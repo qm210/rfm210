@@ -47,7 +47,6 @@ const ErrorLabel = styled.span`
     font-size: 18px;
 `
 
-
 const setLastTypedLetter = event => {
     event.preventDefault();
     event.target.value = event.key;
@@ -103,9 +102,10 @@ const ExportView = ({pixels, setLetterWidth, setLetterHeight, overwritePixels}) 
             <b>Import existing JSON pixel array:</b>
             <ExportTextArea
                 ref = {importTextArea}
+                onKeyPress = {event => event.ctrlKey && event.charCode == 13 ? tryPixelImport(event) : null}
             />
             <br/>
-            <button onClick={event => {tryPixelImport(event, overwritePixels)}}>
+            <button onClick={event => {tryPixelImport(event)}}>
                 Do it!
             </button>
             <ErrorLabel>

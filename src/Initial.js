@@ -10,13 +10,6 @@ const state = {
     dragValue: undefined,
 };
 
-// view constants
-export const pixelSize = 33;
-export const pixelBorder = 1;
-
 export default {
     state,
-    width,
-    height,
-    pixelSize
 };

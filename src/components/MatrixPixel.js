@@ -2,13 +2,13 @@ import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
 import * as Pixel from '../ducks/Pixel';
-import {at2D} from '../Utils';
-import {pixelSize} from '../Initial';
+import {at2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = (state, {coord}) => ({
     value: at2D(state.Pixel.pixels, coord),
     dragMode: state.Pixel.dragMode,
     dragValue: state.Pixel.dragValue,
+    pixelSize: displayPixelSize(state.Pixel.pixels),
 });
 
 const mapDispatchToProps = (dispatch, {coord}) => ({
@@ -24,12 +24,13 @@ const CheckBox = styled.div`
     border: 1px solid black;
 `
 
-const MatrixPixel = ({value, coord, dragMode, dragValue, togglePixel, setPixel, fillArea, enterDragMode, leaveDragMode}) => {
+const MatrixPixel = ({value, coord, dragMode, dragValue, pixelSize, togglePixel, setPixel, fillArea, enterDragMode, leaveDragMode}) => {
     const enterDragModeWithValue = (event) => {
         event.preventDefault();
         togglePixel();
         enterDragMode(!value);
     }
+    console.log(pixelSize);
     return <CheckBox
         value = {value}
         onMouseDown = {enterDragModeWithValue}
