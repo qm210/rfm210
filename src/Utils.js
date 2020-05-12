@@ -1,3 +1,4 @@
+// 2D array specific
 export const update2D = (array2D, {row, column}, value) =>
     Object.assign([...array2D], {
         [row]: Object.assign([...array2D[row]], {
@@ -22,8 +23,14 @@ export const fill2D = (array2D, value) => array2D.map(row => row.map(() => value
 export const isEmpty2D = (array2D) => array2D.every(row => row.every(entry => !entry));
 
 export const width2D = (array2D) => array2D ? array2D[0] ? array2D[0].length : 0 : 0;
+
 export const height2D = (array2D) => array2D ? array2D.length : 0;
+
 export const size2D = (array2D) => ({width: width2D(array2D), height: height2D(array2D)});
+
+// time specific
+export const millis = () => (new Date()).getTime();
+export const sec = () => Math.round((new Date()).getTime() / 1000);
 
 // display specific
 export const displayPixelSize = (pixels) => 33 * 9 / width2D(pixels);

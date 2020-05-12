@@ -19,17 +19,19 @@ const ExportList = styled.div`
     flex-direction: column;
     alignItems: left;
     margin: 10px;
+    padding: 10px;
+    border: 1px solid #888;
 `;
 
 const SpacedInput = styled.input`
     margin: 10px;
-    width: 200px;
+    width: 40px;
     font-size: 1.2em;
 `;
 
 const LabelledInput = (props) => <>
     <label htmlFor={props.name}>{props.label}</label>
-    <SpacedInput {...props}/><br/>
+    <SpacedInput {...props}/>
 </>;
 
 const ExportTextArea = styled.textarea`
@@ -102,7 +104,7 @@ const ExportView = ({pixels, setLetterWidth, setLetterHeight, overwritePixels}) 
             <b>Import existing JSON pixel array:</b>
             <ExportTextArea
                 ref = {importTextArea}
-                onKeyPress = {event => event.ctrlKey && event.charCode == 13 ? tryPixelImport(event) : null}
+                onKeyPress = {event => event.ctrlKey && event.charCode === 13 ? tryPixelImport(event) : null}
             />
             <br/>
             <button onClick={event => {tryPixelImport(event)}}>

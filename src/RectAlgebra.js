@@ -45,25 +45,6 @@ const getMaxWidthToRightWithHeight = (pixels, row, column, height) => {
     return maxWidth;
 }
 
-const getMaxHeightDownWithWidth = (pixels, row, column, width) => {
-    let maxHeight = Number.MAX_VALUE;
-    for (var tryColumn = column; tryColumn < column + width; tryColumn++) {
-        maxHeight = Math.min(maxHeight, getMaxHeightDown(pixels, row, tryColumn));
-    }
-    return maxHeight;
-}
-
-const rectExists = (pixels, row, column, width, height) => {
-    for (let tryWidth = 0; tryWidth < width; tryWidth++) {
-        for (let tryHeight = 0; tryHeight < height; tryHeight++) {
-            if (!at2D(pixels, {row: row + tryHeight, column: column + tryWidth})) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 const getAllRectsAndOrphanPixels = (pixels) => {
     const orphanPixels = [];
     const allRects = [];
@@ -130,11 +111,24 @@ const getSufficientRects = (pixels, allRects, orphanPixels) => {
             break;
         }
     }
-    // TODO: think about only removing rects that are completely inside another, might avoid glitches at edges.
+    // TODO: think about only removing rects that are completely inside another, might avoid glitches at edges. If there are any. I don't know.
     return sufficientRects;
+}
+
+const getEverythingYouNeedAsRects = (pixels) => {
+    const [allRects, orphanPixels] = getAllRectsAndOrphanPixels(pixels);
+    const sufficientRects = getSufficientRects(pixels, allRects, orphanPixels);
+    const orphanRects = orphanPixels.map(pixel => new Rect({
+        row: pixel.row,
+        column: pixel.column,
+        width: 1,
+        height: 1,
+    }));
+    return [...sufficientRects, ...orphanRects];
 }
 
 export default {
     getAllRectsAndOrphanPixels,
-    getSufficientRects
+    getSufficientRects,
+    getEverythingYouNeedAsRects,
 }

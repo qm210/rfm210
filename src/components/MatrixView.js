@@ -30,7 +30,7 @@ const MatrixView = ({clearAllPixels, fillAllPixels}) =>
             style={{
                 display: "flex",
                 flexDirection: "row",
-                marginTop: 20,
+                margin: 15,
             }}>
             <QuickButton onClick = {clearAllPixels}>
                 Clear!
