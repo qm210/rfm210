@@ -26,17 +26,16 @@ const ShaderView = ({pixels}) => {
 
     React.useEffect(() => {
         const timer = setInterval(() => {
-            setMillis(millis => millis + 10);
-        }, 10);
+            setMillis(millis => millis + 1);
+        }, 1);
         return () => clearTimeout(timer);
       }, [millis, setMillis]);
 
     const everyRect = RectAlgebra.getEverythingYouNeedAsRects(pixels);
 
-    const PIXELSIZE = .01;
     const terrifyingCode = everyRect.map(rect =>
-            `dbox(UV + sin(.3*time)*vec2(${rect.fromColumn*PIXELSIZE},${rect.fromRow*PIXELSIZE}), vec2(${rect.width*PIXELSIZE},${rect.height*PIXELSIZE}), d);
-            col = mix(col, c.yyy, sm(d));`).join('');
+        `rect(UV, vec4(${rect.x},${rect.y},${rect.width},${rect.height}), vec2(0), phi, 1., coltemp);`
+    ).join('');
 
     const shaders = Shaders.create({
         example: {
@@ -64,9 +63,33 @@ const ShaderView = ({pixels}) => {
                 d = length(max(da,c.yy)) + min(max(da.x,da.y),0.0);
             }
 
+            void rot(in float phi, out mat2 m)
+            {
+                vec2 cs = vec2(cos(phi), sin(phi));
+                m = mat2(cs.x, -cs.y, cs.y, cs.x);
+            }
             float sm(in float d)
             {
                 return smoothstep(1.5/iResolution.y, -1.5/iResolution.y, d);
+            }
+            #define PIXEL .01
+            void pixel(in vec2 uv, in vec2 pixel, in vec2 shift, in float phi, in float scale, inout vec3 col)
+            {
+                float d;
+                mat2 R;
+                rot(phi, R);
+                R /= max(1.e-3, scale);
+                dbox(R*uv + PIXEL*(vec2(-1.,1.) + R*vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*pixel.x, 2.*pixel.y)), vec2(1.,1.)*PIXEL, d);
+                col = mix(col, c.yyy, sm(d));
+            }
+            void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale, inout vec3 col)
+            {
+                float d;
+                mat2 R;
+                rot(phi, R);
+                R /= max(1.e-3, scale);
+                dbox(R*uv + PIXEL*(vec2(-rect.z,rect.w) + R*vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, d);
+                col = mix(col, c.yyy, sm(d));
             }
 
     //        void mainImage( out vec4 fragColor, in vec2 fragCoord ) // qm hack
@@ -74,11 +97,12 @@ const ShaderView = ({pixels}) => {
             {
                 // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
                 vec2 UV = vec2(uv.x - .5, uv.y - .5); // qm hack
-                vec3 col = c.xxx;
-                float d;
-                //dbox(UV, vec2(.1,.2), d); col = mix(col, c.yyy, sm(d));
-                //dbox(UV, vec2(.05,1.), d); col = mix(col, c.yyy, sm(d));
+                vec3 coltemp = c.xxx;
+                float phi = 10.*time;
                 ${terrifyingCode}
+
+                vec3 col = c.xxx;
+                col = mix(col, coltemp, 1.); // for alpha...
 
                 gl_FragColor = vec4(clamp(col,0.,1.),1.0); // qm hack fragColor -> gl_FragColor
             }
@@ -89,7 +113,7 @@ const ShaderView = ({pixels}) => {
     return <ShaderFrame>
         <b>This is the AWESOME part!</b><br/>
         <Surface width={300} height={300}>
-            <Node shader={shaders.nr4template} uniforms={{time: millis}}/>
+            <Node shader={shaders.nr4template} uniforms={{time: millis/1000}}/>
         </Surface>
     </ShaderFrame>;
 };

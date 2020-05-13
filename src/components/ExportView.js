@@ -3,6 +3,7 @@ import {connect} from 'react-redux';
 import styled from 'styled-components';
 import * as Pixel from '../ducks/Pixel';
 import { size2D } from '../Utils';
+import Initial from '../Initial';
 
 const mapStateToProps = (state) => ({
     pixels: state.Pixel.pixels
@@ -96,14 +97,17 @@ const ExportView = ({pixels, setLetterWidth, setLetterHeight, overwritePixels}) 
             <LabelledInput name="iletter" label="Letter:" type="text" onKeyPress={setLastTypedLetter}/>
             <LabelledInput name="iwidth" label="Width:" type="number" value={size2D(pixels).width} onChange={(event) => setLetterWidth(event.target.value)}/>
             <LabelledInput name="iheight" label="Height:" type="number" value={size2D(pixels).height} onChange={(event) => setLetterHeight(event.target.value)}/>
+            <br/>
             <ExportTextArea
                 value = {JSON.stringify(pixels)}
                 readOnly
             />
             <br/>
             <b>Import existing JSON pixel array:</b>
+            <br/>
             <ExportTextArea
                 ref = {importTextArea}
+                defaultValue = {Initial.importExample}
                 onKeyPress = {event => event.ctrlKey && event.charCode === 13 ? tryPixelImport(event) : null}
             />
             <br/>

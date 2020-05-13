@@ -8,6 +8,9 @@ class Rect {
         this.toRow = row + height;
         this.width = width;
         this.height = height;
+        // why not...
+        this.x = this.fromColumn;
+        this.y = this.fromRow;
     }
     size() {return this.width * this.height;}
 }
