@@ -23,13 +23,22 @@ const ShaderFrame = styled.div`
 
 const ShaderView = ({pixels}) => {
     const [millis, setMillis] = React.useState(0);
+    const reqRef = React.useRef();
+    const prevReqRef = React.useRef();
+
+    const animate = React.useCallback(time => {
+        if (prevReqRef.current !== undefined) {
+            const deltaTime = time - prevReqRef.current;
+            setMillis(ms => ms + deltaTime);
+        }
+        prevReqRef.current = time;
+        prevReqRef.current = requestAnimationFrame(animate);
+    }, []);
 
     React.useEffect(() => {
-        const timer = setInterval(() => {
-            setMillis(millis => millis + 1);
-        }, 1);
-        return () => clearTimeout(timer);
-      }, [millis, setMillis]);
+        reqRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(reqRef.current);
+      }, [animate]);
 
     const everyRect = RectAlgebra.getEverythingYouNeedAsRects(pixels);
 

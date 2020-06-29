@@ -3,17 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@feathersjs/client": "^4.5.4",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "axios": "^0.19.2",
+    "feathers-nedb": "^5.1.0",
+    "fomantic-ui-css": "^2.8.6",
     "gl-react": "^4.0.1",
     "gl-react-dom": "^4.0.1",
     "lodash.throttle": "^4.1.1",
+    "nedb": "^1.8.0",
+    "nodemon": "^2.0.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-redux": "^7.2.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
+    "react-select": "^3.1.0",
     "redux": "^4.0.5",
+    "semantic-ui-react": "^0.88.2",
+    "socket.io-client": "^2.3.0",
     "styled-components": "^5.1.0"
   },
   "scripts": {
@@ -36,5 +46,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-export-default-from": "^7.10.1"
   }
 }

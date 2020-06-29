@@ -8,15 +8,17 @@ const mapStateToProps = state => ({
     pixels: state.Pixel.pixels
 });
 
+const StyledMatrix = styled.div`
+    display: flex;
+    flex-direction: column;
+    border: 2px solid black;
+    width: ${({pixels}) => width2D(pixels) * displayPixelSize(pixels)}px;
+    height: ${({pixels}) => height2D(pixels) * (displayPixelSize(pixels) + 2)}px;
+`;
+
 const Matrix = ({pixels}) => {
-    const StyledMatrix = styled.div`
-        display: flex;
-        flex-direction: column;
-        border: 2px solid black;
-        width: ${width2D(pixels) * displayPixelSize(pixels)}px;
-        height: ${height2D(pixels) * (displayPixelSize(pixels) + 2)}px;
-    `
-    return <StyledMatrix>
+
+    return <StyledMatrix pixels={pixels}>
         {
             pixels.map((pixelRow, row) =>
                 <MatrixRow key={row} row={row} values={pixelRow}/>

@@ -52,7 +52,7 @@ const fillConnectedArea = (pixels, {column, row, value}) => {
     return clonePixels;
 }
 
-const Reducer = (state = Initial.state, {type, payload}) => {
+const Reducer = (state = Initial.pixelState, {type, payload}) => {
     switch (type) {
         case 'SET_PIXEL':
             return {...state, pixels: update2D(state.pixels, payload, payload.value)};
@@ -72,10 +72,6 @@ const Reducer = (state = Initial.state, {type, payload}) => {
 
         case 'OVERWRITE_PIXELS':
             return {...state, pixels: payload};
-
-        // TODO: use different reducer for this. and, of course, define these...
-        case 'SET_WIDTH':
-        case 'SET_HEIGHT':
 
         default:
             return state;

@@ -25,12 +25,12 @@ const CheckBox = styled.div`
 `
 
 const MatrixPixel = ({value, coord, dragMode, dragValue, pixelSize, togglePixel, setPixel, fillArea, enterDragMode, leaveDragMode}) => {
-    const enterDragModeWithValue = (event) => {
+    const enterDragModeWithValue = React.useCallback(event => {
         event.preventDefault();
         togglePixel();
         enterDragMode(!value);
-    }
-    console.log(pixelSize);
+    }, [togglePixel, enterDragMode, value]);
+
     return <CheckBox
         value = {value}
         onMouseDown = {enterDragModeWithValue}
