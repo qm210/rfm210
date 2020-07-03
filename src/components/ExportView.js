@@ -1,41 +1,21 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {ExportList, LabelledInput, ExportTextArea, ErrorLabel} from '.';
-import * as Pixel from '../ducks/Pixel';
-import * as Glyph from '../ducks/Glyphs';
-import { size2D } from '../Utils';
+import {ExportList, ExportTextArea, ErrorLabel} from '.';
+import * as State from '../ReduxState';
 import Initial from '../Initial';
+import {clearStore} from '../LocalStorage';
 
 const mapStateToProps = (state) => ({
-    pixels: state.Pixel.pixels,
-    letter: state.Pixel.currentLetter,
-    glyphset: state.Glyphs[state.Pixel.currentGlyph]
+    pixels: state.pixels,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    overwritePixels: pixels => dispatch(Pixel.overwritePixels(pixels)),
-    setLetterWidth: value => dispatch(Pixel.setLetterWidth(value)),
-    setLetterHeight: value => dispatch(Pixel.setLetterHeight(value)),
-    assignLetter: (oldLetter, newLetter) => dispatch({
-        type: Glyph.ASSIGN_LETTER,
-        payload: {oldLetter, newLetter}
-    }),
+    overwritePixels: pixels => dispatch(State.overwritePixels(pixels)),
 })
 
-const ExportView = ({pixels, letter, glyphset,
-    setLetterWidth, setLetterHeight, overwritePixels, assignLetter}) => {
+const ExportView = ({pixels, overwritePixels}) => {
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
-
-    const setLastTypedLetter = event => {
-        event.preventDefault();
-        const newLetter = event.key;
-        if (event.key.length > 1) {
-            return;
-        }
-        event.target.value = newLetter;
-        assignLetter(letter, newLetter);
-    }
 
     const tryPixelImport = (event) => {
         event.preventDefault();
@@ -70,10 +50,11 @@ const ExportView = ({pixels, letter, glyphset,
 
     return <ExportList>
         <b>General Information:</b>
+        <button style={{margin: 10, padding: 10}} onClick={clearStore}>
+            Clear Cache
+        </button>
         <form onSubmit={() => false}>
-            <LabelledInput name="iletter" label="Letter:" type="text" value={letter} onKeyPress={setLastTypedLetter}/>
-            <LabelledInput name="iwidth" label="Width:" type="number" value={size2D(pixels).width} onChange={(event) => setLetterWidth(event.target.value)}/>
-            <LabelledInput name="iheight" label="Height:" type="number" value={size2D(pixels).height} onChange={(event) => setLetterHeight(event.target.value)}/>
+            <b>Export as JSON pixel array:</b>
             <br/>
             <ExportTextArea
                 value = {JSON.stringify(pixels)}

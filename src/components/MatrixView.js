@@ -2,14 +2,18 @@ import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
 import Matrix from './Matrix';
-import * as Pixel from '../ducks/Pixel';
+import * as State from '../ReduxState';
 
 const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    clearAllPixels: () => dispatch(Pixel.clearAllPixels()),
-    fillAllPixels: () => dispatch(Pixel.fillAllPixels()),
+    clearAllPixels: () => dispatch(State.clearAllPixels()),
+    fillAllPixels: () => dispatch(State.fillAllPixels()),
+    shiftUp: () => dispatch({type: State.SHIFT, payload: {y: -1}}),
+    shiftDown: () => dispatch({type: State.SHIFT, payload: {y: +1}}),
+    shiftLeft: () => dispatch({type: State.SHIFT, payload: {x: -1}}),
+    shiftRight: () => dispatch({type: State.SHIFT, payload: {x: +1}}),
 });
 
 const QuickButton = styled.button`
@@ -19,7 +23,7 @@ const QuickButton = styled.button`
     margin-left: 20px;
 `
 
-const MatrixView = ({clearAllPixels, fillAllPixels}) =>
+const MatrixView = ({clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight}) =>
     <div
         style={{
             display: "flex",
@@ -35,8 +39,17 @@ const MatrixView = ({clearAllPixels, fillAllPixels}) =>
             <QuickButton onClick = {clearAllPixels}>
                 Clear!
             </QuickButton>
-            <QuickButton onClick = {fillAllPixels}>
-                Fill All
+            <QuickButton onClick = {shiftUp}>
+                &#8593;
+            </QuickButton>
+            <QuickButton onClick = {shiftDown}>
+                &#8595;
+            </QuickButton>
+            <QuickButton onClick = {shiftLeft}>
+                &#8592;
+            </QuickButton>
+            <QuickButton onClick = {shiftRight}>
+                &#8594;
             </QuickButton>
         </div>
     </div>;

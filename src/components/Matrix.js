@@ -5,7 +5,7 @@ import MatrixRow from './MatrixRow';
 import {width2D, height2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = state => ({
-    pixels: state.Pixel.pixels
+    pixels: state.pixels
 });
 
 const StyledMatrix = styled.div`

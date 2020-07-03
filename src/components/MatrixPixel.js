@@ -1,22 +1,22 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
-import * as Pixel from '../ducks/Pixel';
+import * as State from '../ReduxState';
 import {at2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = (state, {coord}) => ({
-    value: at2D(state.Pixel.pixels, coord),
-    dragMode: state.Pixel.dragMode,
-    dragValue: state.Pixel.dragValue,
-    pixelSize: displayPixelSize(state.Pixel.pixels),
+    value: at2D(state.pixels, coord),
+    dragMode: state.dragMode,
+    dragValue: state.dragValue,
+    pixelSize: displayPixelSize(state.pixels),
 });
 
 const mapDispatchToProps = (dispatch, {coord}) => ({
-    togglePixel: () => dispatch(Pixel.togglePixel(coord)),
-    setPixel: (value) => dispatch(Pixel.setPixel(coord, value)),
-    enterDragMode: (value) => dispatch(Pixel.enterDragMode(coord, value)),
-    leaveDragMode: () => dispatch(Pixel.leaveDragMode()),
-    fillArea: (value) => dispatch(Pixel.fillArea(coord, value)),
+    togglePixel: () => dispatch(State.togglePixel(coord)),
+    setPixel: (value) => dispatch(State.setPixel(coord, value)),
+    enterDragMode: (value) => dispatch(State.enterDragMode(coord, value)),
+    leaveDragMode: () => dispatch(State.leaveDragMode()),
+    fillArea: (value) => dispatch(State.fillArea(coord, value)),
 });
 
 const CheckBox = styled.div`

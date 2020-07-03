@@ -13,11 +13,11 @@ const GlyphApp = () =>
                 <LogView/>
             </MainColumn>
             <MainColumn>
-                {/*<ShaderView/> // this is not perfomant enough yet, sorry nobody */}
-                <ExportView/>
+                <ControlPanel/>
             </MainColumn>
             <MainColumn>
-                <ControlPanel/>
+                {/*<ShaderView/> // this is not perfomant enough yet, sorry nobody */}
+                <ExportView/>
             </MainColumn>
         </MainView>
     </>;

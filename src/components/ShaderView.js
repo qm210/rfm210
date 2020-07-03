@@ -6,7 +6,7 @@ import {Surface} from 'gl-react-dom';
 import RectAlgebra from '../RectAlgebra';
 
 const mapStateToProps = (state) => ({
-    pixels: state.Pixel.pixels
+    pixels: state.pixels
 });
 
 const mapDispatchToProps = (dispatch) => ({
