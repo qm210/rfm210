@@ -13,7 +13,7 @@ const StyledMatrix = styled.div`
     flex-direction: column;
     border: 2px solid black;
     width: ${({pixels}) => width2D(pixels) * displayPixelSize(pixels)}px;
-    height: ${({pixels}) => height2D(pixels) * (displayPixelSize(pixels) + 2)}px;
+    height: ${({pixels}) => height2D(pixels) * displayPixelSize(pixels) + 4}px;
 `;
 
 const Matrix = ({pixels}) => {

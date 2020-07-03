@@ -42,7 +42,7 @@ const MatrixPixel = ({value, coord, dragMode, dragValue, pixelSize, togglePixel,
             width: pixelSize,
             height: pixelSize,
         }}
-    />
+    />;
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MatrixPixel);

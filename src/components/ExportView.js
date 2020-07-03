@@ -1,64 +1,41 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import styled from 'styled-components';
+import {ExportList, LabelledInput, ExportTextArea, ErrorLabel} from '.';
 import * as Pixel from '../ducks/Pixel';
+import * as Glyph from '../ducks/Glyphs';
 import { size2D } from '../Utils';
 import Initial from '../Initial';
 
 const mapStateToProps = (state) => ({
-    pixels: state.Pixel.pixels
+    pixels: state.Pixel.pixels,
+    letter: state.Pixel.currentLetter,
+    glyphset: state.Glyphs[state.Pixel.currentGlyph]
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    overwritePixels: (pixels) => dispatch(Pixel.overwritePixels(pixels)),
-    setLetterWidth: (value) => dispatch(Pixel.setLetterWidth(value)),
-    setLetterHeight: (value) => dispatch(Pixel.setLetterHeight(value))
+    overwritePixels: pixels => dispatch(Pixel.overwritePixels(pixels)),
+    setLetterWidth: value => dispatch(Pixel.setLetterWidth(value)),
+    setLetterHeight: value => dispatch(Pixel.setLetterHeight(value)),
+    assignLetter: (oldLetter, newLetter) => dispatch({
+        type: Glyph.ASSIGN_LETTER,
+        payload: {oldLetter, newLetter}
+    }),
 })
 
-const ExportList = styled.div`
-    display: flex;
-    flex-direction: column;
-    alignItems: left;
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #888;
-`;
-
-const SpacedInput = styled.input`
-    margin: 10px;
-    width: 40px;
-    font-size: 1.2em;
-`;
-
-const LabelledInput = (props) => <>
-    <label htmlFor={props.name}>{props.label}</label>
-    <SpacedInput {...props}/>
-</>;
-
-const ExportTextArea = styled.textarea`
-    resize: none;
-    width: 321px;
-    height: 180px;
-    margin: 10px;
-    font-size: 9.5px;
-`
-
-const ErrorLabel = styled.span`
-    margin-left: 10px;
-    color: red;
-    font-weight: bold;
-    font-size: 18px;
-`
-
-const setLastTypedLetter = event => {
-    event.preventDefault();
-    event.target.value = event.key;
-}
-
-const importTextArea = React.createRef();
-
-const ExportView = ({pixels, setLetterWidth, setLetterHeight, overwritePixels}) => {
+const ExportView = ({pixels, letter, glyphset,
+    setLetterWidth, setLetterHeight, overwritePixels, assignLetter}) => {
     const [errorLabel, setErrorLabel] = React.useState('');
+    const importTextArea = React.createRef();
+
+    const setLastTypedLetter = event => {
+        event.preventDefault();
+        const newLetter = event.key;
+        if (event.key.length > 1) {
+            return;
+        }
+        event.target.value = newLetter;
+        assignLetter(letter, newLetter);
+    }
 
     const tryPixelImport = (event) => {
         event.preventDefault();
@@ -94,7 +71,7 @@ const ExportView = ({pixels, setLetterWidth, setLetterHeight, overwritePixels}) 
     return <ExportList>
         <b>General Information:</b>
         <form onSubmit={() => false}>
-            <LabelledInput name="iletter" label="Letter:" type="text" onKeyPress={setLastTypedLetter}/>
+            <LabelledInput name="iletter" label="Letter:" type="text" value={letter} onKeyPress={setLastTypedLetter}/>
             <LabelledInput name="iwidth" label="Width:" type="number" value={size2D(pixels).width} onChange={(event) => setLetterWidth(event.target.value)}/>
             <LabelledInput name="iheight" label="Height:" type="number" value={size2D(pixels).height} onChange={(event) => setLetterHeight(event.target.value)}/>
             <br/>

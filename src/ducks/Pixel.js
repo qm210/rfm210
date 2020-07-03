@@ -1,6 +1,9 @@
 import Initial from "../Initial";
 import {update2D, at2D, fill2D, size2D, clone2D} from "../Utils";
 
+export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIXELS, OVERWRITE_PIXELS,
+    ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_LETTER] = [...Array(99).keys()];
+
 export const togglePixel = (coord) => ({type : 'TOGGLE_PIXEL', payload: coord});
 export const setPixel = (coord, value) => ({type: 'SET_PIXEL', payload: {...coord, value}});
 export const fillArea = (coord, value) => ({type: 'FILL_AREA', payload: {...coord, value}});
@@ -10,8 +13,36 @@ export const overwritePixels = (pixels) => ({type: 'OVERWRITE_PIXELS', payload: 
 export const enterDragMode = (coord, value) => ({type: 'ENTER_DRAGMODE', payload: {...coord, value: value}});
 export const leaveDragMode = () => ({type: 'LEAVE_DRAGMODE'});
 
-export const setLetterWidth = (value) => ({type: 'SET_WIDTH', payload: value});
-export const setLetterHeight = (value) => ({type: 'SET_HEIGHT', payload: value});
+const Reducer = (state = Initial.pixelState, {type, payload}) => {
+    switch (type) {
+        case SET_PIXEL:
+            return {...state, pixels: update2D(state.pixels, payload, payload.value)};
+        case TOGGLE_PIXEL:
+            return {...state, pixels: update2D(state.pixels, payload, !at2D(state.pixels, payload))};
+        case FILL_AREA:
+            return {...state, pixels: fillConnectedArea(state.pixels, payload)};
+        case CLEAR_ALL_PIXELS:
+            return {...state, pixels: fill2D(state.pixels, false)};
+        case FILL_ALL_PIXELS:
+            return {...state, pixels: fill2D(state.pixels, true)};
+
+        case ENTER_DRAGMODE:
+            return {...state, dragMode: true, dragValue: payload.value};
+        case LEAVE_DRAGMODE:
+            return {...state, dragMode: false};
+
+        case SET_LETTER:
+            return {...state, currentLetter: payload};
+
+        case OVERWRITE_PIXELS:
+            return {...state, pixels: payload};
+
+        default:
+            return state
+    }
+}
+
+export default Reducer;
 
 const surroundingPixelList = ({row, column, width, height}) => {
     const surrounding = [];
@@ -51,31 +82,3 @@ const fillConnectedArea = (pixels, {column, row, value}) => {
     }
     return clonePixels;
 }
-
-const Reducer = (state = Initial.pixelState, {type, payload}) => {
-    switch (type) {
-        case 'SET_PIXEL':
-            return {...state, pixels: update2D(state.pixels, payload, payload.value)};
-        case 'TOGGLE_PIXEL':
-            return {...state, pixels: update2D(state.pixels, payload, !at2D(state.pixels, payload))};
-        case 'FILL_AREA':
-            return {...state, pixels: fillConnectedArea(state.pixels, payload)};
-        case 'CLEAR_ALL_PIXELS':
-            return {...state, pixels: fill2D(state.pixels, false)};
-        case 'FILL_ALL_PIXELS':
-            return {...state, pixels: fill2D(state.pixels, true)};
-
-        case 'ENTER_DRAGMODE':
-            return {...state, dragMode: true, dragValue: payload.value};
-        case 'LEAVE_DRAGMODE':
-            return {...state, dragMode: false};
-
-        case 'OVERWRITE_PIXELS':
-            return {...state, pixels: payload};
-
-        default:
-            return state;
-    }
-}
-
-export default Reducer;
