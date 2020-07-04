@@ -1,20 +1,14 @@
+Shader:
+- fix time
+- render correct phrase
+- allow multiple phrases
+- phrase effects QMD
+-- colors?
+-- movement
+- scene composition QMD
+
+=== NICHT VOR UC10 ===
+
 Backend (Feathers / Express / idon'tcare)
 - store glyph to file (json)
 - load glyph from file (json)
-
-Shader:
-- Enter Text
-- Show glyph
-
-Refactoring:
-- split letter width / height functionality to different duck / reducer
-
-Font Editor:
-- Assign glyph to matrix
-- change width/height
-- fix border bug
-- colors?
-
-Automation Editor:
-- automatic translation, scaling, rotation, alpha
-- colors?
