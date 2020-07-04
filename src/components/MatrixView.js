@@ -18,9 +18,10 @@ const mapDispatchToProps = (dispatch) => ({
 
 const QuickButton = styled.button`
     height: 50px;
+    min-width: 50px;
     font-size: 20px;
     font-weight: bold;
-    margin-left: 20px;
+    margin-left: 4px;
 `
 
 const MatrixView = ({clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight}) =>
@@ -34,7 +35,8 @@ const MatrixView = ({clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight})
             style={{
                 display: "flex",
                 flexDirection: "row",
-                margin: 15,
+                marginTop: 15,
+                marginBottom: 15,
             }}>
             <QuickButton onClick = {clearAllPixels}>
                 Clear!

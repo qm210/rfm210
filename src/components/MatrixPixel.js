@@ -5,10 +5,10 @@ import * as State from '../ReduxState';
 import {at2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = (state, {coord}) => ({
-    value: at2D(state.pixels, coord),
+    value: at2D(State.currentPixels(state), coord),
     dragMode: state.dragMode,
     dragValue: state.dragValue,
-    pixelSize: displayPixelSize(state.pixels),
+    pixelSize: displayPixelSize(State.currentPixels(state)),
 });
 
 const mapDispatchToProps = (dispatch, {coord}) => ({
@@ -24,7 +24,8 @@ const CheckBox = styled.div`
     border: 1px solid black;
 `
 
-const MatrixPixel = ({value, coord, dragMode, dragValue, pixelSize, togglePixel, setPixel, fillArea, enterDragMode, leaveDragMode}) => {
+const MatrixPixel = ({value, coord, dragMode, dragValue, pixelSize, togglePixel, setPixel, fillArea,
+    enterDragMode, leaveDragMode}) => {
     const enterDragModeWithValue = React.useCallback(event => {
         event.preventDefault();
         togglePixel();

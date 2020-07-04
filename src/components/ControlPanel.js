@@ -5,8 +5,8 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import feathers from '@feathersjs/client';
 import * as State from '../ReduxState';
-import {size2D} from '../Utils';
 import {LabelledInput} from '.';
+import {alias} from '../model/Glyph';
 
 const socket = io('http://localhost:3333');
 
@@ -22,9 +22,8 @@ const ExportList = styled.div`
 `;
 
 const mapStateToProps = (state) => ({
-    pixels: state.pixels,
-    letter: state.currentLetter,
-    glyphset: state.glyphset
+    glyphset: state.glyphset,
+    glyph: State.currentGlyph(state),
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -35,22 +34,18 @@ const mapDispatchToProps = (dispatch) => ({
     assignGlyphset: name => dispatch({type: State.ASSIGN_GLYPHSET, payload: name}),
     addGlyph: () => dispatch({type: State.ADD_GLYPH}),
     copyGlyph: () => dispatch({type: State.COPY_GLYPH}),
-    loadGlyph: letter => dispatch({type: State.LOAD_GLYPH, payload: letter})
+    loadGlyph: id => dispatch({type: State.LOAD_GLYPH, payload: id})
 });
 
-const ControlPanel = ({pixels, letter, glyphset, assignGlyphset, appendGlyphset, addGlyph, copyGlyph,
-    setLetterWidth, setLetterHeight, assignLetter, loadGlyph, glyph}) => {
+const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph, copyGlyph,
+    setLetterWidth, setLetterHeight, assignLetter, loadGlyph}) => {
     const inputRef = React.createRef();
     const glyphsets = [glyphset.title]; // TODO: extend if glyphset is going to be a list
-
-    const debugStuff = () => {
-        console.log(glyphset, letter, glyph);
-    };
 
     const setLastTypedLetter = event => {
         event.preventDefault();
         // TODO: can't handle backspace yet. anyway
-        const newLetter = (letter !== '' && event.target.value === '') ? '' : event.key;
+        const newLetter = (glyph.letter !== '' && event.target.value === '') ? '' : event.key;
         if (newLetter.length > 1) {
             return;
         }
@@ -64,14 +59,14 @@ const ControlPanel = ({pixels, letter, glyphset, assignGlyphset, appendGlyphset,
                 name="iletter"
                 label="Letter:"
                 type="text"
-                defaultValue={letter}
+                defaultValue={glyph.letter}
                 onKeyPress={setLastTypedLetter}
             />
             <LabelledInput
                 name="iwidth"
                 label="Width:"
                 type="number"
-                value={size2D(pixels).width}
+                value={glyph.width}
                 onChange={event => setLetterWidth(event.target.value)}
                 disabled
             />
@@ -79,7 +74,7 @@ const ControlPanel = ({pixels, letter, glyphset, assignGlyphset, appendGlyphset,
                 name="iheight"
                 label="Height:"
                 type="number"
-                value={size2D(pixels).height}
+                value={glyph.height}
                 onChange={event => setLetterHeight(event.target.value)}
                 disabled
             />
@@ -121,18 +116,18 @@ const ControlPanel = ({pixels, letter, glyphset, assignGlyphset, appendGlyphset,
         <select
             size = {10}
             style = {{fontSize: '1.2rem'}}
-            value = {letter}
+            value = {glyph.id}
             onChange = {event => loadGlyph(event.target.value)}
         >
         {
             glyphset.glyphs.slice()
                 .sort((a,b) => a.letter < b.letter)
-                .map((glyph, index) =>
+                .map((eachGlyph, index) =>
                 <option
                     key={index}
-                    value={glyph.letter}
+                    value={eachGlyph.id}
                     >
-                    {glyph.alias}
+                    {alias(eachGlyph.letter)}
                 </option>
             )
         }
@@ -141,7 +136,6 @@ const ControlPanel = ({pixels, letter, glyphset, assignGlyphset, appendGlyphset,
             <button style={{margin: 10, padding: 10}} onClick={addGlyph}>New Glyph</button>
             <button style={{margin: 10, padding: 10}} onClick={copyGlyph}>Copy Glyph</button>
         </div>
-        <button style={{margin: 10, padding: 10}} onClick={debugStuff}>DEBUG</button>
     </ExportList>;
 }
 

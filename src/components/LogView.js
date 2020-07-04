@@ -1,10 +1,11 @@
 import React from 'react';
 import {connect} from 'react-redux';
+import {currentPixels} from '../ReduxState';
 import styled from 'styled-components';
 import RectAlgebra from '../RectAlgebra';
 
 const mapStateToProps = (state) => ({
-    pixels: state.pixels
+    pixels: currentPixels(state)
 });
 
 const LogList = styled.div`

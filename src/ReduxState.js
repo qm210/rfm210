@@ -1,6 +1,6 @@
-import Glyph from './model/Glyph';
+import * as Glyph from './model/Glyph';
 import Initial from "./Initial";
-import {update2D, at2D, fill2D, size2D, clone2D} from "./Utils";
+import {new2D, update2D, at2D, fill2D, size2D, clone2D} from "./Utils";
 
 export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIXELS, OVERWRITE_PIXELS,
     ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_WIDTH, SET_GLYPH_HEIGHT, SHIFT,
@@ -18,17 +18,18 @@ export const enterDragMode = (coord, value) => ({type: ENTER_DRAGMODE, payload: 
 export const leaveDragMode = () => ({type: LEAVE_DRAGMODE});
 
 const Reducer = (state = Initial.state, {type, payload}) => {
+    const pixels = currentPixels(state);
     switch (type) {
         case SET_PIXEL:
-            return {...state, pixels: update2D(state.pixels, payload, payload.value)};
+            return withUpdatedPixels(state, update2D(pixels, payload, payload.value));
         case TOGGLE_PIXEL:
-            return {...state, pixels: update2D(state.pixels, payload, !at2D(state.pixels, payload))};
+            return withUpdatedPixels(state, update2D(pixels, payload, !at2D(pixels, payload)));
         case FILL_AREA:
-            return {...state, pixels: fillConnectedArea(state.pixels, payload)};
+            return withUpdatedPixels(state, fillConnectedArea(pixels, payload));
         case CLEAR_ALL_PIXELS:
-            return {...state, pixels: fill2D(state.pixels, false)};
+            return withUpdatedPixels(state, fill2D(pixels, false));
         case FILL_ALL_PIXELS:
-            return {...state, pixels: fill2D(state.pixels, true)};
+            return withUpdatedPixels(state, fill2D(pixels, true));
 
         case ENTER_DRAGMODE:
             return {...state, dragMode: true, dragValue: payload.value};
@@ -44,7 +45,7 @@ const Reducer = (state = Initial.state, {type, payload}) => {
             return state; // NOT IMPLEMENTED YET
 
         case OVERWRITE_PIXELS:
-            return {...state, pixels: payload};
+            return withUpdatedPixels(state, payload);
 
         case APPEND_GLYPHSET:
             return state; // NOT IMPLEMENTED YET
@@ -56,55 +57,64 @@ const Reducer = (state = Initial.state, {type, payload}) => {
             return state; // NOT IMPLEMENTED YET
 
         case ASSIGN_LETTER:
-            console.log(state, payload, state.currentLetter);
-            const newGlyph = state.glyphset.glyphs.find(
-                glyph => glyph.letter === state.currentLetter
-            );
+            const newGlyph = state.glyphset.glyphs.find(glyph => glyph.id === state.glyphId);
             newGlyph.letter = payload;
             return {
                 ...state,
-                currentLetter: payload,
-                currentGlyph: newGlyph,
                 glyphset: {
                     ...state.glyphset,
                     glyphs: state.glyphset.glyphs.map(glyph =>
-                        (glyph.letter === state.currentLetter)
-                            ? newGlyph
-                            : glyph
+                        glyph.id === state.glyphId ? newGlyph : glyph
             )}};
 
         case ASSIGN_GLYPHSET:
             return {...state, title: payload};
 
         case ADD_GLYPH:
-            return addedGlyph(state, new Glyph().newFrom(state.currentGlyph));
+            return withAddedGlyph(state, Glyph.newFrom(currentGlyph(state)));
 
         case COPY_GLYPH:
-            return addedGlyph(state, new Glyph().copyFrom(state.currentGlyph));
+            return withAddedGlyph(state, Glyph.copyFrom(currentGlyph(state)));
 
-        case SYNC_GLYPH:
+        case LOAD_GLYPH:
             return {
                 ...state,
-                currentGlyph: state.glyphset.glyphs.find(glyph => glyph.letter === payload),
-                currentLetter: payload
+                glyphId: +payload
             };
 
         default:
-            return state
+            return state;
     }
 }
 
 export default Reducer;
 
-const addedGlyph = (state, glyph) => ({
+export const currentGlyph = state => state.glyphset.glyphs.find(glyph => glyph.id === state.glyphId);
+
+export const currentPixels = state => currentGlyph(state) ? currentGlyph(state).pixels : new2D(0,0);
+
+const withUpdatedPixels = (state, pixels) => ({
     ...state,
     glyphset: {
         ...state.glyphset,
-        glyphs: [
-            ...state.glyphset.glyphs,
-            glyph
-        ]}
-    });
+        glyphs: state.glyphset.glyphs.map(glyph =>
+            Glyph.withPixelsIfMatch(glyph, state.glyphId, pixels)
+        )
+    }
+});
+
+const withAddedGlyph = (state, glyph) => {
+    glyph.id = state.maxGlyphId + 1;
+    return {
+        ...state,
+        maxGlyphId: state.maxGlyphId + 1,
+        glyphset: {
+            ...state.glyphset,
+            glyphs: [
+                ...state.glyphset.glyphs,
+                glyph
+    ]}};
+};
 
 const surroundingPixelList = ({row, column, width, height}) => {
     const surrounding = [];

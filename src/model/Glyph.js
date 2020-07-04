@@ -1,33 +1,37 @@
 import {new2D} from '../Utils';
 
-export default class Glyph {
-    constructor(id) {
-        this.id = id;
-        this.letter = '';
-        this.pixels = null;
-    }
+export const Glyph = id => ({
+    id,
+    letter: '',
+    pixels: null
+});
 
-    newFrom(glyph) {
-        this.width = glyph.width;
-        this.height = glyph.height;
-        this.pixels = new2D(glyph.width, glyph.height);
-        return this;
-    }
+export const newFrom = (glyph, id) => ({
+    ...glyph,
+    ...Glyph(id),
+    pixels: new2D(glyph.width, glyph.height)
+});
 
-    copyFrom(glyph) {
-        this.width = glyph.width;
-        this.height = glyph.height;
-        this.pixels = glyph.pixels;
-        return this;
-    }
+export const copyFrom = (glyph, id) => ({
+    ...Glyph(id),
+    ...glyph,
+});
 
-    get alias() {
-        if (this.letter === '') {
-            return '<undefined>';
-        }
-        else if (this.letter === ' ') {
-            return '<space>';
-        }
-        return this.letter;
-    }
-}
+export const withPixels = (glyph, pixels) => ({
+    ...glyph,
+    pixels,
+});
+
+export const withPixelsIfMatch = (glyph, id, pixels) => ({
+    ...glyph,
+    pixels: glyph.id === id ? pixels : glyph.pixels
+});
+
+// TODO: Serializing to local storage breaks the Glyph associaiton. Fix... sometime.
+
+export const alias = letter =>
+    letter === ''
+        ? '<undefined>'
+        : letter === ' '
+            ? '<space>'
+            : letter;

@@ -6,14 +6,15 @@ import Initial from '../Initial';
 import {clearStore} from '../LocalStorage';
 
 const mapStateToProps = (state) => ({
-    pixels: state.pixels,
+    pixels: State.currentPixels(state),
+    state // for debug
 });
 
 const mapDispatchToProps = (dispatch) => ({
     overwritePixels: pixels => dispatch(State.overwritePixels(pixels)),
 })
 
-const ExportView = ({pixels, overwritePixels}) => {
+const ExportView = ({state, pixels, overwritePixels}) => {
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
 
@@ -52,6 +53,9 @@ const ExportView = ({pixels, overwritePixels}) => {
         <b>General Information:</b>
         <button style={{margin: 10, padding: 10}} onClick={clearStore}>
             Clear Cache
+        </button>
+        <button style={{margin: 10, padding: 10}} onClick={() => console.log(state)}>
+            DEBUG
         </button>
         <form onSubmit={() => false}>
             <b>Export as JSON pixel array:</b>

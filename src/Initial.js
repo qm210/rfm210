@@ -1,9 +1,9 @@
-import Glyph from './model/Glyph';
+import * as Glyph from './model/Glyph';
 
 // model constants
 const width = 9;
 const height = 16;
-const initGlyph = new Glyph(0).newFrom({width, height});
+const initGlyph = Glyph.newFrom({width, height}, 0);
 
 const state = {
     dragMode: false,

@@ -1,11 +1,12 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
+import {currentPixels} from '../ReduxState';
 import MatrixRow from './MatrixRow';
 import {width2D, height2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = state => ({
-    pixels: state.pixels
+    pixels: currentPixels(state)
 });
 
 const StyledMatrix = styled.div`
