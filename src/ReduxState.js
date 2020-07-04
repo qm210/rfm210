@@ -1,4 +1,4 @@
-import * as Glyph from './model/Glyph';
+import * as Glyph from './GlyphModel';
 import Initial from "./Initial";
 import {new2D, update2D, at2D, fill2D, size2D, clone2D} from "./Utils";
 
@@ -6,7 +6,7 @@ export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIX
     ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_WIDTH, SET_GLYPH_HEIGHT,
     SHIFT_LEFT, SHIFT_RIGHT, SHIFT_UP, SHIFT_DOWN,
     CLEAR_GLYPHSETS, APPEND_GLYPHSET, PURGE_GLYPHSETS, ASSIGN_GLYPHSET, ASSIGN_LETTER, ADD_GLYPH, COPY_GLYPH,
-    LOAD_GLYPH
+    LOAD_GLYPH, UPDATE_SCENE, UPDATE_PHRASE
 ] = [...Array(999).keys()];
 
 export const togglePixel = (coord) => ({type : TOGGLE_PIXEL, payload: coord});
@@ -102,6 +102,13 @@ const Reducer = (state = Initial.state, {type, payload}) => {
                 glyphId: +payload
             };
 
+        case UPDATE_SCENE:
+            return withUpdatedScene(state, {...currentScene(state), payload});
+
+        case UPDATE_PHRASE:
+            return withUpdatedPhrase(state, payload);
+
+
         default:
             return state;
     }
@@ -112,6 +119,14 @@ export default Reducer;
 export const currentGlyph = state => state.glyphset.glyphs.find(glyph => glyph.id === state.glyphId);
 
 export const currentPixels = state => currentGlyph(state) ? currentGlyph(state).pixels : new2D(0,0);
+
+export const currentScene = state => state.scenes.find(scene => scene.id === state.sceneId);
+
+export const currentPhrase = state => currentScene(state).phrases.find(phrase => phrase.id === state.phraseId);
+
+export const glyphForLetter = (glyphset, letter) => glyphset.glyphs.find(
+    glyph => glyph.letter === letter
+) || Glyph.placeholder(Initial.width, Initial.height);
 
 const withUpdatedPixels = (state, pixels) => ({
     ...state,
@@ -124,10 +139,9 @@ const withUpdatedPixels = (state, pixels) => ({
 });
 
 const withAddedGlyph = (state, glyph) => {
-    glyph.id = state.maxGlyphId + 1;
+    glyph.id = state.glyphset.glyphs.length;
     return {
         ...state,
-        maxGlyphId: state.maxGlyphId + 1,
         glyphset: {
             ...state.glyphset,
             glyphs: [
@@ -135,6 +149,25 @@ const withAddedGlyph = (state, glyph) => {
                 glyph
     ]}};
 };
+
+const withUpdatedScene = (state, sceneUpdate) => ({
+    ...state,
+    scenes: state.scenes.map(scene =>
+        scene.id === state.sceneId
+            ? {...scene, ...sceneUpdate}
+            : scene
+        )
+});
+
+const withUpdatedPhrase = (state, phraseUpdate) => ({
+    ...state,
+    scenes: state.scenes.map(scene =>
+        scene.phrases.map(phrase =>
+            phrase.id === state.phraseId
+                ? {...phrase, ...phraseUpdate}
+                : phrase
+        ))
+});
 
 const surroundingPixelList = ({row, column, width, height}) => {
     const surrounding = [];
@@ -174,13 +207,3 @@ const fillConnectedArea = (pixels, {column, row, value}) => {
     }
     return clonePixels;
 }
-
-// TODO NOT IMPLEMENTED YET OBV
-/*
-const shiftedPixels = (pixels, xShift, yShift) => {
-    return pixels.map(row =>
-        row.map(column =>
-            column
-            ));
-}
-*/

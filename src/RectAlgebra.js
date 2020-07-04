@@ -133,5 +133,5 @@ const getEverythingYouNeedAsRects = (pixels) => {
 export default {
     getAllRectsAndOrphanPixels,
     getSufficientRects,
-    getEverythingYouNeedAsRects,
+    getRequiredRectsForPixels: getEverythingYouNeedAsRects,
 }

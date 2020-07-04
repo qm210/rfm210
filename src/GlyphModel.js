@@ -1,4 +1,4 @@
-import {new2D} from '../Utils';
+import {new2D} from './Utils';
 
 export const Glyph = id => ({
     id,
@@ -16,6 +16,13 @@ export const copyFrom = (glyph, id) => ({
     ...Glyph(id),
     ...glyph,
 });
+
+export const placeholder = (width, height) => ({
+    id: null,
+    pixels: new2D(width, height, true),
+    width,
+    height
+})
 
 export const withPixels = (glyph, pixels) => ({
     ...glyph,

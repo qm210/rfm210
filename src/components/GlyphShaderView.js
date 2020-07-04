@@ -21,7 +21,7 @@ const ShaderFrame = styled.div`
     border: 1px solid #888;
 `;
 
-const ShaderView = ({pixels}) => {
+const GlyphShaderView = ({pixels}) => {
     const [millis, setMillis] = React.useState(0);
     const reqRef = React.useRef();
     const prevReqRef = React.useRef();
@@ -127,4 +127,4 @@ const ShaderView = ({pixels}) => {
     </ShaderFrame>;
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(ShaderView);
+export default connect(mapStateToProps, mapDispatchToProps)(GlyphShaderView);

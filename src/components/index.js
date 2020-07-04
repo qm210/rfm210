@@ -47,3 +47,20 @@ export const ErrorLabel = styled.span`
     font-weight: bold;
     font-size: 18px;
 `
+
+export const QuickButton = styled.button`
+    height: 40px;
+    min-width: 40px;
+    font-size: 20px;
+    font-weight: bold;
+    margin-left: 4px;
+`
+
+export const ShaderFrame = styled.div`
+    display: flex;
+    flex-direction: column;
+    alignItems: left;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #888;
+`;

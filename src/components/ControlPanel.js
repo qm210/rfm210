@@ -6,11 +6,11 @@ import io from 'socket.io-client';
 import feathers from '@feathersjs/client';
 import * as State from '../ReduxState';
 import {LabelledInput} from '.';
-import {alias} from '../model/Glyph';
+import {alias} from '../GlyphModel';
 
-const socket = io('http://localhost:3333');
+//const socket = io('http://localhost:3333');
 
-export const client = feathers().configure(feathers.socketio(socket));
+//export const client = feathers().configure(feathers.socketio(socket));
 
 const ExportList = styled.div`
     display: flex;

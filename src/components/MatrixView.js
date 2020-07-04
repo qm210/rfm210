@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import styled from 'styled-components';
+import {QuickButton} from '../components';
 import Matrix from './Matrix';
 import * as State from '../ReduxState';
 
@@ -15,14 +15,6 @@ const mapDispatchToProps = (dispatch) => ({
     shiftLeft: () => dispatch({type: State.SHIFT_LEFT}),
     shiftRight: () => dispatch({type: State.SHIFT_RIGHT}),
 });
-
-const QuickButton = styled.button`
-    height: 50px;
-    min-width: 50px;
-    font-size: 20px;
-    font-weight: bold;
-    margin-left: 4px;
-`
 
 const MatrixView = ({clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight}) =>
     <div
