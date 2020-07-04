@@ -10,10 +10,10 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
     clearAllPixels: () => dispatch(State.clearAllPixels()),
     fillAllPixels: () => dispatch(State.fillAllPixels()),
-    shiftUp: () => dispatch({type: State.SHIFT, payload: {y: -1}}),
-    shiftDown: () => dispatch({type: State.SHIFT, payload: {y: +1}}),
-    shiftLeft: () => dispatch({type: State.SHIFT, payload: {x: -1}}),
-    shiftRight: () => dispatch({type: State.SHIFT, payload: {x: +1}}),
+    shiftUp: () => dispatch({type: State.SHIFT_UP}),
+    shiftDown: () => dispatch({type: State.SHIFT_DOWN}),
+    shiftLeft: () => dispatch({type: State.SHIFT_LEFT}),
+    shiftRight: () => dispatch({type: State.SHIFT_RIGHT}),
 });
 
 const QuickButton = styled.button`

@@ -3,7 +3,8 @@ import Initial from "./Initial";
 import {new2D, update2D, at2D, fill2D, size2D, clone2D} from "./Utils";
 
 export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIXELS, OVERWRITE_PIXELS,
-    ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_WIDTH, SET_GLYPH_HEIGHT, SHIFT,
+    ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_WIDTH, SET_GLYPH_HEIGHT,
+    SHIFT_LEFT, SHIFT_RIGHT, SHIFT_UP, SHIFT_DOWN,
     CLEAR_GLYPHSETS, APPEND_GLYPHSET, PURGE_GLYPHSETS, ASSIGN_GLYPHSET, ASSIGN_LETTER, ADD_GLYPH, COPY_GLYPH,
     LOAD_GLYPH
 ] = [...Array(999).keys()];
@@ -41,8 +42,27 @@ const Reducer = (state = Initial.state, {type, payload}) => {
         case SET_GLYPH_HEIGHT:
             return state; // NOT IMPLEMENTED YET
 
-        case SHIFT:
-            return state; // NOT IMPLEMENTED YET
+        case SHIFT_LEFT:
+            pixels.map(row => {
+                row.push(row.shift());
+                return row;
+            });
+            return withUpdatedPixels(state, pixels);
+
+        case SHIFT_RIGHT:
+            pixels.map(row => {
+                row.unshift(row.pop());
+                return row;
+            });
+            return withUpdatedPixels(state, pixels);
+
+        case SHIFT_UP:
+            pixels.push(pixels.shift());
+            return withUpdatedPixels(state, pixels);
+
+        case SHIFT_DOWN:
+            pixels.unshift(pixels.pop());
+            return withUpdatedPixels(state, pixels);
 
         case OVERWRITE_PIXELS:
             return withUpdatedPixels(state, payload);
