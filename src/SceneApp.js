@@ -4,6 +4,7 @@ import * as State from './ReduxState';
 import {MainView, MainColumn, LabelledInput, QuickButton} from './components';
 import SceneShaderView from './components/SceneShaderView';
 import Initial from './Initial';
+import {onlyWhenEnter} from './Utils';
 
 const mapStateToProps = (state) => ({
     scenes: state.scenes,
@@ -20,10 +21,11 @@ const mapDispatchToProps = (dispatch) => ({
     setPhraseX: x => dispatch({type: State.UPDATE_PHRASE, payload: {x}}),
     setPhraseY: y => dispatch({type: State.UPDATE_PHRASE, payload: {y}}),
     setPhraseRotate: rotate => dispatch({type: State.UPDATE_PHRASE,  payload: {rotate}}),
+    setPhraseQmd: qmd => dispatch({type: State.UPDATE_PHRASE, payload: {qmd}})
 });
 
-const SceneApp = ({scenes, scene, phrase, defines,
-    setWidth, setHeight, setDuration, setPhraseChars, setPhraseX, setPhraseY, setPhraseRotate}) => {
+const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDuration,
+    setPhraseChars, setPhraseX, setPhraseY, setPhraseRotate, setPhraseQmds}) => {
     const sceneQmd = React.createRef();
     const phraseQmd = React.createRef();
     const defineList = React.createRef();
@@ -76,7 +78,10 @@ const SceneApp = ({scenes, scene, phrase, defines,
                     ref = {sceneQmd}
                     style = {{width: 310, height: 300, resize: 'none'}}
                     placeholder = {'just render everything, all the time'}
-                    defaultValue = {scene.qmd.join('\n')}
+                    value = {scene.qmd.join('\n')}
+                    onKeyDown = {React.useCallback(event =>
+                        onlyWhenEnter(event, () => setPhraseQmds(event.target.value.split('\n')))
+                    , [setPhraseQmds])}
                 />
                 <div>
                     <LabelledInput
@@ -153,7 +158,7 @@ const SceneApp = ({scenes, scene, phrase, defines,
                 <textarea
                     ref = {phraseQmd}
                     style = {{width: 300, height: 200, resize: 'none'}}
-                    placeholder = {'be lame and do nothing'}
+                    placeholder = {'0..forever: be lame and do nothing'}
                     defaultValue = {phrase.qmd.join('\n')}
                 />
             </MainColumn>

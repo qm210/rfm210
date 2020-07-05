@@ -12,7 +12,6 @@ export const MainColumn = styled.div`
     padding: 10px;
 `
 
-
 export const ExportList = styled.div`
     display: flex;
     flex-direction: column;
@@ -64,3 +63,18 @@ export const ShaderFrame = styled.div`
     padding: 10px;
     border: 1px solid #888;
 `;
+
+export const CodeFrame = (props) => <div style={{height: 120, border: "1px solid grey"}}>
+            <textarea
+                {...props}
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    fontSize: '.9rem',
+                    overflow: 'scroll',
+                }}
+                disabled
+                >
+                {props.children}
+            </textarea>
+</div>
