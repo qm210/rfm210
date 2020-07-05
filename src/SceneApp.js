@@ -145,8 +145,8 @@ const SceneApp = ({scenes, scene, phrase, defines,
                         label="&#966;/°:"
                         type="number"
                         style={{width: 60}}
-                        value={phrase.rotate}
-                        onChange = {event => setPhraseRotate(+event.target.value)}
+                        value={180 / Math.PI * phrase.rotate}
+                        onChange = {event => setPhraseRotate(+event.target.value * Math.PI / 180)}
                     />
                 </div>
                 <label htmlFor="phrase">Phrase qmmands:</label>

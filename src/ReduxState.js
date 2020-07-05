@@ -136,7 +136,7 @@ export const currentPhrase = state => currentScene(state).phrases.find(phrase =>
 
 export const glyphForLetter = (glyphset, letter) => glyphset.glyphs.find(
     glyph => glyph.letter === letter
-) || Glyph.placeholder(Initial.width, Initial.height);
+) || Glyph.placeholder(Initial.width, Initial.height, letter !== ' ');
 
 const withUpdatedPixels = (state, pixels) => ({
     ...state,

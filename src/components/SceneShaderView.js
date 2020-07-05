@@ -48,12 +48,14 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         var objects = [];
         var maxWidth = 0;
         var maxHeight = 0;
-        for(const char of phrase.chars.split('')) {
+        const cosPhi = Math.cos(phrase.rotate);
+        const sinPhi = Math.sin(phrase.rotate);
+        for (const char of phrase.chars.split('')) {
             const glyph = State.glyphForLetter(glyphset, char);
             const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
             const transform = {
-                offsetX: phrase.x + maxWidth,
-                offsetY: phrase.y,
+                offsetX: phrase.x + maxWidth * cosPhi,
+                offsetY: phrase.y - maxWidth * sinPhi,
                 rotate: phrase.rotate,
             };
             objects.push({glyph, pixelRects, transform});
@@ -63,8 +65,8 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         objects.forEach(obj =>
             obj.transform = {
                 ...obj.transform,
-                offsetX: obj.transform.offsetX - maxWidth/2,
-                offsetY: obj.transform.offsetY - maxHeight/2,
+                offsetX: obj.transform.offsetX - .5 * maxWidth * cosPhi - .5 * maxHeight * sinPhi,
+                offsetY: obj.transform.offsetY + .5 * maxWidth * sinPhi - .5 * maxHeight * cosPhi,
             }
         );
         return objects.map(obj =>

@@ -17,9 +17,9 @@ export const copyFrom = (glyph, id) => ({
     ...glyph,
 });
 
-export const placeholder = (width, height) => ({
+export const placeholder = (width, height, value = true) => ({
     id: null,
-    pixels: new2D(width, height, true),
+    pixels: new2D(width, height, value),
     width,
     height
 })
