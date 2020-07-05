@@ -1,20 +1,21 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {ShaderFrame} from '.';
-import {Shaders, Node, GLSL} from 'gl-react';
-import {Surface} from 'gl-react-dom';
+import * as GL from 'gl-react';
+import * as GLDom from 'gl-react-dom';
 import RectAlgebra from '../RectAlgebra';
 import * as State from '../ReduxState';
 
 const mapStateToProps = (state) => ({
     scene: State.currentScene(state),
     glyphset: state.glyphset,
+    defines: state.defines,
 });
 
 const mapDispatchToProps = (dispatch) => ({
 })
 
-const SceneShaderView = ({scene, glyphset}) => {
+const SceneShaderView = ({scene, glyphset, defines}) => {
     const [millis, setMillis] = React.useState(0);
     const reqRef = React.useRef();
     const prevReqRef = React.useRef();
@@ -33,33 +34,49 @@ const SceneShaderView = ({scene, glyphset}) => {
         return () => cancelAnimationFrame(reqRef.current);
       }, [animate]);
 
-    const glslForRect = (rect, transform) =>
-        `rect(UV, vec4(${rect.x},${rect.y},${rect.width},${rect.height}),
-            vec2(${transform.offsetX}, ${transform.offsetY}), ${transform.rotate}, 1., coltemp);`;
+    const glslForRect = React.useCallback((rect, transform) => {
+        const {x, y, width, height} = rect;
+        const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
+        return `rect(UV, vec4(${x},${y},${width},${height}),`
+            + `vec2(${offsetX}, ${offsetY}), ${asFloat(rotate)}, ${asFloat(scale)}, coltemp);`;
+    }, []);
 
     const asFloat = number => number.toString() + (Number.isInteger(number) ? '.' : '');
 
     const terrifyingCode = React.useMemo(() => {
         const phrase = scene.phrases[0];
-        const code = [];
+        var objects = [];
+        var maxWidth = 0;
+        var maxHeight = 0;
         for(const char of phrase.chars.split('')) {
             const glyph = State.glyphForLetter(glyphset, char);
             const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
-            console.log(pixelRects);
             const transform = {
-                offsetX: asFloat(0),
-                offsetY: asFloat(0),
-                rotate: asFloat(phrase.rotate),
-            }
-            code.push(pixelRects.map(rect => glslForRect(rect, transform)).join(''));
+                offsetX: phrase.x + maxWidth,
+                offsetY: phrase.y,
+                rotate: phrase.rotate,
+            };
+            objects.push({glyph, pixelRects, transform});
+            maxWidth += glyph.width;
+            maxHeight = Math.max(maxHeight, glyph.height);
         }
-        return code.join('\n')
-    }, [scene, glyphset]);
+        objects.forEach(obj =>
+            obj.transform = {
+                ...obj.transform,
+                offsetX: obj.transform.offsetX - maxWidth/2,
+                offsetY: obj.transform.offsetY - maxHeight/2,
+            }
+        );
+        return objects.map(obj =>
+            obj.pixelRects.map(rect =>
+                glslForRect(rect, obj.transform)
+            ).join('')
+        ).join('\n');
+    }, [scene, glyphset, glslForRect]);
 
-
-    const shaders = Shaders.create({
+    const shaders = React.useMemo(() => GL.Shaders.create({
         example: {
-        frag: GLSL`
+        frag: GL.GLSL`
             precision highp float;
             varying vec2 uv;
             uniform float blue;
@@ -70,7 +87,7 @@ const SceneShaderView = ({scene, glyphset}) => {
         `
         },
         nr4template: {
-            frag: GLSL`
+            frag: GL.GLSL`
             precision highp float;
             varying vec2 uv;
             uniform float time;
@@ -92,7 +109,8 @@ const SceneShaderView = ({scene, glyphset}) => {
             {
                 return smoothstep(1.5/iResolution.y, -1.5/iResolution.y, d);
             }
-            #define PIXEL .01
+            ${Object.keys(defines).map(key => `#define ${key} ${defines[key]}`).join('\n')}
+            #define PIXEL .005
             void pixel(in vec2 uv, in vec2 pixel, in vec2 shift, in float phi, in float scale, inout vec3 col)
             {
                 float d;
@@ -116,9 +134,9 @@ const SceneShaderView = ({scene, glyphset}) => {
             void main()
             {
                 // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
-                vec2 UV = vec2(uv.x - .5, uv.y - .5); // qm hack
+                vec2 UV = vec2((uv.x - .5)*${asFloat(scene.width/scene.height)}, uv.y - .5); // qm hack
                 vec3 coltemp = c.xxx;
-                float phi = 0.;//10.*time;
+                float phi = 10.*time;
                 ${terrifyingCode}
 
                 vec3 col = c.xxx;
@@ -128,14 +146,16 @@ const SceneShaderView = ({scene, glyphset}) => {
             }
             `
         }
-    });
+    }), [terrifyingCode, defines, scene]);
 
-    return <ShaderFrame>
-        <b>This is the AWESOME part!</b><br/>
-        <Surface width={scene.width} height={scene.height}>
-            <Node shader={shaders.nr4template} uniforms={{time: millis/1000}}/>
-        </Surface>
-    </ShaderFrame>;
+    return (
+        <ShaderFrame>
+            <b>This is the AWESOME part!</b><br/>
+            <GLDom.Surface width={scene.width} height={scene.height}>
+                <GL.Node shader={shaders.nr4template} uniforms={{time: millis/1000}}/>
+            </GLDom.Surface>
+        </ShaderFrame>
+        );
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SceneShaderView);

@@ -28,6 +28,27 @@ export const height2D = (array2D) => array2D ? array2D.length : 0;
 
 export const size2D = (array2D) => ({width: width2D(array2D), height: height2D(array2D)});
 
+export const resize2D = (array2D, width, height) => {
+    const oldWidth = width2D(array2D);
+    const oldHeight = height2D(array2D);
+    if (width) {
+        array2D.forEach((row, rowIndex) => {
+            array2D[rowIndex] = width < oldWidth
+                ? row.slice(0, width)
+                : [...row, ...Array(width - oldWidth).fill(false)];
+            }
+        )
+    }
+    if (height) {
+        array2D = height < height2D(array2D)
+            ? array2D.slice(0, height)
+            : [...array2D, ...Array(height - oldHeight).fill(Array(width || oldWidth).fill(false))]
+    }
+    console.log(width, oldWidth, height, oldHeight, array2D);
+    return array2D;
+}
+
+
 // time specific
 export const millis = () => (new Date()).getTime();
 export const sec = () => Math.round((new Date()).getTime() / 1000);

@@ -17,8 +17,16 @@ store.subscribe(throttle(() => {
     saveStore(store.getState()); // could only take {pixels: store.getState().pixels} or something
 }, 1000));
 
-const App = () =>
-    <Provider store={store}>
+const RESET_CACHE = true;
+
+const App = () => {
+    React.useEffect(() => {
+        if (RESET_CACHE) {
+            localStorage.removeItem('store');
+        }
+    }, []);
+
+    return <Provider store={store}>
         <BrowserRouter>
                 <div className="ui two item menu">
                     <NavLink className="item" activeClassName="active" exact to="/">
@@ -32,5 +40,6 @@ const App = () =>
                 <Route path="/scene" component={SceneApp}/>
         </BrowserRouter>
     </Provider>;
+}
 
 export default App;

@@ -1,13 +1,17 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
-import {currentPixels} from '../ReduxState';
+import * as State from '../ReduxState';
 import MatrixRow from './MatrixRow';
 import {width2D, height2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = state => ({
-    pixels: currentPixels(state)
+    pixels: State.currentPixels(state)
 });
+
+const mapDispatchToProps = dispatch => ({
+    leaveDragMode: () => dispatch({type: State.LEAVE_DRAGMODE, payload: {value: false}}),
+})
 
 const StyledMatrix = styled.div`
     display: flex;
@@ -17,15 +21,16 @@ const StyledMatrix = styled.div`
     height: ${({pixels}) => height2D(pixels) * displayPixelSize(pixels) + 4}px;
 `;
 
-const Matrix = ({pixels}) => {
-
-    return <StyledMatrix pixels={pixels}>
-        {
+const Matrix = ({pixels, leaveDragMode}) =>
+    <StyledMatrix
+        pixels = {pixels}
+        onMouseLeave = {leaveDragMode}
+        >
+       {
             pixels.map((pixelRow, row) =>
                 <MatrixRow key={row} row={row} values={pixelRow}/>
             )
         }
-    </StyledMatrix>;
-}
+    </StyledMatrix>
 
-export default connect(mapStateToProps)(Matrix);
+export default connect(mapStateToProps, mapDispatchToProps)(Matrix);

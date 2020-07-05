@@ -28,7 +28,6 @@ const SceneApp = ({scenes, scene, phrase, defines,
     const phraseQmd = React.createRef();
     const defineList = React.createRef();
 
-    console.log(scenes, scene, phrase, defines);
     return <>
         <MainView>
             <MainColumn>

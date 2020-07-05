@@ -1,9 +1,9 @@
 import * as Glyph from './GlyphModel';
 import Initial from "./Initial";
-import {new2D, update2D, at2D, fill2D, size2D, clone2D} from "./Utils";
+import {new2D, update2D, at2D, fill2D, size2D, clone2D, resize2D} from "./Utils";
 
 export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIXELS, OVERWRITE_PIXELS,
-    ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_WIDTH, SET_GLYPH_HEIGHT,
+    ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_SIZE,
     SHIFT_LEFT, SHIFT_RIGHT, SHIFT_UP, SHIFT_DOWN,
     CLEAR_GLYPHSETS, APPEND_GLYPHSET, PURGE_GLYPHSETS, ASSIGN_GLYPHSET, ASSIGN_LETTER, ADD_GLYPH, COPY_GLYPH,
     LOAD_GLYPH, UPDATE_SCENE, UPDATE_PHRASE
@@ -37,10 +37,21 @@ const Reducer = (state = Initial.state, {type, payload}) => {
         case LEAVE_DRAGMODE:
             return {...state, dragMode: false};
 
-        case SET_GLYPH_WIDTH:
-            return state; // NOT IMPLEMENTED YET
-        case SET_GLYPH_HEIGHT:
-            return state; // NOT IMPLEMENTED YET
+        case SET_GLYPH_SIZE:
+            return {
+                ...state,
+                glyphset: {
+                    ...state.glyphset,
+                    glyphs: state.glyphset.glyphs.map(glyph =>
+                        glyph.id === state.glyphId
+                            ? {
+                                ...glyph,
+                                ...payload,
+                                pixels: resize2D(pixels, payload.width, payload.height)
+                            } : glyph
+                    )
+                }
+            }
 
         case SHIFT_LEFT:
             pixels.map(row => {
@@ -103,11 +114,10 @@ const Reducer = (state = Initial.state, {type, payload}) => {
             };
 
         case UPDATE_SCENE:
-            return withUpdatedScene(state, {...currentScene(state), payload});
+            return withUpdatedScene(state, payload);
 
         case UPDATE_PHRASE:
             return withUpdatedPhrase(state, payload);
-
 
         default:
             return state;
@@ -147,7 +157,8 @@ const withAddedGlyph = (state, glyph) => {
             glyphs: [
                 ...state.glyphset.glyphs,
                 glyph
-    ]}};
+            ]
+    }};
 };
 
 const withUpdatedScene = (state, sceneUpdate) => ({
@@ -162,11 +173,16 @@ const withUpdatedScene = (state, sceneUpdate) => ({
 const withUpdatedPhrase = (state, phraseUpdate) => ({
     ...state,
     scenes: state.scenes.map(scene =>
-        scene.phrases.map(phrase =>
-            phrase.id === state.phraseId
-                ? {...phrase, ...phraseUpdate}
-                : phrase
-        ))
+        scene.id === state.sceneId
+            ? {
+                ...scene,
+                phrases: scene.phrases.map(phrase =>
+                    phrase.id === state.phraseId
+                        ? {...phrase, ...phraseUpdate}
+                        : phrase
+            )}
+        : scene
+    )
 });
 
 const surroundingPixelList = ({row, column, width, height}) => {

@@ -8,7 +8,7 @@ const MatrixRow = ({row, values}) =>
             flexDirection: "row",
         }}>
     {
-        values.map((value, column) =>
+        values.map((_, column) =>
             <MatrixPixel
                 key = {column}
                 coord = {{row, column}}

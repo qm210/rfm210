@@ -29,8 +29,8 @@ const state = {
             {
                 id: 0,
                 chars: 'lel',
-                x: 320,
-                y: 160,
+                x: 0,
+                y: 0,
                 active: true,
                 scaleX: 1,
                 scaleY: 1,

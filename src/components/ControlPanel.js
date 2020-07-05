@@ -27,8 +27,8 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    setLetterWidth: width => dispatch({type: State.SET_GLYPH_WIDTH, payload: width}),
-    setLetterHeight: height => dispatch({type: State.SET_GLYPH_HEIGHT, payload: height}),
+    setLetterWidth: width => dispatch({type: State.SET_GLYPH_SIZE, payload: {width}}),
+    setLetterHeight: height => dispatch({type: State.SET_GLYPH_SIZE, payload: {height}}),
     assignLetter: letter => dispatch({type: State.ASSIGN_LETTER, payload: letter}),
     appendGlyphset: name => dispatch({type: State.APPEND_GLYPHSET, payload: name}),
     assignGlyphset: name => dispatch({type: State.ASSIGN_GLYPHSET, payload: name}),
@@ -67,16 +67,14 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
                 label="Width:"
                 type="number"
                 value={glyph.width}
-                onChange={event => setLetterWidth(event.target.value)}
-                disabled
+                onChange={event => setLetterWidth(+event.target.value)}
             />
             <LabelledInput
                 name="iheight"
                 label="Height:"
                 type="number"
                 value={glyph.height}
-                onChange={event => setLetterHeight(event.target.value)}
-                disabled
+                onChange={event => setLetterHeight(+event.target.value)}
             />
         </div>
         <div style={{marginBottom: 20}}>
@@ -115,20 +113,20 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
         </div>
         <select
             size = {10}
-            style = {{fontSize: '1.2rem'}}
+            style = {{fontSize: '1.2rem', height: 300}}
             value = {glyph.id}
             onChange = {event => loadGlyph(event.target.value)}
         >
         {
             glyphset.glyphs.slice()
-                .sort((a,b) => a.letter < b.letter)
+                .sort((a,b) => a.letter > b.letter ? 1 : -1)
                 .map((eachGlyph, index) =>
-                <option
-                    key={index}
-                    value={eachGlyph.id}
-                    >
-                    {alias(eachGlyph.letter)}
-                </option>
+                    <option
+                        key={index}
+                        value={eachGlyph.id}
+                        >
+                        {alias(eachGlyph.letter)}
+                    </option>
             )
         }
         </select>
