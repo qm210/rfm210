@@ -6,7 +6,7 @@ export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIX
     ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_SIZE,
     SHIFT_LEFT, SHIFT_RIGHT, SHIFT_UP, SHIFT_DOWN,
     CLEAR_GLYPHSETS, APPEND_GLYPHSET, PURGE_GLYPHSETS, ASSIGN_GLYPHSET, ASSIGN_LETTER, ADD_GLYPH, COPY_GLYPH,
-    LOAD_GLYPH, UPDATE_SCENE, UPDATE_PHRASE
+    LOAD_GLYPH, UPDATE_SCENE, UPDATE_PHRASE, SET_DEFINES,
 ] = [...Array(999).keys()];
 
 export const togglePixel = (coord) => ({type : TOGGLE_PIXEL, payload: coord});
@@ -118,6 +118,9 @@ const Reducer = (state = Initial.state, {type, payload}) => {
 
         case UPDATE_PHRASE:
             return withUpdatedPhrase(state, payload);
+
+        case SET_DEFINES:
+            return {...state, defines: payload};
 
         default:
             return state;

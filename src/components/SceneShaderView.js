@@ -16,6 +16,10 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
 })
 
+const asFloat = number => number.toString() + (Number.isInteger(number) ? '.' : '');
+
+const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing.toString();
+
 const SceneShaderView = ({scene, glyphset, defines}) => {
     const [millis, setMillis] = React.useState(0);
     const reqRef = React.useRef();
@@ -39,16 +43,35 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         const {x, y, width, height} = rect;
         const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
         return `rect(UV, vec4(${x},${y},${width},${height}),`
-            + `vec2(${offsetX}, ${offsetY}), ${asFloat(rotate)}, ${asFloat(scale)}, coltemp);`;
+            + `vec2(${offsetX}, ${offsetY}), ${asFloatOrStr(rotate)}, ${asFloatOrStr(scale)}, col);`;
     }, []);
 
-    const asFloat = number => number.toString() + (Number.isInteger(number) ? '.' : '');
+    const parsePhraseQmd = React.useCallback((script) => {
+        const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod'];
 
-    const usesTime = scene.phrases[0].qmd.length > 0;
+        const qmds = [];
+        for (const line of script) {
+            if (line[0] === '#') {
+                continue;
+            }
+            const [timeInterval, qmdList] = (line.includes(':') ? line : '0.. :' + line).split(':');
+            const [start, end] = timeInterval.replace(' ', '').split('..');
+            const rawArgs = qmdList.split(' ');
+            const qmd = rawArgs.shift().toLowerCase();
+            const arg = Object.fromEntries(rawArgs.map(r => r.split('=')));
+            if (acceptedPhraseQmds.includes(qmd)) {
+                qmds.push({start: asFloat(+start), end: asFloat(+end || scene.duration), qmd, arg});
+            }
+        }
+        return qmds;
+    }, [scene.duration]);
+
+    const usesTime = React.useMemo(() => scene.phrases[0].qmd.length > 0, [scene]);
 
     const terrifyingCode = React.useMemo(() => {
         const phrase = scene.phrases[0];
         var objects = [];
+        var postProcess = [];
         var params = [];
         var maxWidth = 0;
         var maxHeight = 0;
@@ -56,15 +79,7 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         const sinPhi = Math.sin(phrase.rotate);
 
         // parse qmds
-        console.log("LEL", phrase.qmd)
-        for (const qmdLine of phrase.qmd) {
-            if (qmdLine[0] === '#') {
-                continue;
-            }
-            const [timeInterval, effect] = qmdLine.split(':');
-            const [start, end] = timeInterval.split('..');
-            console.log(start, end);
-        }
+        const qmd0 = parsePhraseQmd(phrase.qmd);
 
         // construct rects
         for (const char of phrase.chars.split('')) {
@@ -73,7 +88,7 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
             const transform = {
                 offsetX: phrase.x + maxWidth * cosPhi,
                 offsetY: phrase.y - maxWidth * sinPhi,
-                rotate: phrase.rotate,
+                rotate: asFloat(phrase.rotate),
             };
             objects.push({glyph, pixelRects, transform});
             maxWidth += glyph.width;
@@ -86,19 +101,41 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
                 offsetY: obj.transform.offsetY + .5 * maxWidth * sinPhi - .5 * maxHeight * cosPhi,
             }
         );
-        return params.map(param => `float {param.name} = {param.code};\n` + ' '.repeat(8)) + objects.map(obj =>
+        for (const {start, end, qmd, arg} of qmd0) {
+            const nextParamName = `p${params.length}`;
+            var def = asFloat(0);
+            switch (qmd) {
+                case 'show':
+                    postProcess.push(`col = mix(c.yyy, col, (t >= ${start} && t < ${end}) ? 1. : 0.);`);
+                    break;
+                case 'hide':
+                    postProcess.push(`col = mix(c.yyy, col, (t >= ${start} && t < ${end}) ? 0. : 1.);`);
+                    break;
+                case 'spin':
+                    const speed = arg['speed'] || 1;
+                    params.push({name: nextParamName, code: `${asFloatOrStr(speed)}*t`, start, end, def});
+                    objects.forEach(obj => obj.transform.rotate += '+' + nextParamName);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        return params.map(p =>
+            `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
+        ) + objects.map(obj =>
             obj.pixelRects.map(rect =>
                 glslForRect(rect, obj.transform)
             ).join('')
         ).join('\n' + ' '.repeat(8));
-    }, [scene, glyphset, glslForRect]);
+    }, [scene, glyphset, glslForRect, parsePhraseQmd]);
 
     const shaderCode = React.useMemo(() => GL.GLSL`
     precision highp float;
     varying vec2 uv;
     ${usesTime ? 'uniform float time;' : ''}
     const vec3 c = vec3(1.,0.,-1.);
-    const vec2 iResolution = vec2(300, 300); // qm hacked this
+    uniform vec2 iResolution; // qm hacked this
 
     void dbox(in vec2 x, in vec2 b, out float d)
     {
@@ -139,14 +176,13 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
 //        void mainImage( out vec4 fragColor, in vec2 fragCoord ) // qm hack
     void main()
     {
+        ${usesTime ? `float t = mod(time, ${asFloat(scene.duration)});` : ''}
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
         vec2 UV = vec2((uv.x - .5)*${asFloat(scene.width/scene.height)}, uv.y - .5); // qm hack
-        vec3 coltemp = c.xxx;
+        vec3 col = c.xxx;
         ${terrifyingCode}
 
-        vec3 col = c.xxx;
-        col = mix(col, coltemp, 1.); // for alpha...
-
+        col = mix(c.xxx, col, 1.); // for alpha...
         gl_FragColor = vec4(clamp(col,0.,1.),1.0); // qm hack fragColor -> gl_FragColor
     }
     `, [terrifyingCode, defines, scene, usesTime]);
@@ -161,7 +197,13 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         <ShaderFrame>
             <b>This is the AWESOME part!</b><br/>
             <GLDom.Surface width={scene.width} height={scene.height}>
-                <GL.Node shader={shaders.nr4template} uniforms={usesTime ? {time: millis/1000} : {}}/>
+                <GL.Node
+                    shader={shaders.nr4template}
+                    uniforms={{
+                        iResolution: [scene.width, scene.height],
+                        ...(usesTime ? {time: millis/1000} : {})
+                    }}
+                />
             </GLDom.Surface>
         </ShaderFrame>
         <CodeFrame>

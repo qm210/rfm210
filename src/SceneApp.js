@@ -4,7 +4,7 @@ import * as State from './ReduxState';
 import {MainView, MainColumn, LabelledInput, QuickButton} from './components';
 import SceneShaderView from './components/SceneShaderView';
 import Initial from './Initial';
-import {onlyWhenEnter} from './Utils';
+import {joinObject, splitToObject, whenSubmitted} from './Utils';
 
 const mapStateToProps = (state) => ({
     scenes: state.scenes,
@@ -17,18 +17,24 @@ const mapDispatchToProps = (dispatch) => ({
     setWidth: width => dispatch({type: State.UPDATE_SCENE, payload: {width}}),
     setHeight: height => dispatch({type: State.UPDATE_SCENE, payload: {height}}),
     setDuration: duration => dispatch({type: State.UPDATE_SCENE, payload: {duration}}),
+    setSceneQmd: qmd => dispatch({type: State.UPDATE_SCENE, payload: {qmd}}),
     setPhraseChars: chars => dispatch({type: State.UPDATE_PHRASE, payload: {chars}}),
     setPhraseX: x => dispatch({type: State.UPDATE_PHRASE, payload: {x}}),
     setPhraseY: y => dispatch({type: State.UPDATE_PHRASE, payload: {y}}),
     setPhraseRotate: rotate => dispatch({type: State.UPDATE_PHRASE,  payload: {rotate}}),
-    setPhraseQmd: qmd => dispatch({type: State.UPDATE_PHRASE, payload: {qmd}})
+    setPhraseQmd: qmd => dispatch({type: State.UPDATE_PHRASE, payload: {qmd}}),
+    setDefines: defines => dispatch({type: State.SET_DEFINES, payload: defines}),
 });
 
-const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDuration,
-    setPhraseChars, setPhraseX, setPhraseY, setPhraseRotate, setPhraseQmds}) => {
-    const sceneQmd = React.createRef();
-    const phraseQmd = React.createRef();
-    const defineList = React.createRef();
+const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDuration, setSceneQmd,
+    setPhraseChars, setPhraseX, setPhraseY, setPhraseRotate, setPhraseQmd, setDefines}) => {
+    const [inputSceneQmd, setInputSceneQmd] = React.useState(scene.qmd.join('\n'));
+    const [inputPhraseQmd, setInputPhraseQmd] = React.useState(phrase.qmd.join('\n'));
+    const [inputDefines, setInputDefines] = React.useState(joinObject(defines, ' ', '\n'));
+
+    const submitSceneQmd = () => setSceneQmd(inputSceneQmd.split('\n'));
+    const submitPhraseQmd = () => setPhraseQmd(inputPhraseQmd.split('\n'));
+    const submitDefines = () => setDefines(splitToObject(inputDefines, '\n', ' '));
 
     return <>
         <MainView>
@@ -75,13 +81,12 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
             <MainColumn>
                 <label htmlFor="scene">Scene qmmands:</label>
                 <textarea
-                    ref = {sceneQmd}
                     style = {{width: 310, height: 300, resize: 'none'}}
                     placeholder = {'just render everything, all the time'}
-                    value = {scene.qmd.join('\n')}
-                    onKeyDown = {React.useCallback(event =>
-                        onlyWhenEnter(event, () => setPhraseQmds(event.target.value.split('\n')))
-                    , [setPhraseQmds])}
+                    value = {inputSceneQmd}
+                    onChange = {React.useCallback(event => setInputSceneQmd(event.target.value), [setInputSceneQmd])}
+                    onKeyDown = {event => whenSubmitted(event, submitSceneQmd)}
+                    onBlur = {submitSceneQmd}
                 />
                 <div>
                     <LabelledInput
@@ -111,10 +116,12 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                 </div>
                 <label>#define</label>
                 <textarea
-                    ref = {defineList}
                     style = {{width: 310, height: 100, resize: 'none'}}
                     placeholder = {'const value\n...'}
-                    defaultValue = {Object.keys(defines).join('\n')}
+                    value = {inputDefines}
+                    onChange = {React.useCallback(event => setInputDefines(event.target.value), [setInputDefines])}
+                    onKeyDown = {event => whenSubmitted(event, () => submitDefines)}
+                    onBlur = {submitDefines}
                 />
             </MainColumn>
             <MainColumn>
@@ -156,10 +163,12 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                 </div>
                 <label htmlFor="phrase">Phrase qmmands:</label>
                 <textarea
-                    ref = {phraseQmd}
                     style = {{width: 300, height: 200, resize: 'none'}}
                     placeholder = {'0..forever: be lame and do nothing'}
-                    defaultValue = {phrase.qmd.join('\n')}
+                    value = {inputPhraseQmd}
+                    onChange = {React.useCallback(event => setInputPhraseQmd(event.target.value), [setInputPhraseQmd])}
+                    onKeyDown = {event => whenSubmitted(event, submitPhraseQmd)}
+                    onBlur = {submitPhraseQmd}
                 />
             </MainColumn>
             <MainColumn>
