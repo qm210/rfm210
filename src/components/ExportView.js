@@ -3,11 +3,9 @@ import {connect} from 'react-redux';
 import {ExportList, ExportTextArea, ErrorLabel} from '.';
 import * as State from '../ReduxState';
 import Initial from '../Initial';
-import {clearStore} from '../LocalStorage';
 
 const mapStateToProps = (state) => ({
     pixels: State.currentPixels(state),
-    state // for debug
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -50,13 +48,7 @@ const ExportView = ({state, pixels, overwritePixels}) => {
     }
 
     return <ExportList>
-        <b>General Information:</b>
-        <button style={{margin: 10, padding: 10}} onClick={clearStore}>
-            Clear Cache
-        </button>
-        <button style={{margin: 10, padding: 10}} onClick={() => console.log(state)}>
-            DEBUG
-        </button>
+        <b>No time til' UC10, so..:</b>
         <form onSubmit={() => false}>
             <b>Export as JSON pixel array:</b>
             <br/>

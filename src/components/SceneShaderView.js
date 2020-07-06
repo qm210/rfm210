@@ -6,6 +6,7 @@ import * as GLDom from 'gl-react-dom';
 import RectAlgebra from '../RectAlgebra';
 import * as State from '../ReduxState';
 import {CodeFrame} from '../components';
+import { shaderAlias } from '../GlyphModel';
 
 const mapStateToProps = (state) => ({
     scene: State.currentScene(state),
@@ -19,6 +20,35 @@ const mapDispatchToProps = (dispatch) => ({
 const asFloat = number => number.toString() + (Number.isInteger(number) ? '.' : '');
 
 const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing.toString();
+
+const shadertoyify = code => (
+    code
+        .replace('varying vec2 uv;\n', '')
+        .replace(/uniform vec2 iResolution.*/, '')
+        .replace('// vec2 uv', 'vec2 uv')
+        .replace(/vec2 UV = .*/, 'vec2 UV = uv;')
+        .replace('void main()', 'void mainImage( out vec4 fragColor, in vec2 fragCoord )')
+        .replace('gl_FragColor', 'fragColor')
+    );
+
+const glslForRect = (rect) => {
+    const {x, y, width, height} = rect;
+    return `rect(UV,vec4(${x},${y},${width},${height}),shift,phi,scale,col);`
+};
+
+const glslForGlyph = (glyph, transform) => {
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
+    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${offsetX},${offsetY}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},col);`;
+};
+
+const glslForPhrase = (phrase, transform) => {
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
+    return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},col);`;
+}
+
+const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
+
+const phraseFuncName = (phrase) => `phrase_${[...phrase.chars].map(char => shaderAlias(char)).join('')}`;
 
 const SceneShaderView = ({scene, glyphset, defines}) => {
     const [millis, setMillis] = React.useState(0);
@@ -38,13 +68,6 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         reqRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(reqRef.current);
       }, [animate]);
-
-    const glslForRect = React.useCallback((rect, transform) => {
-        const {x, y, width, height} = rect;
-        const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
-        return `rect(UV, vec4(${x},${y},${width},${height}),`
-            + `vec2(${offsetX}, ${offsetY}), ${asFloatOrStr(rotate)}, ${asFloatOrStr(scale)}, col);`;
-    }, []);
 
     const parsePhraseQmd = React.useCallback((script) => {
         const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod'];
@@ -68,7 +91,7 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
 
     const usesTime = React.useMemo(() => scene.phrases[0].qmd.length > 0, [scene]);
 
-    const terrifyingCode = React.useMemo(() => {
+    const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
         const phrase = scene.phrases[0];
         var objects = [];
         var postProcess = [];
@@ -81,16 +104,22 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         // parse qmds
         const qmd0 = parsePhraseQmd(phrase.qmd);
 
+        const phraseTransform = {
+            offsetX: asFloat(phrase.x),
+            offsetY: asFloat(phrase.y),
+            rotate: asFloat(phrase.rotate),
+        };
+
         // construct rects
         for (const char of phrase.chars.split('')) {
             const glyph = State.glyphForLetter(glyphset, char);
             const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
             const transform = {
-                offsetX: phrase.x + maxWidth * cosPhi,
-                offsetY: phrase.y - maxWidth * sinPhi,
-                rotate: asFloat(phrase.rotate),
+                offsetX: maxWidth * cosPhi,
+                offsetY: maxWidth * sinPhi,
+                rotate: 0,
             };
-            objects.push({glyph, pixelRects, transform});
+            objects.push({char, glyph, pixelRects, transform});
             maxWidth += glyph.width;
             maxHeight = Math.max(maxHeight, glyph.height);
         }
@@ -101,6 +130,12 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
                 offsetY: obj.transform.offsetY + .5 * maxWidth * sinPhi - .5 * maxHeight * cosPhi,
             }
         );
+        const usedGlyphs = objects.reduce((acc, obj) => {
+            if (!(obj.char in acc)) {
+                acc[obj.char] = obj.pixelRects;
+            }
+            return acc;
+        }, {});
         for (const {start, end, qmd, arg} of qmd0) {
             const nextParamName = `p${params.length}`;
             var def = asFloat(0);
@@ -116,19 +151,34 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
                     params.push({name: nextParamName, code: `${asFloatOrStr(speed)}*t`, start, end, def});
                     objects.forEach(obj => obj.transform.rotate += '+' + nextParamName);
                     break;
-
                 default:
                     break;
             }
         }
-        return params.map(p =>
+        console.log(usedGlyphs);
+        const terrifyingCode = params.map(p =>
             `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
-        ) + objects.map(obj =>
-            obj.pixelRects.map(rect =>
-                glslForRect(rect, obj.transform)
+        ) + glslForPhrase(phrase, phraseTransform);
+        const glyphCode = `void glyph_undefined(in vec2 UV, in vec2 shift, in float phi, in float scale, inout vec3 col)
+        {rect(UV,vec4(0,0,9,16),shift,phi,scale,col);}
+        ${
+            Object.keys(usedGlyphs).map(glyph =>
+                `void ${glyphFuncName(glyph)}(in vec2 UV, in vec2 shift, in float phi, in float scale, inout vec3 col)
+                {
+                    ${usedGlyphs[glyph].map(rect =>
+                        glslForRect(rect)
+                    ).join('')}
+                }\n`
             ).join('')
-        ).join('\n' + ' '.repeat(8));
-    }, [scene, glyphset, glslForRect, parsePhraseQmd]);
+        }`;
+        const phraseCode = `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, inout vec3 col)
+        {
+            ${objects.map(obj =>
+                glslForGlyph(obj.glyph, obj.transform)
+            ).join('\n' + ' '.repeat(8))}
+        }`
+        return [terrifyingCode, glyphCode, phraseCode];
+    }, [scene, glyphset, parsePhraseQmd]);
 
     const shaderCode = React.useMemo(() => GL.GLSL`
     precision highp float;
@@ -136,6 +186,10 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
     ${usesTime ? 'uniform float time;' : ''}
     const vec3 c = vec3(1.,0.,-1.);
     uniform vec2 iResolution; // qm hacked this
+
+    ${Object.keys(defines).map(key => `#define ${key} ${defines[key]}`).join('\n')} // nr4 advice: hardcode replace these
+    #define PIXEL .005
+    #define BLUR 0.3
 
     void dbox(in vec2 x, in vec2 b, out float d)
     {
@@ -150,18 +204,7 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
     }
     float sm(in float d)
     {
-        return smoothstep(1.5/iResolution.y, -1.5/iResolution.y, d);
-    }
-    ${Object.keys(defines).map(key => `#define ${key} ${defines[key]}`).join('\n')}
-    #define PIXEL .005
-    void pixel(in vec2 uv, in vec2 pixel, in vec2 shift, in float phi, in float scale, inout vec3 col)
-    {
-        float d;
-        mat2 R;
-        rot(phi, R);
-        R /= max(1.e-3, scale);
-        dbox(R*uv + PIXEL*(vec2(-1.,1.) + R*vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*pixel.x, 2.*pixel.y)), vec2(1.,1.)*PIXEL, d);
-        col = mix(col, c.yyy, sm(d));
+        return smoothstep(BLUR/iResolution.y, -BLUR/iResolution.y, d);
     }
     void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale, inout vec3 col)
     {
@@ -169,10 +212,11 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         mat2 R;
         rot(phi, R);
         R /= max(1.e-3, scale);
-        dbox(R*uv + PIXEL*(vec2(-rect.z,rect.w) + R*vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, d);
+        dbox(R*uv + PIXEL*(vec2(-rect.z,rect.w) + /*R**/vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, d);
         col = mix(col, c.yyy, sm(d));
     }
-
+    ${glyphCode}
+    ${phraseCode}
 //        void mainImage( out vec4 fragColor, in vec2 fragCoord ) // qm hack
     void main()
     {
@@ -185,7 +229,7 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         col = mix(c.xxx, col, 1.); // for alpha...
         gl_FragColor = vec4(clamp(col,0.,1.),1.0); // qm hack fragColor -> gl_FragColor
     }
-    `, [terrifyingCode, defines, scene, usesTime]);
+    `, [terrifyingCode, glyphCode, phraseCode, defines, scene, usesTime]);
 
     const shaders = React.useMemo(() => GL.Shaders.create({
         nr4template: {
@@ -207,7 +251,7 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
             </GLDom.Surface>
         </ShaderFrame>
         <CodeFrame>
-            {shaderCode}
+            {shadertoyify(shaderCode)}
         </CodeFrame>
     </>;
 };

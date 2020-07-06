@@ -44,7 +44,6 @@ export const resize2D = (array2D, width, height) => {
             ? array2D.slice(0, height)
             : [...array2D, ...Array(height - oldHeight).fill(Array(width || oldWidth).fill(false))]
     }
-    console.log(width, oldWidth, height, oldHeight, array2D);
     return array2D;
 }
 

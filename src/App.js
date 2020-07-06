@@ -7,6 +7,7 @@ import Reducer from './ReduxState';
 import {loadStore, saveStore} from './LocalStorage';
 import GlyphApp from './GlyphApp';
 import SceneApp from './SceneApp';
+import StoreBackupApp from './StoreBackupApp';
 import {BrowserRouter} from 'react-router-dom';
 import 'fomantic-ui-css/semantic.min.css';
 
@@ -17,7 +18,7 @@ store.subscribe(throttle(() => {
     saveStore(store.getState()); // could only take {pixels: store.getState().pixels} or something
 }, 1000));
 
-const RESET_CACHE = true;
+const RESET_CACHE = false;
 
 const App = () => {
     React.useEffect(() => {
@@ -28,16 +29,20 @@ const App = () => {
 
     return <Provider store={store}>
         <BrowserRouter>
-                <div className="ui two item menu">
+                <div className="ui three item menu">
                     <NavLink className="item" activeClassName="active" exact to="/">
                         Glyph Editor
                     </NavLink>
                     <NavLink className="item" activeClassName="active" exact to="/scene">
                         Scene Editor
                     </NavLink>
+                    <NavLink className="item" activeClassName="active" exact to="/store">
+                        Store Backup
+                    </NavLink>
                 </div>
                 <Route exact path="/" component={GlyphApp}/>
                 <Route path="/scene" component={SceneApp}/>
+                <Route path="/store" component={StoreBackupApp}/>
         </BrowserRouter>
     </Provider>;
 }

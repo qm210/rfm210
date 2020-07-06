@@ -42,3 +42,45 @@ export const alias = letter =>
         : letter === ' '
             ? '<space>'
             : letter;
+
+const shaderAliases = {
+    ' ': 'lelzeichen',
+    '?': 'questschn',
+    '!': 'eggsclamation',
+    '.': 'dot',
+    ',': 'qomma',
+    ':': 'colonhehehehe',
+    ';': 'semicolon',
+    '-': 'minus',
+    '+': 'plus',
+    '&': 'ampersand',
+    '#': 'hashtag',
+    '*': 'asterisk',
+    '/': 'slushy',
+    '\\': 'begslushy',
+    '~': 'hilde',
+    '$': 'doller',
+    "'": 'kot',
+    '"': 'dobblkot',
+    '(': 'klauf',
+    ')': 'klzu',
+    '[': 'ecklauf',
+    ']': 'ecklzu',
+    '{': 'geschwauf',
+    '}': 'geschwzu',
+    '=': 'desisso',
+    '%': 'my2cent',
+    '<': 'langle',
+    '>': 'rangle',
+    '|': 'pipe',
+    '@': 'at',
+    'ä': 'ae',
+    'Ä': 'Ae',
+    'ö': 'oe',
+    'Ö': 'Oe',
+    'ü': 'ue',
+    'Ü': 'Ue',
+    'ß': 'scharfess',
+}
+
+export const shaderAlias = letter => letter in shaderAliases ? shaderAliases[letter] : letter;

@@ -6,7 +6,8 @@ import MatrixRow from './MatrixRow';
 import {width2D, height2D, displayPixelSize} from '../Utils';
 
 const mapStateToProps = state => ({
-    pixels: State.currentPixels(state)
+    pixels: State.currentPixels(state),
+    dummyForRerender: State.currentPixels(state)[0]
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -21,16 +22,17 @@ const StyledMatrix = styled.div`
     height: ${({pixels}) => height2D(pixels) * displayPixelSize(pixels) + 4}px;
 `;
 
-const Matrix = ({pixels, leaveDragMode}) =>
-    <StyledMatrix
+const Matrix = ({pixels, leaveDragMode}) => {
+    return <StyledMatrix
         pixels = {pixels}
         onMouseLeave = {leaveDragMode}
         >
-       {
+        {
             pixels.map((pixelRow, row) =>
                 <MatrixRow key={row} row={row} values={pixelRow}/>
             )
         }
     </StyledMatrix>
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(Matrix);
