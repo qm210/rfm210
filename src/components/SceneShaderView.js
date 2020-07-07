@@ -40,7 +40,7 @@ const glslForRect = (rect) => {
 
 const glslForGlyph = (glyph, transform) => {
     const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 1, distort = 1.} = transform;
-    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${offsetX},${offsetY}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},alpha*${asFloatOrStr(alpha)},${asFloatOrStr(distort)},d);`;
+    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${offsetX},${offsetY}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},alpha*${asFloatOrStr(alpha)},distort*${asFloatOrStr(distort)},d);`;
 };
 
 const glslForPhrase = (phrase, transform) => {
@@ -73,7 +73,6 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
 
     const parsePhraseQmd = React.useCallback((script) => {
         const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod'];
-
         const qmds = [];
         for (const line of script) {
             if (line[0] === '#') {
@@ -94,73 +93,86 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
     const usesTime = React.useMemo(() => scene.phrases[0].qmd.length > 0, [scene]);
 
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
-        const phrase = scene.phrases[0];
-        var objects = [];
-        var postProcess = [];
-        var params = [];
+        var usedGlyphs = {};
         var maxWidth = 0;
         var maxHeight = 0;
-        const cosPhi = Math.cos(phrase.rotate);
-        const sinPhi = Math.sin(phrase.rotate);
+        var terrifyingCode = '';
+        var phraseCode = '';
+        for(const phrase of scene.phrases) {
+            var phraseObjects = [];
+            var postProcess = [];
+            var params = [];
+            maxWidth = 0;
+            maxHeight = 0;
+            const cosPhi = Math.cos(phrase.rotate);
+            const sinPhi = Math.sin(phrase.rotate);
 
-        // parse qmds
-        const qmd0 = parsePhraseQmd(phrase.qmd);
+            // parse qmds
+            const qmds = parsePhraseQmd(phrase.qmd);
 
-        const phraseTransform = {
-            offsetX: asFloat(phrase.x),
-            offsetY: asFloat(phrase.y),
-            rotate: asFloat(phrase.rotate),
-        };
-
-        // construct rects
-        for (const char of phrase.chars.split('')) {
-            const glyph = State.glyphForLetter(glyphset, char);
-            const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
-            const transform = {
-                offsetX: maxWidth * cosPhi,
-                offsetY: maxWidth * sinPhi,
-                rotate: 0,
+            phrase.transform = {
+                offsetX: asFloat(phrase.x),
+                offsetY: asFloat(phrase.y),
+                rotate: asFloat(phrase.rotate),
             };
-            objects.push({char, glyph, pixelRects, transform});
-            maxWidth += glyph.width;
-            maxHeight = Math.max(maxHeight, glyph.height);
+
+            // construct rects
+            for (const char of phrase.chars.split('')) {
+                const glyph = State.glyphForLetter(glyphset, char);
+                const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
+                const transform = {
+                    offsetX: maxWidth * cosPhi,
+                    offsetY: maxWidth * sinPhi,
+                    rotate: 0,
+                };
+                phraseObjects.push({phrase, char, glyph, pixelRects, transform});
+                maxWidth += glyph.width;
+                maxHeight = Math.max(maxHeight, glyph.height);
+            }
+            phraseObjects.forEach(obj =>
+                obj.transform = {
+                    ...obj.transform,
+                    offsetX: obj.transform.offsetX - .5 * maxWidth * cosPhi - .5 * maxHeight * sinPhi,
+                    offsetY: obj.transform.offsetY + .5 * maxWidth * sinPhi - .5 * maxHeight * cosPhi,
+                }
+            );
+            usedGlyphs = phraseObjects.reduce((acc, obj) => {
+                if (!(obj.char in acc)) {
+                    acc[obj.char] = obj.pixelRects;
+                }
+                return acc;
+            }, usedGlyphs);
+            for (const {start, end, qmd, arg} of qmds) {
+                const nextParamName = `p${params.length}`;
+                var def = asFloat(0);
+                switch (qmd) {
+                    case 'show':
+                        postProcess.push(`col = mix(c.yyy, col, (t >= ${start} && t < ${end}) ? 1. : 0.);`);
+                        break;
+                    case 'hide':
+                        postProcess.push(`col = mix(c.yyy, col, (t >= ${start} && t < ${end}) ? 0. : 1.);`);
+                        break;
+                    case 'spin':
+                        const speed = arg['speed'] || 1;
+                        params.push({name: nextParamName, code: `${asFloatOrStr(speed)}*t`, start, end, def});
+                        phraseObjects.forEach(obj => obj.transform.rotate += '+' + nextParamName);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            terrifyingCode += params.map(p =>
+                `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
+            ) + glslForPhrase(phrase, phrase.transform) + '\n' + ' '.repeat(8);
+            phraseCode += `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float blur, in float distort, inout vec4 col)
+            {
+                float d = 1.;
+                ${phraseObjects.map(obj =>
+                    glslForGlyph(obj.glyph, obj.transform)
+                ).join('\n' + ' '.repeat(8))}
+                col = mix(col, c.yyyx, alpha * sm(d, blur));
+            }`
         }
-        objects.forEach(obj =>
-            obj.transform = {
-                ...obj.transform,
-                offsetX: obj.transform.offsetX - .5 * maxWidth * cosPhi - .5 * maxHeight * sinPhi,
-                offsetY: obj.transform.offsetY + .5 * maxWidth * sinPhi - .5 * maxHeight * cosPhi,
-            }
-        );
-        const usedGlyphs = objects.reduce((acc, obj) => {
-            if (!(obj.char in acc)) {
-                acc[obj.char] = obj.pixelRects;
-            }
-            return acc;
-        }, {});
-        for (const {start, end, qmd, arg} of qmd0) {
-            const nextParamName = `p${params.length}`;
-            var def = asFloat(0);
-            switch (qmd) {
-                case 'show':
-                    postProcess.push(`col = mix(c.yyy, col, (t >= ${start} && t < ${end}) ? 1. : 0.);`);
-                    break;
-                case 'hide':
-                    postProcess.push(`col = mix(c.yyy, col, (t >= ${start} && t < ${end}) ? 0. : 1.);`);
-                    break;
-                case 'spin':
-                    const speed = arg['speed'] || 1;
-                    params.push({name: nextParamName, code: `${asFloatOrStr(speed)}*t`, start, end, def});
-                    objects.forEach(obj => obj.transform.rotate += '+' + nextParamName);
-                    break;
-                default:
-                    break;
-            }
-        }
-        console.log(usedGlyphs);
-        const terrifyingCode = params.map(p =>
-            `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
-        ) + glslForPhrase(phrase, phraseTransform);
         const glyphCode = `void glyph_undefined(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float distort, inout float d)
         {rect(UV,vec4(0,0,9,16),shift,phi,scale,distort,d);}
         ${
@@ -170,18 +182,9 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
                     ${usedGlyphs[glyph].map(rect =>
                         glslForRect(rect)
                     ).join('')}
-                    //col.a = alpha;
                 }\n`
             ).join('')
         }`;
-        const phraseCode = `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float blur, in float distort, inout vec4 col)
-        {
-            float d = 1.;
-            ${objects.map(obj =>
-                glslForGlyph(obj.glyph, obj.transform)
-            ).join('\n' + ' '.repeat(8))}
-            col = mix(col, c.yyyx, sm(d, blur));
-        }`
         return [terrifyingCode, glyphCode, phraseCode];
     }, [scene, glyphset, parsePhraseQmd]);
 

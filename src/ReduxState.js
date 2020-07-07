@@ -7,6 +7,7 @@ export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIX
     SHIFT_LEFT, SHIFT_RIGHT, SHIFT_UP, SHIFT_DOWN,
     CLEAR_GLYPHSETS, APPEND_GLYPHSET, PURGE_GLYPHSETS, ASSIGN_GLYPHSET, ASSIGN_LETTER, ADD_GLYPH, COPY_GLYPH,
     LOAD_GLYPH, UPDATE_SCENE, UPDATE_PHRASE, SET_DEFINES,
+    ADD_NEW_PHRASE, COPY_PHRASE, DELETE_PHRASE, LOAD_PHRASE,
     REPLACE_STATE
 ] = [...Array(999).keys()];
 
@@ -109,10 +110,7 @@ const Reducer = (state = Initial.state, {type, payload}) => {
             return withAddedGlyph(state, Glyph.copyFrom(currentGlyph(state)));
 
         case LOAD_GLYPH:
-            return {
-                ...state,
-                glyphId: +payload
-            };
+            return {...state, glyphId: +payload};
 
         case UPDATE_SCENE:
             return withUpdatedScene(state, payload);
@@ -125,6 +123,20 @@ const Reducer = (state = Initial.state, {type, payload}) => {
 
         case REPLACE_STATE:
             return payload;
+
+        case ADD_NEW_PHRASE:
+            const phraseTemplate = {...currentPhrase(state), chars: '', qmd: [], x: 0, y: 0, rotate: 0};
+            return withAddedPhrase(state, phraseTemplate);
+
+        case COPY_PHRASE:
+            return withAddedPhrase(state, {...currentPhrase(state)});
+
+        case DELETE_PHRASE:
+            return withDeletedPhrase(state, currentPhrase(state));
+
+        case LOAD_PHRASE:
+            return {...state, phraseId: +payload};
+
 
         default:
             return state;
@@ -190,6 +202,39 @@ const withUpdatedPhrase = (state, phraseUpdate) => ({
             )}
         : scene
     )
+});
+
+const withAddedPhrase = (state, phrase) => ({
+    ...state,
+    scenes: state.scenes.map(scene =>
+        scene.id === state.sceneId
+            ? {
+                ...scene,
+                phrases: [
+                    ...scene.phrases,
+                    {
+                        ...phrase,
+                        id: scene.phrases.length
+                    }
+                ]
+            }
+            : scene
+    )
+});
+
+const withDeletedPhrase = (state, phraseToDelete) => ({
+    ...state,
+    scenes: state.scenes.map(scene =>
+        scene.id === state.sceneId
+            ? {
+                ...scene,
+                phrases: scene.phrases.filter(
+                    phrase => phrase.id !== phraseToDelete.id
+                )
+            }
+            : scene
+    ),
+    phraseId: currentScene(state).phrases[0].id
 });
 
 const surroundingPixelList = ({row, column, width, height}) => {

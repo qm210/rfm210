@@ -18,16 +18,27 @@ const mapDispatchToProps = (dispatch) => ({
     setHeight: height => dispatch({type: State.UPDATE_SCENE, payload: {height}}),
     setDuration: duration => dispatch({type: State.UPDATE_SCENE, payload: {duration}}),
     setSceneQmd: qmd => dispatch({type: State.UPDATE_SCENE, payload: {qmd}}),
-    setPhraseChars: chars => dispatch({type: State.UPDATE_PHRASE, payload: {chars}}),
-    setPhraseX: x => dispatch({type: State.UPDATE_PHRASE, payload: {x}}),
-    setPhraseY: y => dispatch({type: State.UPDATE_PHRASE, payload: {y}}),
-    setPhraseRotate: rotate => dispatch({type: State.UPDATE_PHRASE,  payload: {rotate}}),
     setPhraseQmd: qmd => dispatch({type: State.UPDATE_PHRASE, payload: {qmd}}),
     setDefines: defines => dispatch({type: State.SET_DEFINES, payload: defines}),
+    addNewPhrase: () => dispatch({type: State.ADD_NEW_PHRASE}),
+    copyPhrase: () => dispatch({type: State.COPY_PHRASE}),
+    deletePhrase: () => dispatch({type: State.DELETE_PHRASE}),
+
+    onSetPhraseChars: event =>
+        dispatch({type: State.UPDATE_PHRASE, payload: {chars: event.target.value}}),
+    onSetPhraseX: event =>
+        dispatch({type: State.UPDATE_PHRASE, payload: {x: +event.target.value}}),
+    onSetPhraseY: event =>
+        dispatch({type: State.UPDATE_PHRASE, payload: {y: +event.target.value}}),
+    onSetPhraseRotate: event =>
+        dispatch({type: State.UPDATE_PHRASE,  payload: {rotate: +event.target.value * Math.PI / 180}}),
+    onLoadPhrase: event =>
+        dispatch({type: State.LOAD_PHRASE, payload: +event.target.value})
 });
 
 const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDuration, setSceneQmd,
-    setPhraseChars, setPhraseX, setPhraseY, setPhraseRotate, setPhraseQmd, setDefines}) => {
+    onSetPhraseChars, onSetPhraseX, onSetPhraseY, onSetPhraseRotate, setPhraseQmd, setDefines,
+    addNewPhrase, copyPhrase, deletePhrase, onLoadPhrase}) => {
     const [inputSceneQmd, setInputSceneQmd] = React.useState(scene.qmd.join('\n'));
     const [inputPhraseQmd, setInputPhraseQmd] = React.useState(phrase.qmd.join('\n'));
     const [inputDefines, setInputDefines] = React.useState(joinObject(defines, ' ', '\n'));
@@ -56,24 +67,27 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                     Phrases
                 </div>
                 <select
-                    size={10}
-                    >
-                    {scene.phrases.map((phrase, index) =>
-                        <option key={index} value={phrase.id}>
-                            {`${phrase.id}: ${phrase.chars || '<empty>'}`}
-                        </option>
-                    )}
+                    size = {10}
+                    value = {phrase.id}
+                    onChange = {onLoadPhrase}>
+                        {scene.phrases.map((phrase, index) =>
+                            <option key={index} value={phrase.id}>
+                                {`${phrase.id}: ${phrase.chars || '<empty>'}`}
+                            </option>
+                        )}
                 </select>
                 <div style={{marginTop: 10}}>
-                    <QuickButton>
+                    <QuickButton
+                        onClick={addNewPhrase}>
                         + Phrase
                     </QuickButton>
-                    <QuickButton>
+                    <QuickButton
+                        onClick={copyPhrase}>
                         Copy
                     </QuickButton>
                     <QuickButton
-                        disabled = {scene.phrases.length === 1}
-                        >
+                        onClick={deletePhrase}
+                        disabled = {scene.phrases.length === 1}>
                             Delete
                     </QuickButton>
                 </div>
@@ -132,7 +146,7 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                         type="text"
                         style = {{width: 300}}
                         value = {phrase.chars}
-                        onChange = {event => setPhraseChars(event.target.value)}
+                        onChange = {onSetPhraseChars}
                     />
                 </div>
                 <div>
@@ -142,7 +156,7 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                         type="number"
                         style={{width: 60}}
                         value={phrase.x}
-                        onChange = {event => setPhraseX(+event.target.value)}
+                        onChange = {onSetPhraseX}
                     />
                     <LabelledInput
                         name="iy"
@@ -150,7 +164,7 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                         type="number"
                         style={{width: 60}}
                         value={phrase.y}
-                        onChange = {event => setPhraseY(+event.target.value)}
+                        onChange = {onSetPhraseY}
                     />
                     <LabelledInput
                         name="iphi"
@@ -158,7 +172,7 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
                         type="number"
                         style={{width: 60}}
                         value={180 / Math.PI * phrase.rotate}
-                        onChange = {event => setPhraseRotate(+event.target.value * Math.PI / 180)}
+                        onChange = {onSetPhraseRotate}
                     />
                 </div>
                 <label htmlFor="phrase">Phrase qmmands:</label>

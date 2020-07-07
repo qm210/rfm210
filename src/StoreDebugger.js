@@ -13,7 +13,7 @@ const mapDispatchToProps = (dispatch) => ({
     replaceState: state => dispatch({type: State.REPLACE_STATE, payload: state}),
 })
 
-const StoreBackupApp = ({state, pixels, overwritePixels}) => {
+const StoreDebugger = ({state, pixels, overwritePixels}) => {
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
 
@@ -77,4 +77,4 @@ const StoreBackupApp = ({state, pixels, overwritePixels}) => {
     </ExportList>;
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(StoreBackupApp);
+export default connect(mapStateToProps, mapDispatchToProps)(StoreDebugger);

@@ -37,7 +37,6 @@ const state = {
                 rotate: 0,
                 color: 'black',
                 qmd: [],
-                effects: []
             }
         ],
     }],

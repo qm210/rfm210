@@ -7,7 +7,7 @@ import Reducer from './ReduxState';
 import {loadStore, saveStore} from './LocalStorage';
 import GlyphApp from './GlyphApp';
 import SceneApp from './SceneApp';
-import StoreBackupApp from './StoreBackupApp';
+import StoreDebugger from './StoreDebugger';
 import {BrowserRouter} from 'react-router-dom';
 import 'fomantic-ui-css/semantic.min.css';
 
@@ -37,12 +37,12 @@ const App = () => {
                         Scene Editor
                     </NavLink>
                     <NavLink className="item" activeClassName="active" exact to="/store">
-                        Store Backup
+                        Store Debugger
                     </NavLink>
                 </div>
                 <Route exact path="/" component={GlyphApp}/>
                 <Route path="/scene" component={SceneApp}/>
-                <Route path="/store" component={StoreBackupApp}/>
+                <Route path="/store" component={StoreDebugger}/>
         </BrowserRouter>
     </Provider>;
 }
