@@ -29,21 +29,23 @@ const shadertoyify = code => (
         .replace(/vec2 UV = .*/, 'vec2 UV = uv;')
         .replace('void main()', 'void mainImage( out vec4 fragColor, in vec2 fragCoord )')
         .replace('gl_FragColor', 'fragColor')
+        .replace(/\+0\.,/g, ',')
+        .replace(/\*1\.,/g, ',')
     );
 
 const glslForRect = (rect) => {
     const {x, y, width, height} = rect;
-    return `rect(UV,vec4(${x},${y},${width},${height}),shift,phi,scale,col);`
+    return `rect(UV,vec4(${x},${y},${width},${height}),shift,phi,scale,distort,d);`
 };
 
 const glslForGlyph = (glyph, transform) => {
-    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
-    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${offsetX},${offsetY}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},col);`;
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 1, distort = 1.} = transform;
+    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${offsetX},${offsetY}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},alpha*${asFloatOrStr(alpha)},${asFloatOrStr(distort)},d);`;
 };
 
 const glslForPhrase = (phrase, transform) => {
-    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1} = transform;
-    return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},col);`;
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 1, blur = 1, distort = 1.} = transform;
+    return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(alpha)},${asFloatOrStr(blur)},${asFloatOrStr(distort)},col);`;
 }
 
 const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
@@ -159,23 +161,26 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         const terrifyingCode = params.map(p =>
             `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
         ) + glslForPhrase(phrase, phraseTransform);
-        const glyphCode = `void glyph_undefined(in vec2 UV, in vec2 shift, in float phi, in float scale, inout vec3 col)
-        {rect(UV,vec4(0,0,9,16),shift,phi,scale,col);}
+        const glyphCode = `void glyph_undefined(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float distort, inout float d)
+        {rect(UV,vec4(0,0,9,16),shift,phi,scale,distort,d);}
         ${
             Object.keys(usedGlyphs).map(glyph =>
-                `void ${glyphFuncName(glyph)}(in vec2 UV, in vec2 shift, in float phi, in float scale, inout vec3 col)
+                `void ${glyphFuncName(glyph)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float distort, inout float d)
                 {
                     ${usedGlyphs[glyph].map(rect =>
                         glslForRect(rect)
                     ).join('')}
+                    //col.a = alpha;
                 }\n`
             ).join('')
         }`;
-        const phraseCode = `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, inout vec3 col)
+        const phraseCode = `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float blur, in float distort, inout vec4 col)
         {
+            float d = 1.;
             ${objects.map(obj =>
                 glslForGlyph(obj.glyph, obj.transform)
             ).join('\n' + ' '.repeat(8))}
+            col = mix(col, c.yyyx, sm(d, blur));
         }`
         return [terrifyingCode, glyphCode, phraseCode];
     }, [scene, glyphset, parsePhraseQmd]);
@@ -189,12 +194,11 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
 
     ${Object.keys(defines).map(key => `#define ${key} ${defines[key]}`).join('\n')} // nr4 advice: hardcode replace these
     #define PIXEL .005
-    #define BLUR 0.3
 
-    void dbox(in vec2 x, in vec2 b, out float d)
+    void dbox(in vec2 x, in vec2 b, in float distort, inout float d)
     {
-        vec2 da = abs(x)-b;
-        d = length(max(da,c.yy)) + min(max(da.x,da.y),0.0);
+        vec2 da = abs(x*distort)-b;
+        d = min(d, length(max(da,c.yy)) + min(max(da.x,da.y),0.0));
     }
 
     void rot(in float phi, out mat2 m)
@@ -202,18 +206,17 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         vec2 cs = vec2(cos(phi), sin(phi));
         m = mat2(cs.x, -cs.y, cs.y, cs.x);
     }
-    float sm(in float d)
+    float sm(in float d, in float blur)
     {
-        return smoothstep(BLUR/iResolution.y, -BLUR/iResolution.y, d);
+        return smoothstep(.2/iResolution.y, -.2/iResolution.y, blur*d);
     }
-    void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale, inout vec3 col)
+    void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale, in float distort, inout float d)
     {
-        float d;
         mat2 R;
         rot(phi, R);
         R /= max(1.e-3, scale);
-        dbox(R*uv + PIXEL*(vec2(-rect.z,rect.w) + /*R**/vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, d);
-        col = mix(col, c.yyy, sm(d));
+        //dbox(R*uv + PIXEL*(vec2(-rect.z,rect.w) + R*vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, d);
+        dbox(R*uv + PIXEL*(vec2(-rect.z,rect.w) + vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, distort, d);
     }
     ${glyphCode}
     ${phraseCode}
@@ -223,11 +226,9 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
         ${usesTime ? `float t = mod(time, ${asFloat(scene.duration)});` : ''}
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
         vec2 UV = vec2((uv.x - .5)*${asFloat(scene.width/scene.height)}, uv.y - .5); // qm hack
-        vec3 col = c.xxx;
+        vec4 col = c.xxxx;
         ${terrifyingCode}
-
-        col = mix(c.xxx, col, 1.); // for alpha...
-        gl_FragColor = vec4(clamp(col,0.,1.),1.0); // qm hack fragColor -> gl_FragColor
+        gl_FragColor = vec4(clamp(col,0.,1.)); // qm hack fragColor -> gl_FragColor
     }
     `, [terrifyingCode, glyphCode, phraseCode, defines, scene, usesTime]);
 

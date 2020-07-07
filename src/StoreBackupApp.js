@@ -2,7 +2,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {ExportList, ExportTextArea, ErrorLabel} from './components';
 import * as State from './ReduxState';
-import Initial from './Initial';
+//import Initial from './Initial';
 import {clearStore} from './LocalStorage';
 
 const mapStateToProps = (state) => ({
@@ -24,7 +24,7 @@ const StoreBackupApp = ({state, pixels, overwritePixels}) => {
             return;
         }
         try {
-            const importedState = JSON.parse(tryImportText);
+            /*const importedState = */JSON.parse(tryImportText);
             /* could test here whether the structure matches to the current Initial.state */
         }
         catch (error) {
