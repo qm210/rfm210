@@ -85,18 +85,17 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
                     assignGlyphset(event.target.value);
                     inputRef.current.value = event.target.value;
                 }}
-                style = {{width: 200, marginLeft: 20}}
-                >
-                    {
-                        (glyphsets || []).map((item, index) =>
-                            <option
-                                key={item}
-                                value={item}
-                                >
-                                {item}
-                            </option>
-                        )
-                    }
+                style = {{width: 200, marginLeft: 20}}>
+                {
+                    (glyphsets || []).map((item, index) =>
+                        <option
+                            key={item}
+                            value={item}
+                            >
+                            {item}
+                        </option>
+                    )
+                }
             </select>
             <input
                 type = "text"
@@ -117,7 +116,7 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
             value = {glyph.id}
             onChange = {event => loadGlyph(event.target.value)}
         >
-        {
+        { // TODO: own selector with lots of small buttons
             glyphset.glyphs.slice()
                 .sort((a,b) => a.letter > b.letter ? 1 : -1)
                 .map((eachGlyph, index) =>

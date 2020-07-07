@@ -52,7 +52,7 @@ export const millis = () => (new Date()).getTime();
 export const sec = () => Math.round((new Date()).getTime() / 1000);
 
 // display specific
-export const displayPixelSize = (pixels) => 33 * 9 / width2D(pixels);
+export const displayPixelSize = (pixels) => Math.round(33 * Math.sqrt(9 / width2D(pixels)));
 
 // event specific
 export const whenSubmitted = (event, func) => {
