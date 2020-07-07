@@ -13,7 +13,7 @@ const mapDispatchToProps = (dispatch) => ({
     replaceState: state => dispatch({type: State.REPLACE_STATE, payload: state}),
 })
 
-const StoreDebugger = ({state, pixels, overwritePixels}) => {
+const StoreDebugger = ({state, replaceState}) => {
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
 
@@ -24,8 +24,8 @@ const StoreDebugger = ({state, pixels, overwritePixels}) => {
             return;
         }
         try {
-            /*const importedState = */JSON.parse(tryImportText);
-            /* could test here whether the structure matches to the current Initial.state */
+            /* could test first whether the structure matches to the current Initial.state */
+            replaceState(JSON.parse(tryImportText));
         }
         catch (error) {
             if (error instanceof TypeError) {

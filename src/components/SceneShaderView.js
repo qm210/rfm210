@@ -94,16 +94,12 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
 
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
         var usedGlyphs = {};
-        var maxWidth = 0;
-        var maxHeight = 0;
         var terrifyingCode = '';
         var phraseCode = '';
         for(const phrase of scene.phrases) {
             var phraseObjects = [];
             var postProcess = [];
             var params = [];
-            maxWidth = 0;
-            maxHeight = 0;
             const cosPhi = Math.cos(phrase.rotate);
             const sinPhi = Math.sin(phrase.rotate);
 
@@ -117,6 +113,8 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
             };
 
             // construct rects
+            var maxWidth = 0;
+            var maxHeight = 0;
             for (const char of phrase.chars.split('')) {
                 const glyph = State.glyphForLetter(glyphset, char);
                 const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
@@ -129,11 +127,13 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
                 maxWidth += glyph.width;
                 maxHeight = Math.max(maxHeight, glyph.height);
             }
+            const halfWidth = .5 * maxWidth;
+            const halfHeight = .5 * maxHeight;
             phraseObjects.forEach(obj =>
                 obj.transform = {
                     ...obj.transform,
-                    offsetX: obj.transform.offsetX - .5 * maxWidth * cosPhi - .5 * maxHeight * sinPhi,
-                    offsetY: obj.transform.offsetY + .5 * maxWidth * sinPhi - .5 * maxHeight * cosPhi,
+                    offsetX: obj.transform.offsetX - halfWidth * cosPhi - halfHeight * sinPhi,
+                    offsetY: obj.transform.offsetY + halfWidth * sinPhi - halfHeight * cosPhi,
                 }
             );
             usedGlyphs = phraseObjects.reduce((acc, obj) => {
