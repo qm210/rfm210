@@ -23,13 +23,14 @@ const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing
 
 const shadertoyify = code => (
     code
+        .replace('precision highp float;', '')
         .replace('varying vec2 uv;\n', '')
         .replace(/uniform vec2 iResolution.*/, '')
         .replace('// vec2 uv', 'vec2 uv')
         .replace(/vec2 UV = .*/, '')
         .replace(/UV/g, 'uv')
         .replace('void main()', 'void mainImage( out vec4 fragColor, in vec2 fragCoord )')
-        .replace('gl_FragColor', 'fragColor')
+        .replace(/gl_FragColor/g, 'fragColor')
         .replace(/\+0\.,/g, ',')
         .replace(/\*1\.,/g, ',')
     );
@@ -43,14 +44,16 @@ const glslForRect = (rect) => {
 };
 
 const glslForGlyph = (glyph, transform) => {
-    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 1, distort = 1.} = transform;
-    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},alpha*${asFloatOrStr(alpha)},distort*${asFloatOrStr(distort)},d);`;
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, distort = 1.} = transform;
+    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},distort*${asFloatOrStr(distort)},d);`;
 };
 
 const glslForPhrase = (phrase, transform) => {
-    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 1, blur = 1, distort = 1., spacing = 1.} = transform;
-    return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(alpha)},${asFloatOrStr(blur)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)},col);`;
-}
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 'alpha', blur = 'blur', distort = 1., spacing = 1.} = transform;
+    return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)},d);\n`
+    + `        col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\n`
+    + `        col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005, ${asFloatOrStr(blur)}));`
+} // make blackening customizable, also might think about alpha* in third argument (vorletzte zeile)
 
 const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
 
@@ -150,6 +153,14 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
                 }
                 return acc;
             }, usedGlyphs);
+            // quick hack before UC10: use every glyph
+            usedGlyphs = glyphset.glyphs.reduce((acc, glyph) => {
+                if (!(glyph.letter in acc)) {
+                    acc[glyph.letter] = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);;
+                }
+                return acc;
+            }, usedGlyphs);
+            //////////////////////////////
             for (const {start, end, qmd, arg} of qmds) {
                 const nextParamName = `p${params.length}`;
                 var def = asFloat(0);
@@ -172,20 +183,19 @@ const SceneShaderView = ({scene, glyphset, defines}) => {
             terrifyingCode += params.map(p =>
                 `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
             ) + glslForPhrase(phrase, phrase.transform) + '\n' + ' '.repeat(8);
-            phraseCode += `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float blur, in float distort, in float spac, inout vec3 col)
-            {
-                float d = 1.;
-                ${phraseObjects.map(obj =>
+            phraseCode += `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, in float spac, out float d)
+    {d = 1.;
+    ${phraseObjects.map(obj =>
                     glslForGlyph(obj.glyph, obj.transform)
-                ).join('\n' + ' '.repeat(8))}
-                col = mix(col, c.yyy, alpha * sm(d, blur));
+                ).join('\n' + ' '.repeat(4))}
             }`
         }
-        const glyphCode = `void glyph_undefined(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float distort, inout float d)
-        {rect(UV,vec4(0,0,9,16),shift,phi,scale,distort,d);}
+        const glyphCode = `
+void glyph_undefined(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, inout float d)
+    {rect(UV,vec4(0,0,9,16),shift,phi,scale,distort,d);}
         ${
             Object.keys(usedGlyphs).map(glyph =>
-                `void ${glyphFuncName(glyph)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float alpha, in float distort, inout float d){
+                `void ${glyphFuncName(glyph)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, inout float d){
 ${usedGlyphs[glyph].map(rect =>
                         glslForRect(rect)
                     ).join('')}
@@ -204,30 +214,31 @@ ${usedGlyphs[glyph].map(rect =>
 
     ${Object.keys(defines).map(key => `#define ${key} ${defines[key]}`).join('\n')} // nr4 advice: hardcode replace these
     #define PIXEL .005
+    #define CONTOUR .01
+    #define DARKBORDER 0.1
+    #define DARKENING col*col*col
 
+    float smstep(float a, float b, float x) {return smoothstep(a, b, clamp(x, a, b));}
     void rand(in vec2 x, out float n)
     {
         x += 400.;
         n = fract(sin(dot(sign(x)*abs(x) ,vec2(12.9898,78.233)))*43758.5453);
     }
-    void lfnoise(in vec2 t, out float n)
+    void lpnoise(in float t, in float fq, out float n)
     {
-        vec2 i = floor(t);
-        t = fract(t);
-        t = smoothstep(c.yy, c.xx, t);
-        vec2 v1, v2;
-        rand(i, v1.x);
-        rand(i+c.xy, v1.y);
-        rand(i+c.yx, v2.x);
-        rand(i+c.xx, v2.y);
-        v1 = c.zz+2.*mix(v1, v2, t.y);
-        n = mix(v1.x, v1.y, t.x);
+        t *= fq;
+        float tt = fract(t);
+        float tn = t - tt;
+        float r1, r2;
+        rand(vec2(floor(tn) / fq), r1);
+        rand(vec2(floor(tn + 1.0) / fq), r2);
+        n = mix(r1, r2, smstep(0.0, 1.0, tt));
     }
-    void lf2dnoise(in vec2 t, out vec2 n)
+    void lp2dnoise(in float t, out vec2 n)
     {
         float r1, r2;
-        lfnoise(t, r1);
-        lfnoise(1.1*t, r2);
+        lpnoise(t, 1.0, r1);
+        lpnoise(t, 1.1, r2);
         n = vec2(r1, r2);
     }
     void dboxcombo(in vec2 x, in vec2 b, in float distort, inout float d)
@@ -258,7 +269,10 @@ ${usedGlyphs[glyph].map(rect =>
         ${usesTime ? `float t = mod(time, ${asFloat(scene.duration)});` : ''}
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
         vec2 UV = vec2((uv.x - .5)*${asFloat(scene.width/scene.height)}, uv.y - .5); // qm hack
-        vec3 col = c.xxx;
+        vec3 col = vec3(1.,.8,1.);
+        float d;
+        float alpha = 1.;
+        float blur = 1.;
         ${terrifyingCode}
         gl_FragColor = vec4(clamp(col,0.,1.),1.); // qm hack fragColor -> gl_FragColor
     }
