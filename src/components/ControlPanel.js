@@ -5,21 +5,12 @@ import styled from 'styled-components';
 //import io from 'socket.io-client';
 //import feathers from '@feathersjs/client';
 import * as State from '../ReduxState';
-import {LabelledInput} from '.';
-import {alias} from '../GlyphModel';
+import {GenericList, LabelledInput} from '.';
+import GlyphSelector from './GlyphSelector';
 
 //const socket = io('http://localhost:3333');
 
 //export const client = feathers().configure(feathers.socketio(socket));
-
-const ExportList = styled.div`
-    display: flex;
-    flex-direction: column;
-    alignItems: left;
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #888;
-`;
 
 const mapStateToProps = (state) => ({
     glyphset: state.glyphset,
@@ -34,11 +25,10 @@ const mapDispatchToProps = (dispatch) => ({
     assignGlyphset: name => dispatch({type: State.ASSIGN_GLYPHSET, payload: name}),
     addGlyph: () => dispatch({type: State.ADD_GLYPH}),
     copyGlyph: () => dispatch({type: State.COPY_GLYPH}),
-    loadGlyph: id => dispatch({type: State.LOAD_GLYPH, payload: id})
 });
 
 const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph, copyGlyph,
-    setLetterWidth, setLetterHeight, assignLetter, loadGlyph}) => {
+    setLetterWidth, setLetterHeight, assignLetter}) => {
     const inputRef = React.createRef();
     const glyphsets = [glyphset.title]; // TODO: extend if glyphset is going to be a list
 
@@ -53,7 +43,7 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
         assignLetter(newLetter);
     }
 
-    return <ExportList>
+    return <GenericList>
         <div>
             <LabelledInput
                 name="iletter"
@@ -110,30 +100,12 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
         <div>
             Glyphset contains
         </div>
-        <select
-            size = {10}
-            style = {{fontSize: '1.2rem', height: 300}}
-            value = {glyph.id}
-            onChange = {event => loadGlyph(event.target.value)}
-        >
-        { // TODO: own selector with lots of small buttons
-            glyphset.glyphs.slice()
-                .sort((a,b) => a.letter > b.letter ? 1 : -1)
-                .map((eachGlyph, index) =>
-                    <option
-                        key={index}
-                        value={eachGlyph.id}
-                        >
-                        {alias(eachGlyph.letter)}
-                    </option>
-            )
-        }
-        </select>
+        <GlyphSelector/>
         <div>
             <button style={{margin: 10, padding: 10}} onClick={addGlyph}>New Glyph</button>
             <button style={{margin: 10, padding: 10}} onClick={copyGlyph}>Copy Glyph</button>
         </div>
-    </ExportList>;
+    </GenericList>;
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ControlPanel);

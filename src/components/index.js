@@ -76,4 +76,13 @@ export const CodeFrame = (props) =>
             disabled
             value={props.children}
         />
-    </div>
+    </div>;
+
+export const GenericList = styled.div`
+    display: flex;
+    flex-direction: column;
+    alignItems: left;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #888;
+`;
