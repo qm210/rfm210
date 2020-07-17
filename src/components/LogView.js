@@ -41,14 +41,21 @@ const RectList = ({collection, ItemClass, label}) => {
 };
 
 
-const LogView = ({pixels}) => {
+const LogView = React.memo(({pixels}) => {
+    const [onceClicked, setOnceClicked] = React.useState(false);
     const [allRects, orphanPixels] = RectAlgebra.getAllRectsAndOrphanPixels(pixels);
     const sufficientRects = RectAlgebra.getSufficientRects(pixels, allRects, orphanPixels);
     return <LogList>
-        <RectList collection={sufficientRects} ItemClass={RectInfoLabel} label="Sufficient Rects"/>
-        <RectList collection={orphanPixels} ItemClass={PixelInfoLabel} label="Orphan Pixels"/>
-        <RectList collection={allRects} ItemClass={RectInfoLabel} label="All Rects"/>
+        {
+            onceClicked
+            ? <>
+                <RectList collection={sufficientRects} ItemClass={RectInfoLabel} label="Sufficient Rects"/>
+                <RectList collection={orphanPixels} ItemClass={PixelInfoLabel} label="Orphan Pixels"/>
+                <RectList collection={allRects} ItemClass={RectInfoLabel} label="All Rects"/>
+            </>
+            : <button onClick={() => setOnceClicked(true)}>Show Rect Information</button>
+        }
     </LogList>;
-};
+});
 
 export default connect(mapStateToProps)(LogView);
