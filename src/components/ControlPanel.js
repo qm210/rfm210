@@ -1,7 +1,5 @@
 import React from 'react';
 import {connect} from 'react-redux';
-//import Select from 'react-select';
-import styled from 'styled-components';
 //import io from 'socket.io-client';
 //import feathers from '@feathersjs/client';
 import * as State from '../ReduxState';

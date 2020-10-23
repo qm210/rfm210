@@ -9,6 +9,17 @@ Shader:
 
 === NICHT VOR UC10 ===
 
+
+_____
+Backend - State Austausch
+fix von cmd
+Ersetzen von Font-Glyphen durch generische Glyphen (code submitten) mit PARAMETERN
+PARAMETER AUTOMATION
+time in shadertoy-react
+liveMode - deactivate
+(Orgel)
+_____
+
 Backend (Feathers / Express / idon'tcare)
 - store glyph to file (json)
 - load glyph from file (json)

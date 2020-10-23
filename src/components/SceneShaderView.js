@@ -1,12 +1,14 @@
 import React from 'react';
 import {connect} from 'react-redux';
+import ShadertoyReact from 'shadertoy-react';
 import {ShaderFrame} from '.';
 import * as GL from 'gl-react';
-import * as GLDom from 'gl-react-dom';
+//import * as GLDom from 'gl-react-dom';
 import RectAlgebra from '../RectAlgebra';
 import * as State from '../ReduxState';
 import {CodeFrame} from '../components';
 import { shaderAlias, hardCodeKerningMap } from '../GlyphModel';
+import {liveMode} from '..'
 
 const mapStateToProps = (state) => ({
     scene: State.currentScene(state),
@@ -204,7 +206,7 @@ ${usedGlyphs[glyph].map(rect =>
         }`;
         return [terrifyingCode, glyphCode, phraseCode];
     }, [scene, glyphset, parsePhraseQmd]);
-
+// Einfach mal shadertoy-react implementieren
     const shaderCode = React.useMemo(() => GL.GLSL`
     precision highp float;
     varying vec2 uv;
@@ -287,6 +289,7 @@ ${usedGlyphs[glyph].map(rect =>
     return <>
         <ShaderFrame>
             <b>This is the AWESOME part!</b><br/>
+            {/*
             <GLDom.Surface width={scene.width} height={scene.height}>
                 <GL.Node
                     shader={shaders.nr4template}
@@ -296,6 +299,8 @@ ${usedGlyphs[glyph].map(rect =>
                     }}
                 />
             </GLDom.Surface>
+            */}
+            <ShadertoyReact fs={shadertoyify(shaderCode)}/>
         </ShaderFrame>
         <CodeFrame>
             {shadertoyify(shaderCode)}

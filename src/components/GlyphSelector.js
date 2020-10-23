@@ -32,7 +32,11 @@ const GlyphSelector = ({glyphset, glyph, loadGlyph}) =>
             width: 400,
         }}>
             {glyphset.glyphs.slice()
-                .sort((a,b) => a.letter > b.letter ? 1 : -1)
+                .sort((a,b) =>
+                    a.letter.toLowerCase() === b.letter.toLowerCase()
+                        ? (a.letter > b.letter ? 1 : -1)
+                        : (a.letter.toLowerCase() > b.letter.toLowerCase() ? 1 : -1)
+                )
                 .map((eachGlyph, index) =>
                     <button
                         key = {index}
