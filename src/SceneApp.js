@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import * as State from './ReduxState';
+import * as State from './slices/glyphSlice';
 import {MainView, MainColumn, LabelledInput, QuickButton} from './components';
 import SceneShaderView from './components/SceneShaderView';
 import Initial from './Initial';

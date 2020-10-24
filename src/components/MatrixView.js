@@ -2,7 +2,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {QuickButton} from '../components';
 import Matrix from './Matrix';
-import * as State from '../ReduxState';
+import * as State from '../slices/glyphSlice';
 
 const mapStateToProps = (state) => ({
 });

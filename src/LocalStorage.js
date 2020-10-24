@@ -23,5 +23,5 @@ export const saveStore = (store) => {
 
 export const clearStore = () => {
     localStorage.removeItem('store');
-    window.location.reload(true);
+    window.location.reload();
 };

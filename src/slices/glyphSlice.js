@@ -1,6 +1,9 @@
-import * as Glyph from './GlyphModel';
-import Initial from "./Initial";
-import {new2D, update2D, at2D, fill2D, size2D, clone2D, resize2D} from "./Utils";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { surfer } from '..';
+import * as Glyph from '../GlyphModel';
+import Initial, { initGlyph } from "../Initial";
+import {new2D, update2D, at2D, fill2D, size2D, clone2D, resize2D} from "../Utils";
+import { FAIL, IDLE, LOADING, OK } from '../const';
 
 export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIXELS, OVERWRITE_PIXELS,
     ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_SIZE,
@@ -11,15 +14,130 @@ export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIX
     REPLACE_STATE
 ] = [...Array(999).keys()];
 
-export const togglePixel = (coord) => ({type : TOGGLE_PIXEL, payload: coord});
-export const setPixel = (coord, value) => ({type: SET_PIXEL, payload: {...coord, value}});
-export const fillArea = (coord, value) => ({type: FILL_AREA, payload: {...coord, value}});
-export const clearAllPixels = () => ({type: CLEAR_ALL_PIXELS});
-export const fillAllPixels = () => ({type: FILL_ALL_PIXELS});
-export const overwritePixels = (pixels) => ({type: OVERWRITE_PIXELS, payload: pixels});
-export const enterDragMode = (coord, value) => ({type: ENTER_DRAGMODE, payload: {...coord, value: value}});
-export const leaveDragMode = () => ({type: LEAVE_DRAGMODE});
+const service = () => surfer.service('glyphset');
 
+export const fetchGlyph = createAsyncThunk('glyph/fetchGlyph', async (glyphset, letter) => {
+    try {
+        console.log(glyphset, letter);
+        return {};
+    } catch (err) {
+        console.warn(err);
+        return null;
+    }
+});
+
+export const addGlyph = createAsyncThunk('glyph/add', async (cloneId, {getState}) => {
+    await service().create({
+        query: {
+            glyphset: getState().glyphset.current.id,
+            clone: cloneId,
+        }
+    });
+});
+
+export const deleteGlyph = createAsyncThunk('glyph/remove', async (id, {getState}) => {
+    const id = getState().id;
+    if (!id) {
+        console.warn("can't delete glyph with no ID!", id);
+    }
+    await service().remove(id);
+});
+// TODO: Reload whole glyph list
+
+export const replacePixels = createAsyncThunk('glyph/replacePixels', async (newPixels, {getState}) => {
+    const id = getState().id;
+    if (!id) {
+        console.log('Cannot PATCH pixels, ID is not known!');
+        return;
+    }
+    await service().patch(id, {pixels: newPixels});
+})
+
+const initWidth = 9;
+const initHeight = 16;
+
+export const glyphSlice = createSlice({
+    name: 'glyph',
+    initialState: {
+        id: null,
+        width: initWidth,
+        height: initHeight,
+        letter: '',
+        pixels: new2D(initWidth, initHeight),
+        dragMode: false,
+        dragValue: null,
+        status: IDLE,
+        error: null,
+    },
+    reducers: {
+        clearAllPixels: (state) => {
+            state.pixels = fill2D(state.pixels, false);
+        },
+        fillAllPixels: (state) => {
+            state.pixels = fill2D(state.pixels, true);
+        },
+        enterDragMode: (state) => {
+            state.dragMode = true;
+        },
+        leaveDragMode: (state) => {
+            state.dragMode = false;
+        },
+        togglePixel: (state, {payload: coord}) => {
+            console.log("TOGGLE", coord);
+            state.pixels = update2D(state.pixels, coord, !at2D(state.pixels, coord));
+        },
+        setPixel: (state, {payload}) => {
+            console.log("SETPIXEL", payload);
+            state.pixels = update2D(state.pixels, payload.coord, payload.value);
+        },
+        fillArea: (state, {payload}) => {
+            state.pixels = fillConnectedArea(state.pixels, payload)
+        },
+        resize: (state, {payload}) => {
+            state.pixels = resize2D(state.pixels, payload.width || state.width, payload.height || state.height);
+        },
+        shiftLeft: (state) => { //TODO: forEach?
+            state.pixels = state.pixels.map(row => {
+                row.push(row.shift());
+                return row;
+            });
+        },
+        shiftRight: (state) => { //TODO: forEach?
+            state.pixels = state.pixels.map(row => {
+                row.unshift(row.pop());
+                return row;
+            });
+        },
+        shiftUp: (state) => {
+            state.pixels.push(state.pixels.shift());
+        },
+        shiftDown: (state) => {
+            state.pixels.unshift(state.pixels.pop());
+        },
+        assignLetter: (state, {payload}) => {
+            state.letter = payload.letter;
+        }
+    },
+    extraReducers: {
+        [fetchGlyph.pending]: (state) => {
+            state.status = LOADING;
+        },
+        [fetchGlyph.fulfilled]: (state, {payload}) => {
+            state.status = OK;
+            state.glyph = payload;
+            state.error = null;
+        },
+        [fetchGlyph.rejected]: (state, {error}) => {
+            state.status = 'LEEL?';
+            state.error = error.message;
+        }
+    }
+});
+
+export const {leaveDragMode, enterDragMode, clearAllPixels, togglePixel, setPixel, fillArea, fillAllPixels} = glyphSlice.actions;
+export default glyphSlice.reducer;
+
+/*
 const Reducer = (state = Initial.state, {type, payload}) => {
     const pixels = currentPixels(state);
     switch (type) {
@@ -39,78 +157,9 @@ const Reducer = (state = Initial.state, {type, payload}) => {
         case LEAVE_DRAGMODE:
             return {...state, dragMode: false};
 
-        case SET_GLYPH_SIZE:
-            return {
-                ...state,
-                glyphset: {
-                    ...state.glyphset,
-                    glyphs: state.glyphset.glyphs.map(glyph =>
-                        glyph.id === state.glyphId
-                            ? {
-                                ...glyph,
-                                ...payload,
-                                pixels: resize2D(pixels, payload.width, payload.height)
-                            } : glyph
-                    )
-                }
-            }
-
-        case SHIFT_LEFT:
-            pixels.map(row => {
-                row.push(row.shift());
-                return row;
-            });
-            return withUpdatedPixels(state, pixels);
-
-        case SHIFT_RIGHT:
-            pixels.map(row => {
-                row.unshift(row.pop());
-                return row;
-            });
-            return withUpdatedPixels(state, pixels);
-
-        case SHIFT_UP:
-            pixels.push(pixels.shift());
-            return withUpdatedPixels(state, pixels);
-
-        case SHIFT_DOWN:
-            pixels.unshift(pixels.pop());
-            return withUpdatedPixels(state, pixels);
 
         case OVERWRITE_PIXELS:
             return withUpdatedPixels(state, payload);
-
-        case APPEND_GLYPHSET:
-            return state; // NOT IMPLEMENTED YET
-
-        case CLEAR_GLYPHSETS:
-            return state; // NOT IMPLEMENTED YET
-
-        case PURGE_GLYPHSETS:
-            return state; // NOT IMPLEMENTED YET
-
-        case ASSIGN_LETTER:
-            const newGlyph = state.glyphset.glyphs.find(glyph => glyph.id === state.glyphId);
-            newGlyph.letter = payload;
-            return {
-                ...state,
-                glyphset: {
-                    ...state.glyphset,
-                    glyphs: state.glyphset.glyphs.map(glyph =>
-                        glyph.id === state.glyphId ? newGlyph : glyph
-            )}};
-
-        case ASSIGN_GLYPHSET:
-            return {...state, title: payload};
-
-        case ADD_GLYPH:
-            return withAddedGlyph(state, Glyph.newFrom(currentGlyph(state)));
-
-        case COPY_GLYPH:
-            return withAddedGlyph(state, Glyph.copyFrom(currentGlyph(state)));
-
-        case LOAD_GLYPH:
-            return {...state, glyphId: +payload};
 
         case UPDATE_SCENE:
             return withUpdatedScene(state, payload);
@@ -143,10 +192,6 @@ const Reducer = (state = Initial.state, {type, payload}) => {
     }
 }
 
-export default Reducer;
-
-export const currentGlyph = state => state.glyphset.glyphs.find(glyph => glyph.id === state.glyphId);
-
 export const currentPixels = state => currentGlyph(state) ? currentGlyph(state).pixels : new2D(0,0);
 
 export const currentScene = state => state.scenes.find(scene => scene.id === state.sceneId);
@@ -166,19 +211,6 @@ const withUpdatedPixels = (state, pixels) => ({
         )
     }
 });
-
-const withAddedGlyph = (state, glyph) => {
-    glyph.id = state.glyphset.glyphs.length;
-    return {
-        ...state,
-        glyphset: {
-            ...state.glyphset,
-            glyphs: [
-                ...state.glyphset.glyphs,
-                glyph
-            ]
-    }};
-};
 
 const withUpdatedScene = (state, sceneUpdate) => ({
     ...state,
@@ -236,6 +268,7 @@ const withDeletedPhrase = (state, phraseToDelete) => ({
     ),
     phraseId: currentScene(state).phrases[0].id
 });
+*/
 
 const surroundingPixelList = ({row, column, width, height}) => {
     const surrounding = [];

@@ -1,21 +1,15 @@
 import React from 'react';
-import {connect} from 'react-redux';
-import {ExportList, ExportTextArea, ErrorLabel} from './components';
-import * as State from './ReduxState';
-//import Initial from './Initial';
+import { useSelector, useDispatch } from 'react-redux';
+import {ExportList, ExportTextArea, ErrorLabel, Button} from './components';
 import {clearStore} from './LocalStorage';
+import {clearGlyphsets} from './slices/glyphsetSlice';
 
-const mapStateToProps = (state) => ({
-    state
-});
-
-const mapDispatchToProps = (dispatch) => ({
-    replaceState: state => dispatch({type: State.REPLACE_STATE, payload: state}),
-})
-
-const StoreDebugger = ({state, replaceState}) => {
+const StoreDebugger = () => {
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
+
+    const state = useSelector(s => s);
+    const dispatch = useDispatch();
 
     const tryStateImport = (event) => {
         event.preventDefault();
@@ -25,7 +19,9 @@ const StoreDebugger = ({state, replaceState}) => {
         }
         try {
             /* could test first whether the structure matches to the current Initial.state */
-            replaceState(JSON.parse(tryImportText));
+            alert("function removed!")
+            // //        replaceState: state => dispatch({type: State.REPLACE_STATE, payload: state}),
+            //dispatch(replaceState(JSON.parse(tryImportText)));
         }
         catch (error) {
             if (error instanceof TypeError) {
@@ -43,12 +39,13 @@ const StoreDebugger = ({state, replaceState}) => {
 
     return <ExportList>
         <b>General Information:</b>
-        <button style={{margin: 10, padding: 10}} onClick={clearStore}>
+        <Button onClick={clearStore}>
             Clear Cache
-        </button>
-        <button style={{margin: 10, padding: 10}} onClick={() => console.log(state)}>
+        </Button>
+        <Button onClick={() => dispatch(clearAllGlyphsets())}>Surfer: Clear Glyphsets</Button>
+        <Button onClick={() => console.log(state)}>
             DEBUG
-        </button>
+        </Button>
         <form onSubmit={() => false}>
             <b>Serialized JSON state:</b>
             <br/>
@@ -77,4 +74,4 @@ const StoreDebugger = ({state, replaceState}) => {
     </ExportList>;
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(StoreDebugger);
+export default StoreDebugger;

@@ -6,7 +6,8 @@ const hooks = require('./glyphset.hooks');
 module.exports = function (app) {
   const options = {
     Model: createModel(app),
-    paginate: app.get('paginate')
+    paginate: app.get('paginate'),
+    multi: ['remove'],
   };
 
   // Initialize our service with any options it requires
@@ -16,4 +17,7 @@ module.exports = function (app) {
   const service = app.service('glyphset');
 
   service.hooks(hooks);
+
+  service.on('removed', (event) => console.log("Remove", event));
+
 };

@@ -1,12 +1,7 @@
 import React from 'react';
-import {connect} from 'react-redux';
-import {currentPixels} from '../ReduxState';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import RectAlgebra from '../RectAlgebra';
-
-const mapStateToProps = (state) => ({
-    pixels: currentPixels(state)
-});
 
 const LogList = styled.div`
     display: flex;
@@ -40,8 +35,8 @@ const RectList = ({collection, ItemClass, label}) => {
     </>;
 };
 
-
-const LogView = React.memo(({pixels}) => {
+const LogView = () => {
+    const pixels = useSelector(state => state.glyph.pixels);
     const [onceClicked, setOnceClicked] = React.useState(false);
     const [allRects, orphanPixels] = RectAlgebra.getAllRectsAndOrphanPixels(pixels);
     const sufficientRects = RectAlgebra.getSufficientRects(pixels, allRects, orphanPixels);
@@ -56,6 +51,6 @@ const LogView = React.memo(({pixels}) => {
             : <button onClick={() => setOnceClicked(true)}>Show Rect Information</button>
         }
     </LogList>;
-});
+};
 
-export default connect(mapStateToProps)(LogView);
+export default LogView;

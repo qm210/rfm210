@@ -3,43 +3,47 @@ import * as Glyph from './GlyphModel';
 // model constants
 const width = 9;
 const height = 16;
-const initGlyph = Glyph.newFrom({width, height}, 0);
+export const initGlyph = Glyph.newFrom({width, height}, 0);
+
+export const newGlyphSet = (title, spacing, lineSpacing) => ({
+    title,
+    spacing,
+    lineSpacing,
+    glyphs: [initGlyph]
+});
+
+export const newScene = (id) => ({
+    id: id || 0,
+    title: '',
+    duration: 10,
+    width: 640,
+    height: 320,
+    backgroundColor: 'white',
+    qmd: [],
+    phrases: [
+        {
+            id: 0,
+            chars: 'lel',
+            x: 0,
+            y: 0,
+            active: true,
+            scaleX: 1,
+            scaleY: 1,
+            rotate: 0,
+            color: 'black',
+            qmd: [],
+        }
+    ],
+});
 
 const state = {
     dragMode: false,
     dragValue: undefined,
-    glyphId: 0,
-    glyphset: {
-        title: 'matzdings',
-        spacing: 1,
-        lineSpacing: 2,
-        glyphs: [initGlyph]
-    },
+    glyphId: null,
+    glyphset: null,
     sceneId: 0,
     phraseId: 0,
-    scenes: [{
-        id: 0,
-        title: '',
-        duration: 10,
-        width: 640,
-        height: 320,
-        backgroundColor: 'white',
-        qmd: [],
-        phrases: [
-            {
-                id: 0,
-                chars: 'lel',
-                x: 0,
-                y: 0,
-                active: true,
-                scaleX: 1,
-                scaleY: 1,
-                rotate: 0,
-                color: 'black',
-                qmd: [],
-            }
-        ],
-    }],
+    scene: null,
     defines: {}
 };
 

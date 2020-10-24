@@ -1,18 +1,12 @@
 import React from 'react';
-import {connect} from 'react-redux';
-import {ExportList, ExportTextArea, ErrorLabel} from '.';
-import * as State from '../ReduxState';
+import { useSelector, useDispatch } from 'react-redux';
+import { replacePixels } from '../slices/glyphSlice';
+import { ExportList, ExportTextArea, ErrorLabel } from '.';
 import Initial from '../Initial';
 
-const mapStateToProps = (state) => ({
-    pixels: State.currentPixels(state),
-});
-
-const mapDispatchToProps = (dispatch) => ({
-    overwritePixels: pixels => dispatch(State.overwritePixels(pixels)),
-})
-
-const ExportView = ({state, pixels, overwritePixels}) => {
+const ExportView = () => {
+    const pixels = useSelector(state => state.glyph.pixels);
+    const dispatch = useDispatch();
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
 
@@ -26,7 +20,7 @@ const ExportView = ({state, pixels, overwritePixels}) => {
             const importedPixels = JSON.parse(tryImportText);
             const test2DArrayAccess = importedPixels[0][0];
             if (typeof test2DArrayAccess === "boolean") {
-                overwritePixels(importedPixels);
+                dispatch(replacePixels(importedPixels));
                 setErrorLabel('');
             }
             else {
@@ -76,4 +70,4 @@ const ExportView = ({state, pixels, overwritePixels}) => {
     </ExportList>;
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(ExportView);
+export default ExportView;

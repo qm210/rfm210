@@ -5,7 +5,7 @@ import {ShaderFrame} from '.';
 import * as GL from 'gl-react';
 //import * as GLDom from 'gl-react-dom';
 import RectAlgebra from '../RectAlgebra';
-import * as State from '../ReduxState';
+import * as State from '../slices/glyphSlice';
 import {CodeFrame} from '../components';
 import { shaderAlias, hardCodeKerningMap } from '../GlyphModel';
 import {liveMode} from '..'

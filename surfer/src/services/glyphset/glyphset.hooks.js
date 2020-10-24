@@ -12,7 +12,7 @@ module.exports = {
   },
 
   after: {
-    all: [],
+    all: [context => console.log("DID:", context)],
     find: [],
     get: [],
     create: [],

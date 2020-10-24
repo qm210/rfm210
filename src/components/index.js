@@ -86,3 +86,8 @@ export const GenericList = styled.div`
     padding: 10px;
     border: 1px solid #888;
 `;
+
+export const Button = styled.button`
+    margin: 10px;
+    padding: 10px;
+`;

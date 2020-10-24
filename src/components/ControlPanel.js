@@ -1,36 +1,23 @@
 import React from 'react';
-import {connect} from 'react-redux';
-//import io from 'socket.io-client';
-//import feathers from '@feathersjs/client';
-import * as State from '../ReduxState';
-import {GenericList, LabelledInput} from '.';
+import { useSelector, useDispatch } from 'react-redux';
+import * as State from '../slices/glyphSlice';
 import GlyphSelector from './GlyphSelector';
+import { GenericList, LabelledInput, Button } from '.';
+import { IDLE } from '../const';
+import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets } from '../slices/glyphsetSlice';
+import { surfer } from '..';
+import { OK } from './../const';
 
-//const socket = io('http://localhost:3333');
-
-//export const client = feathers().configure(feathers.socketio(socket));
-
-const mapStateToProps = (state) => ({
-    glyphset: state.glyphset,
-    glyph: State.currentGlyph(state),
-});
-
-const mapDispatchToProps = (dispatch) => ({
-    setLetterWidth: width => dispatch({type: State.SET_GLYPH_SIZE, payload: {width}}),
-    setLetterHeight: height => dispatch({type: State.SET_GLYPH_SIZE, payload: {height}}),
-    assignLetter: letter => dispatch({type: State.ASSIGN_LETTER, payload: letter}),
-    appendGlyphset: name => dispatch({type: State.APPEND_GLYPHSET, payload: name}),
-    assignGlyphset: name => dispatch({type: State.ASSIGN_GLYPHSET, payload: name}),
-    addGlyph: () => dispatch({type: State.ADD_GLYPH}),
-    copyGlyph: () => dispatch({type: State.COPY_GLYPH}),
-});
-
-const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph, copyGlyph,
-    setLetterWidth, setLetterHeight, assignLetter}) => {
+const ControlPanel = () => {
     const inputRef = React.createRef();
-    const glyphsets = [glyphset.title]; // TODO: extend if glyphset is going to be a list
+    const glyphset = useSelector(state => state.glyphset);
+    const glyph = null;
+    const dispatch = useDispatch();
 
-    const setLastTypedLetter = event => {
+    const glyphsetService = surfer.service('glyphset');
+    glyphsetService.on('removed', (event) => console.log("LLLEEEEEELLL!!", event));
+
+    const dispatchLastTypedLetter = event => {
         event.preventDefault();
         // TODO: can't handle backspace yet. anyway
         const newLetter = (glyph.letter !== '' && event.target.value === '') ? '' : event.key;
@@ -38,72 +25,84 @@ const ControlPanel = ({glyph, glyphset, assignGlyphset, appendGlyphset, addGlyph
             return;
         }
         event.target.value = newLetter;
-        assignLetter(newLetter);
+        dispatch(assignLetter(newLetter));
     }
+
+    React.useEffect(() => {
+        if (glyphset.status === IDLE) {
+            dispatch(fetchGlyphsets())
+        }
+    }, [glyphset, dispatch]);
+
+    console.log("......", glyphset.status, glyphset.all);
 
     return <GenericList>
         <div>
             <LabelledInput
-                name="iletter"
-                label="Letter:"
-                type="text"
-                defaultValue={glyph.letter}
-                onKeyPress={setLastTypedLetter}
+                name = "iletter"
+                label = "Letter:"
+                type = "text"
+                defaultValue = {glyph ? glyph.letter : ''}
+                disabled = {!glyph}
+                onKeyPress = {dispatchLastTypedLetter}
             />
             <LabelledInput
-                name="iwidth"
-                label="Width:"
-                type="number"
-                value={glyph.width}
-                onChange={event => setLetterWidth(+event.target.value)}
+                name = "iwidth"
+                label = "Width:"
+                type = "number"
+                value = {glyph ? glyph.width : 0}
+                disabled = {!glyph}
+                onChange = {event => dispatch(setLetterWidth(+event.target.value))}
             />
             <LabelledInput
                 name="iheight"
                 label="Height:"
                 type="number"
-                value={glyph.height}
-                onChange={event => setLetterHeight(+event.target.value)}
+                value={glyph ? glyph.height : 0}
+                disabled = {!glyph}
+                onChange={event => dispatch(setLetterHeight(+event.target.value))}
             />
         </div>
         <div style={{marginBottom: 20}}>
             <span>Glyphset: </span>
             <select
-                value = {glyphset.title}
+                value = {glyphset.current ? glyphset.current.title : ''}
                 onChange = {(event) => {
-                    assignGlyphset(event.target.value);
+                    dispatch(selectGlyphsetByTitle(event.target.value));
                     inputRef.current.value = event.target.value;
                 }}
+                disabled = {glyphset.status !== OK}
                 style = {{width: 200, marginLeft: 20}}>
                 {
-                    (glyphsets || []).map((item, index) =>
-                        <option
-                            key={item}
-                            value={item}
+                    glyphset.status === OK
+                    ? (glyphset.all || []).map((item, index) =>
+                        <option key={index}
+                            value={item.title}
                             >
-                            {item}
+                            {item.title}
                         </option>
                     )
+                    : <option>{glyphset.status}</option>
                 }
             </select>
             <input
                 type = "text"
                 ref = {inputRef}
-                defaultValue = {glyphset.title}
+                defaultValue = {glyphset.current ? glyphset.current.title : ''}
                 style = {{margin: "0 30px"}}
             />
-            <button onClick = {event => appendGlyphset(event.target.value)}>
-                +
-            </button>
+            <button onClick = {() => dispatch(createGlyphset(inputRef.current.value))}>+</button>
         </div>
         <div>
             Glyphset contains
         </div>
         <GlyphSelector/>
         <div>
-            <button style={{margin: 10, padding: 10}} onClick={addGlyph}>New Glyph</button>
-            <button style={{margin: 10, padding: 10}} onClick={copyGlyph}>Copy Glyph</button>
+            <Button onClick={() => dispatch(addGlyph())}>New Glyph</Button>
+            <Button onClick={() => dispatch(copyGlyph())}>Copy Glyph</Button>
+            <Button onClick={() => dispatch(deleteGlyph())}>Delete Glyph</Button>
         </div>
     </GenericList>;
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ControlPanel);
+export default ControlPanel;

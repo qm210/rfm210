@@ -5,7 +5,11 @@ module.exports = {
         all: [],
         find: [],
         get: [],
-        create: [],
+        create: [
+            context => {
+                console.log(context);
+            }
+        ],
         update: [],
         patch: [],
         remove: []

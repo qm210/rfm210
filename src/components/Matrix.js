@@ -1,29 +1,23 @@
 import React from 'react';
-import {connect} from 'react-redux';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-import * as State from '../ReduxState';
+import { leaveDragMode } from '../slices/glyphSlice';
 import MatrixRow from './MatrixRow';
-import {width2D, height2D, displayPixelSize} from '../Utils';
-
-const mapStateToProps = state => ({
-    pixels: State.currentPixels(state),
-    dummyForRerender: State.currentPixels(state)[0]
-});
-
-const mapDispatchToProps = dispatch => ({
-    leaveDragMode: () => dispatch({type: State.LEAVE_DRAGMODE, payload: {value: false}}),
-})
+import { width2D, height2D, displayPixelSize } from '../Utils';
 
 const StyledMatrix = styled.div`
     display: flex;
     flex-direction: column;
     border: 2px solid black;
-    width: ${({pixels}) => width2D(pixels) * displayPixelSize(pixels)}px;
-    height: ${({pixels}) => height2D(pixels) * displayPixelSize(pixels) + 4}px;
 `;
 
-const Matrix = ({pixels, leaveDragMode}) => {
+const Matrix = () => {
+    const pixels = useSelector(state => state.glyph.pixels);
     return <StyledMatrix
+        style = {{
+            width: width2D(pixels) * displayPixelSize(pixels),
+            height: height2D(pixels) * displayPixelSize(pixels) + 4,
+        }}
         pixels = {pixels}
         onMouseLeave = {leaveDragMode}
         >
@@ -35,4 +29,4 @@ const Matrix = ({pixels, leaveDragMode}) => {
     </StyledMatrix>
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Matrix);
+export default Matrix;
