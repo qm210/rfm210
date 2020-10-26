@@ -6,19 +6,17 @@ import ControlPanel from './components/ControlPanel';
 import {MainView, MainColumn} from './components';
 
 const GlyphApp = () =>
-    <>
-        <MainView>
-            <MainColumn>
-                {/*<MatrixView/>*/}
-                {/*<LogView/>*/}
-            </MainColumn>
-            <MainColumn>
-                <ControlPanel/>
-            </MainColumn>
-            <MainColumn>
-                {/*<ExportView/>*/}
-            </MainColumn>
-        </MainView>
-    </>;
+    <MainView>
+        <MainColumn>
+            <MatrixView/>
+            <LogView/>
+        </MainColumn>
+        <MainColumn>
+            <ControlPanel/>
+        </MainColumn>
+        <MainColumn>
+            <ExportView/>
+        </MainColumn>
+    </MainView>;
 
 export default GlyphApp;

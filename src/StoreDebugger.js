@@ -2,14 +2,30 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {ExportList, ExportTextArea, ErrorLabel, Button} from './components';
 import {clearStore} from './LocalStorage';
-import {clearGlyphsets} from './slices/glyphsetSlice';
+import {clearGlyphsetsAndGlyphs} from './slices/glyphsetSlice';
+import { surferUrl } from '.';
+
+const debugFeathersEndpoints = ['glyph', 'glyphset'];
 
 const StoreDebugger = () => {
     const [errorLabel, setErrorLabel] = React.useState('');
     const importTextArea = React.createRef();
+    const [feathersResponses, setFeathersResponses] = React.useState({});
 
     const state = useSelector(s => s);
     const dispatch = useDispatch();
+
+    React.useEffect(() => {
+        debugFeathersEndpoints.forEach(endpoint =>
+            fetch(surferUrl + '/' + endpoint)
+                .then(response => response.text())
+                .then(data => setFeathersResponses(state => ({
+                    ...state,
+                    [endpoint]: data
+                })))
+                .catch(error => console.warn(endpoint, error.message))
+        );
+    }, [setFeathersResponses, state]);
 
     const tryStateImport = (event) => {
         event.preventDefault();
@@ -42,7 +58,21 @@ const StoreDebugger = () => {
         <Button onClick={clearStore}>
             Clear Cache
         </Button>
-        <Button onClick={() => dispatch(clearAllGlyphsets())}>Surfer: Clear Glyphsets</Button>
+        <Button onClick={() => dispatch(clearGlyphsetsAndGlyphs())}>Surfer: Clear Glyphsets &amp; Glyphs</Button>
+        <div>
+        {
+            debugFeathersEndpoints.map((endpoint, index) =>
+            <React.Fragment key={index}>
+                <h5>
+                    {`${surferUrl}/${endpoint}`}
+                </h5>
+                <div>
+                    {feathersResponses[endpoint] || ''}
+                </div>
+            </React.Fragment>
+            )
+        }
+        </div>
         <Button onClick={() => console.log(state)}>
             DEBUG
         </Button>

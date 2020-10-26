@@ -5,7 +5,7 @@ import {Provider} from 'react-redux';
 import throttle from 'lodash.throttle';
 import GlyphReducer from './slices/glyphSlice';
 import GlyphsetReducer from './slices/glyphsetSlice';
-import {loadStore, saveStore} from './LocalStorage';
+import {saveStore} from './LocalStorage';
 import {BrowserRouter} from "react-router-dom";
 import App from './App';
 import './index.css';
@@ -13,20 +13,18 @@ import {parse} from 'query-string';
 import socketio from 'socket.io-client';
 import feathers from '@feathersjs/client';
 
-const parsedQuery = parse(window.location.search);
-export const liveMode = 'live' in parsedQuery;
+export const liveMode = 'live' in parse(window.location.search);
 
+export const surferUrl = 'http://localhost:3030';
 export const surfer = feathers();
-surfer.configure(feathers.socketio(socketio('http://localhost:3030')));
+surfer.configure(feathers.socketio(socketio(surferUrl)));
 
-export const persistedState = loadStore();
 export const store = configureStore({
     reducer: {
         glyphset: GlyphsetReducer,
         glyph: GlyphReducer,
     },
     devTools: true,
-    preloadedState: persistedState
 });
 
 store.subscribe(throttle(() => {

@@ -1,4 +1,4 @@
-import * as Glyph from './GlyphModel';
+import * as Glyph from './glyphUtils';
 
 // model constants
 const width = 9;

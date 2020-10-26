@@ -1,13 +1,11 @@
 export const loadStore = () => {
+    const serializedStore = localStorage.getItem('store');
     try {
-        const serializedStore = localStorage.getItem('store');
-        if (serializedStore === null) {
-            return undefined;
-        }
         return JSON.parse(serializedStore);
     }
     catch (error) {
-        console.error(error);
+        console.log("serialized store:", serializedStore, "error:", error);
+        return undefined;
     }
 };
 

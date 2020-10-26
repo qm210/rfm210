@@ -1,35 +1,17 @@
 import React from 'react';
-import {connect} from 'react-redux';
-import {QuickButton} from '../components';
+import { QuickButton, ButtonBar } from '../components';
 import Matrix from './Matrix';
-import * as State from '../slices/glyphSlice';
+import { clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight } from '../slices/glyphSlice';
 
-const mapStateToProps = (state) => ({
-});
 
-const mapDispatchToProps = (dispatch) => ({
-    clearAllPixels: () => dispatch(State.clearAllPixels()),
-    fillAllPixels: () => dispatch(State.fillAllPixels()),
-    shiftUp: () => dispatch({type: State.SHIFT_UP}),
-    shiftDown: () => dispatch({type: State.SHIFT_DOWN}),
-    shiftLeft: () => dispatch({type: State.SHIFT_LEFT}),
-    shiftRight: () => dispatch({type: State.SHIFT_RIGHT}),
-});
-
-const MatrixView = ({clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight}) =>
-    <div
+const MatrixView = () => {
+    return <div
         style={{
             display: "flex",
             flexDirection: "column",
         }}>
         <Matrix/>
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "row",
-                marginTop: 15,
-                marginBottom: 15,
-            }}>
+        <ButtonBar>
             <QuickButton onClick = {clearAllPixels}>
                 Clear!
             </QuickButton>
@@ -45,7 +27,8 @@ const MatrixView = ({clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight})
             <QuickButton onClick = {shiftRight}>
                 &#8594;
             </QuickButton>
-        </div>
+        </ButtonBar>
     </div>;
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(MatrixView);
+export default MatrixView;

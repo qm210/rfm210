@@ -1,57 +1,52 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { surfer } from '..';
-import * as Glyph from '../GlyphModel';
-import Initial, { initGlyph } from "../Initial";
 import {new2D, update2D, at2D, fill2D, size2D, clone2D, resize2D} from "../Utils";
 import { FAIL, IDLE, LOADING, OK } from '../const';
+import { nextLetter } from './../glyphUtils';
 
-export const [TOGGLE_PIXEL, SET_PIXEL, FILL_AREA, CLEAR_ALL_PIXELS, FILL_ALL_PIXELS, OVERWRITE_PIXELS,
-    ENTER_DRAGMODE, LEAVE_DRAGMODE, SET_GLYPH_SIZE,
-    SHIFT_LEFT, SHIFT_RIGHT, SHIFT_UP, SHIFT_DOWN,
-    CLEAR_GLYPHSETS, APPEND_GLYPHSET, PURGE_GLYPHSETS, ASSIGN_GLYPHSET, ASSIGN_LETTER, ADD_GLYPH, COPY_GLYPH,
-    LOAD_GLYPH, UPDATE_SCENE, UPDATE_PHRASE, SET_DEFINES,
-    ADD_NEW_PHRASE, COPY_PHRASE, DELETE_PHRASE, LOAD_PHRASE,
-    REPLACE_STATE
-] = [...Array(999).keys()];
+const service = () => surfer.service('glyph');
 
-const service = () => surfer.service('glyphset');
-
-export const fetchGlyph = createAsyncThunk('glyph/fetchGlyph', async (glyphset, letter) => {
+export const fetchGlyph = createAsyncThunk('glyph/fetchGlyph', async (id, {rejectWithValue}) => {
     try {
-        console.log(glyphset, letter);
-        return {};
+        return await service().get(id);
     } catch (err) {
         console.warn(err);
-        return null;
+        return rejectWithValue(err.message);
     }
 });
 
-export const addGlyph = createAsyncThunk('glyph/add', async (cloneId, {getState}) => {
+export const copyGlyph = () => addGlyph(true);
+
+export const addGlyph = createAsyncThunk('glyph/add', async (clone = false, {getState}) =>
     await service().create({
-        query: {
-            glyphset: getState().glyphset.current.id,
-            clone: cloneId,
-        }
-    });
-});
+        letter: nextLetter(getState().glyph.letter),
+        glyphsetId: getState().glyphset.current._id,
+        cloneId: clone ? getState().glyph._id : null,
+}));
 
-export const deleteGlyph = createAsyncThunk('glyph/remove', async (id, {getState}) => {
-    const id = getState().id;
+export const deleteGlyph = createAsyncThunk('glyph/remove', async (arg, {getState}) => {
+    const id = getState().glyph._id;
     if (!id) {
-        console.warn("can't delete glyph with no ID!", id);
+        return Promise.reject("can't delete glyph with no ID!");
     }
-    await service().remove(id);
+    return await service().remove(id);
 });
-// TODO: Reload whole glyph list
 
 export const replacePixels = createAsyncThunk('glyph/replacePixels', async (newPixels, {getState}) => {
-    const id = getState().id;
+    const id = getState()._id;
     if (!id) {
         console.log('Cannot PATCH pixels, ID is not known!');
         return;
     }
     await service().patch(id, {pixels: newPixels});
-})
+});
+
+export const fetchLetterMap = createAsyncThunk('glyph/fetchLetterMap', async (glyphset) => {
+    if (!glyphset || !glyphset.glyphList || !glyphset.glyphList.length) {
+        return [];
+    }
+    return await Promise.all(glyphset.glyphList.map(async id => service().get(id)));
+});
 
 const initWidth = 9;
 const initHeight = 16;
@@ -59,7 +54,6 @@ const initHeight = 16;
 export const glyphSlice = createSlice({
     name: 'glyph',
     initialState: {
-        id: null,
         width: initWidth,
         height: initHeight,
         letter: '',
@@ -122,20 +116,37 @@ export const glyphSlice = createSlice({
         [fetchGlyph.pending]: (state) => {
             state.status = LOADING;
         },
-        [fetchGlyph.fulfilled]: (state, {payload}) => {
-            state.status = OK;
-            state.glyph = payload;
-            state.error = null;
-        },
+        [fetchGlyph.fulfilled]: (state, {payload}) => ({
+                ...state,
+                ...payload,
+                status: OK,
+                error: null
+        }),
         [fetchGlyph.rejected]: (state, {error}) => {
-            state.status = 'LEEL?';
+            state.status = FAIL;
             state.error = error.message;
-        }
+        },
     }
 });
 
-export const {leaveDragMode, enterDragMode, clearAllPixels, togglePixel, setPixel, fillArea, fillAllPixels} = glyphSlice.actions;
 export default glyphSlice.reducer;
+
+export const {
+    leaveDragMode,
+    enterDragMode,
+    clearAllPixels,
+    fillAllPixels,
+    togglePixel,
+    setPixel,
+    fillArea,
+    assignLetter,
+    resize,
+    shiftUp,
+    shiftDown,
+    shiftLeft,
+    shiftRight,
+} = glyphSlice.actions;
+
 
 /*
 const Reducer = (state = Initial.state, {type, payload}) => {

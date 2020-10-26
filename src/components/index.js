@@ -38,14 +38,14 @@ export const ExportTextArea = styled.textarea`
     height: 180px;
     margin: 10px;
     font-size: 9.5px;
-`
+`;
 
 export const ErrorLabel = styled.span`
     margin-left: 10px;
     color: red;
     font-weight: bold;
     font-size: 18px;
-`
+`;
 
 export const QuickButton = styled.button`
     height: 40px;
@@ -53,7 +53,14 @@ export const QuickButton = styled.button`
     font-size: 20px;
     font-weight: bold;
     margin-left: 4px;
-`
+`;
+
+export const ButtonBar = styled.div`
+    display: flex;
+    flex-direction: row;
+    margin-top: 15;
+    margin-bottom: 15;
+`;
 
 export const ShaderFrame = styled.div`
     display: flex;

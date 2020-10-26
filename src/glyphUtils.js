@@ -34,7 +34,7 @@ export const withPixelsIfMatch = (glyph, id, pixels) => ({
     pixels: glyph.id === id ? pixels : glyph.pixels
 });
 
-// TODO: Serializing to local storage breaks the Glyph associaiton. Fix... sometime.
+export const nextLetter = (letter) => letter ? String.fromCharCode(letter.charCodeAt(0) + 1) : 'A';
 
 export const alias = letter =>
     letter === ''

@@ -1,52 +1,63 @@
 import React from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import {alias} from '../GlyphModel';
-import {fetchGlyph} from '../slices/glyphSlice';
-import styled from 'styled-components';
+import { alias } from '../glyphUtils';
+import { fetchGlyph } from '../slices/glyphSlice';
+import { Loader, Segment } from 'semantic-ui-react';
+import { fetchLetterMap } from './../slices/glyphSlice';
 
-const SelectorList = styled.div`
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: flex-start;
-    align-items: baseline;
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #888;
-`;
-
+// TODO: save last glyphset and glyph ID in local state, and fetch these again up reload.
 const GlyphSelector = () => {
-    const glyphset = null;
-    const glyph = null;
-    return (
-    <SelectorList
-        style = {{
-            flexDirection: 'row',
-            fontSize: '1.2rem',
-            width: 400,
-        }}>
-            {glyphset && glyphset.glyphs.slice()
-                .sort((a,b) =>
-                    a.letter.toLowerCase() === b.letter.toLowerCase()
-                        ? (a.letter > b.letter ? 1 : -1)
-                        : (a.letter.toLowerCase() > b.letter.toLowerCase() ? 1 : -1)
-                )
-                .map((eachGlyph, index) =>
+    const glyphset = useSelector(state => state.glyphset.current);
+    const glyph = useSelector(state => state.glyph);
+    const dispatch = useDispatch();
+
+    React.useEffect(() => {
+        if (glyphset && !glyphset.letterMap) {
+            const promise = dispatch(fetchLetterMap(glyphset));
+            return () => promise.abort();
+        }
+    }, [dispatch, glyphset])
+
+    const selected = item => glyph && glyph._id === item._id;
+
+    return !glyphset ? null : <div>
+        Glyphset contains
+        <Segment
+            style = {{
+                flexDirection: 'row',
+                fontSize: '1.2rem',
+                width: '99%',
+                padding: 15,
+                backgroundColor: !glyphset.letterMap ? 'lightgrey' : 'none'
+            }}>
+            <Loader active={!glyphset.letterMap}/>
+            {
+                (glyphset.letterMap || []).map((item, index) =>
                     <button
                         key = {index}
-                        value = {eachGlyph.id}
                         style = {{
                             marginRight: 5,
                             marginBottom: 5,
                             padding: "3px 10px",
-                            borderWidth: glyph && eachGlyph.id === glyph.id ? 2 : 1,
+                            borderWidth: 2,
+                            outline: 'none',
+                            ...(selected(item) && {
+                                color: 'red',
+                                backgroundColor: 'gold',
+                                fontWeight: 'bold'
+                            }) || {
+                                color: 'black',
+                                fontWeight: 'normal'
+                            }
                         }}
-                        onClick = {event => fetchGlyph(glyphset, event.target.value)}
+                        title = {item._id}
+                        onClick = {() => dispatch(fetchGlyph(item._id))}
                         >
-                            {alias(eachGlyph.letter)}
+                            {alias(item.letter)}
                     </button>
             )}
-    </SelectorList>
-    )
+        </Segment>
+    </div>;
 };
 
 export default GlyphSelector;

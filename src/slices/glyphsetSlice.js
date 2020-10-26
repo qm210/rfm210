@@ -1,28 +1,25 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { surfer } from '..';
 import { IDLE, OK, LOADING, FAIL } from '../const';
+import { fetchLetterMap } from './glyphSlice';
 
 const service = () => surfer.service('glyphset');
 
 export const fetchGlyphsets = createAsyncThunk('glyphset/find', async () => {
-    console.log("LETS GO")
     const response = await service().find();
-    console.log("GLYPHSET FIND", response);
     return response.data;
 });
 
-export const createGlyphset = createAsyncThunk('glyphset/create', async (title) => {
+export const createGlyphset = createAsyncThunk('glyphset/create', async (title, {getState}) => {
     const response = await service().create({
         title
     });
-    console.log("..", response);
-    await new Promise(r => setTimeout(r, 500));
-    console.log("IDLE NOW");
     return response;
 });
 
-export const clearGlyphsets = createAsyncThunk('glyphsets/clear', async () => {
+export const clearGlyphsetsAndGlyphs = createAsyncThunk('glyphsets/clear', async () => {
     await service().remove(null);
+    await surfer.service('glyph').remove(null);
 });
 
 export const glyphsetSlice = createSlice({
@@ -35,7 +32,11 @@ export const glyphsetSlice = createSlice({
     },
     reducers: {
         selectGlyphsetByTitle: (state, action) => {
-            state.current = state.all.find(g => g.title === action.payload);
+            state.current = state.all.find(glyphset => glyphset.title === action.payload);
+            if (!state.current) {
+                console.warn("could not select glyphset by title", action.payload);
+                return;
+            }
         },
     },
     extraReducers: {
@@ -43,7 +44,6 @@ export const glyphsetSlice = createSlice({
             state.status = LOADING;
         },
         [fetchGlyphsets.fulfilled]: (state, action) => {
-            console.log("FGFF", action);
             state.all = action.payload;
             state.status = OK;
         },
@@ -53,8 +53,19 @@ export const glyphsetSlice = createSlice({
             state.error = action.error.message;
         },
         [createGlyphset.fulfilled]: (state, action) => {
-            console.log("CFGG", action);
+            state.all.push(action.payload);
+            state.all.sort();
+            state.current = action.payload;
+        },
+        [clearGlyphsetsAndGlyphs.fulfilled]: (state) => {
             state.status = IDLE;
+            state.all = [];
+            state.current = null;
+        },
+        [fetchLetterMap.fulfilled]: (state, action) => {
+            if (state.current) {
+                state.current.letterMap = action.payload;
+            }
         }
     }
 });
