@@ -1,13 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { surfer } from '..';
 import { IDLE, OK, LOADING, FAIL } from '../const';
-import { fetchLetterMap } from './glyphSlice';
+import { fetchLetterMap, assignLetter } from './glyphSlice';
 
 const service = () => surfer.service('glyphset');
 
 export const fetchGlyphsets = createAsyncThunk('glyphset/find', async () => {
     const response = await service().find();
     return response.data;
+});
+
+export const fetchGlyphset = createAsyncThunk('glyphset/get', async (glyphset) => {
+    const lel = await service().get(glyphset._id);
+    return lel;
 });
 
 export const createGlyphset = createAsyncThunk('glyphset/create', async (title, {getState}) => {
@@ -52,6 +57,11 @@ export const glyphsetSlice = createSlice({
             state.status = FAIL;
             state.error = action.error.message;
         },
+        [fetchGlyphset.fulfilled]: (state, action) => {
+            console.log("was:", state.current);
+            state.current = action.payload;
+            console.log("is:", state.current);
+        },
         [createGlyphset.fulfilled]: (state, action) => {
             state.all.push(action.payload);
             state.all.sort();
@@ -65,6 +75,16 @@ export const glyphsetSlice = createSlice({
         [fetchLetterMap.fulfilled]: (state, action) => {
             if (state.current) {
                 state.current.letterMap = action.payload;
+            }
+        },
+        [assignLetter]: (state, {payload}) => {
+            if (state.current.letterMap) {
+                console.log("lel", payload);
+                state.current.letterMap = state.current.letterMap.map(glyph => ({
+                    ...glyph,
+                    letter: glyph._id === payload.id ? payload.letter : glyph.letter
+                }));
+                state.current.letterMap.sort((a,b) => a.letter < b.letter ? -1 : 1);
             }
         }
     }

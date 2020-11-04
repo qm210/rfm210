@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { surfer } from '..';
-import {new2D, update2D, at2D, fill2D, size2D, clone2D, resize2D} from "../Utils";
+import { update2D, at2D, fill2D, size2D, clone2D, resize2D } from "../Utils";
 import { FAIL, IDLE, LOADING, OK } from '../const';
 import { nextLetter } from './../glyphUtils';
 
@@ -17,47 +17,48 @@ export const fetchGlyph = createAsyncThunk('glyph/fetchGlyph', async (id, {rejec
 
 export const copyGlyph = () => addGlyph(true);
 
-export const addGlyph = createAsyncThunk('glyph/add', async (clone = false, {getState}) =>
-    await service().create({
-        letter: nextLetter(getState().glyph.letter),
-        glyphsetId: getState().glyphset.current._id,
-        cloneId: clone ? getState().glyph._id : null,
-}));
+export const addGlyph = createAsyncThunk('glyph/add', async (clone = false, {getState}) => {
+    const glyph = getState().glyph.current;
+    const glyphset = getState().glyphset.current;
+    return await service().create({
+        letter: nextLetter(glyphset.letterMap),
+        glyphsetId: glyphset._id,
+        cloneId: clone && glyph ? glyph._id : null,
+        width: glyph ? glyph.width : null,
+        height: glyph ? glyph.height : null,
+    });
+});
 
 export const deleteGlyph = createAsyncThunk('glyph/remove', async (arg, {getState}) => {
-    const id = getState().glyph._id;
+    const id = getState().glyph.current._id;
     if (!id) {
         return Promise.reject("can't delete glyph with no ID!");
     }
     return await service().remove(id);
 });
 
-export const replacePixels = createAsyncThunk('glyph/replacePixels', async (newPixels, {getState}) => {
-    const id = getState()._id;
-    if (!id) {
-        console.log('Cannot PATCH pixels, ID is not known!');
+export const updateGlyph = createAsyncThunk('glyph/update', async (arg, {getState}) => {
+    const glyph = getState().glyph.current;
+    if (!glyph._id) {
+        console.log('Cannot PATCH pixels, ID is not known!', glyph);
         return;
     }
-    await service().patch(id, {pixels: newPixels});
+    await service().patch(glyph._id, glyph);
 });
 
 export const fetchLetterMap = createAsyncThunk('glyph/fetchLetterMap', async (glyphset) => {
     if (!glyphset || !glyphset.glyphList || !glyphset.glyphList.length) {
         return [];
     }
-    return await Promise.all(glyphset.glyphList.map(async id => service().get(id)));
+    const letterMap = await Promise.all(glyphset.glyphList.map(async id => service().get(id)));
+    letterMap.sort((a,b) => a.letter < b.letter ? -1 : 1);
+    return letterMap;
 });
-
-const initWidth = 9;
-const initHeight = 16;
 
 export const glyphSlice = createSlice({
     name: 'glyph',
     initialState: {
-        width: initWidth,
-        height: initHeight,
-        letter: '',
-        pixels: new2D(initWidth, initHeight),
+        current: null,
         dragMode: false,
         dragValue: null,
         status: IDLE,
@@ -65,51 +66,55 @@ export const glyphSlice = createSlice({
     },
     reducers: {
         clearAllPixels: (state) => {
-            state.pixels = fill2D(state.pixels, false);
+            state.current.pixels = fill2D(state.current.pixels, false);
         },
         fillAllPixels: (state) => {
-            state.pixels = fill2D(state.pixels, true);
+            state.current.pixels = fill2D(state.current.pixels, true);
         },
-        enterDragMode: (state) => {
+        enterDragMode: (state, action) => {
             state.dragMode = true;
+            state.dragValue = action.payload;
         },
         leaveDragMode: (state) => {
             state.dragMode = false;
         },
         togglePixel: (state, {payload: coord}) => {
-            console.log("TOGGLE", coord);
-            state.pixels = update2D(state.pixels, coord, !at2D(state.pixels, coord));
+            state.current.pixels = update2D(state.current.pixels, coord, !at2D(state.current.pixels, coord));
         },
         setPixel: (state, {payload}) => {
-            console.log("SETPIXEL", payload);
-            state.pixels = update2D(state.pixels, payload.coord, payload.value);
+            state.current.pixels = update2D(state.current.pixels, payload.coord, payload.value);
         },
         fillArea: (state, {payload}) => {
-            state.pixels = fillConnectedArea(state.pixels, payload)
+            state.current.pixels = fillConnectedArea(state.current.pixels, payload.coord, payload.value)
         },
         resize: (state, {payload}) => {
-            state.pixels = resize2D(state.pixels, payload.width || state.width, payload.height || state.height);
+            state.current.width = payload.width || state.current.width;
+            state.current.height = payload.height || state.current.height
+            state.current.pixels = resize2D(state.current.pixels, state.current.width, state.current.height);
         },
         shiftLeft: (state) => { //TODO: forEach?
-            state.pixels = state.pixels.map(row => {
+            state.current.pixels = state.current.pixels.map(row => {
                 row.push(row.shift());
                 return row;
             });
         },
         shiftRight: (state) => { //TODO: forEach?
-            state.pixels = state.pixels.map(row => {
+            state.current.pixels = state.current.pixels.map(row => {
                 row.unshift(row.pop());
                 return row;
             });
         },
         shiftUp: (state) => {
-            state.pixels.push(state.pixels.shift());
+            state.current.pixels.push(state.current.pixels.shift());
         },
         shiftDown: (state) => {
-            state.pixels.unshift(state.pixels.pop());
+            state.current.pixels.unshift(state.current.pixels.pop());
         },
         assignLetter: (state, {payload}) => {
-            state.letter = payload.letter;
+            state.current.letter = payload.letter;
+        },
+        replacePixels: (state, {payload}) => {
+            state.current.pixels = payload;
         }
     },
     extraReducers: {
@@ -118,7 +123,10 @@ export const glyphSlice = createSlice({
         },
         [fetchGlyph.fulfilled]: (state, {payload}) => ({
                 ...state,
-                ...payload,
+                current: {
+                    ...state.current,
+                    ...payload,
+                },
                 status: OK,
                 error: null
         }),
@@ -126,6 +134,9 @@ export const glyphSlice = createSlice({
             state.status = FAIL;
             state.error = error.message;
         },
+        [addGlyph.rejected]: (state, action) => {
+            console.warn("add glyph rejected", action);
+        }
     }
 });
 
@@ -140,6 +151,7 @@ export const {
     setPixel,
     fillArea,
     assignLetter,
+    replacePixels,
     resize,
     shiftUp,
     shiftDown,
@@ -311,7 +323,7 @@ const recursiveFindConnectedPixels = (holding, pixels, column, row, value) => {
     return holding;
 }
 
-const fillConnectedArea = (pixels, {column, row, value}) => {
+const fillConnectedArea = (pixels, {column, row}, value) => {
     const clonePixels = clone2D(pixels);
     const connectedPixels = recursiveFindConnectedPixels([], pixels, column, row, value);
     for (const pixel of connectedPixels) {

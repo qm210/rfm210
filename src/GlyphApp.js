@@ -5,18 +5,21 @@ import ExportView from './components/ExportView';
 import ControlPanel from './components/ControlPanel';
 import {MainView, MainColumn} from './components';
 
-const GlyphApp = () =>
-    <MainView>
-        <MainColumn>
-            <MatrixView/>
-            <LogView/>
-        </MainColumn>
-        <MainColumn>
-            <ControlPanel/>
-        </MainColumn>
-        <MainColumn>
-            <ExportView/>
-        </MainColumn>
-    </MainView>;
+const GlyphApp = () => {
+    return (
+        <MainView>
+            <MainColumn>
+                <MatrixView/>
+                <LogView/>
+            </MainColumn>
+            <MainColumn>
+                <ControlPanel/>
+            </MainColumn>
+            <MainColumn>
+                <ExportView/>
+            </MainColumn>
+        </MainView>
+    );
+};
 
 export default GlyphApp;

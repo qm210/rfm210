@@ -34,7 +34,15 @@ export const withPixelsIfMatch = (glyph, id, pixels) => ({
     pixels: glyph.id === id ? pixels : glyph.pixels
 });
 
-export const nextLetter = (letter) => letter ? String.fromCharCode(letter.charCodeAt(0) + 1) : 'A';
+export const nextLetter = (letterMap) => {
+    if (letterMap.length === 1) {
+        return String.fromCharCode(letterMap[0].letter.charCodeAt(0) + 1);
+    }
+    else if (letterMap.length === 0) {
+        return 'Q'
+    }
+    return nextLetter(letterMap.slice(-1));
+}
 
 export const alias = letter =>
     letter === ''

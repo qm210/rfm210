@@ -1,20 +1,35 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import Select from 'react-select';
 import GlyphSelector from './GlyphSelector';
 import { GenericList, LabelledInput, Button } from '.';
 import { IDLE } from '../const';
-import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets } from '../slices/glyphsetSlice';
-import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph } from '../slices/glyphSlice';
+import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets, fetchGlyphset } from '../slices/glyphsetSlice';
+import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph, updateGlyph } from '../slices/glyphSlice';
 import { OK } from './../const';
-import { fetchLetterMap } from './../slices/glyphSlice';
+
+const GLYPH_UPDATE_THROTTLE = 1000;
+
+const option = value => ({value, label: value});
 
 const ControlPanel = () => {
     const glyphset = useSelector(state => state.glyphset);
-    const glyph = null;
+    const glyph = useSelector(state => state.glyph.current);
     const dispatch = useDispatch();
     const [glyphsetTitleInput, setGlyphsetTitleInput] = React.useState('Matzdings');
 
-    const glyphsetTitleList = React.useMemo(() => (glyphset.all || []).map(item => item.title), [glyphset]);
+    const glyphsetTitleList = (glyphset.all || []).map(item => item.title);
+    const glyphsetOptionList = glyphset.status !== OK
+        ? [option(glyphset.status)]
+        : glyphsetTitleList.map(title => option(title))
+
+    React.useEffect(() => {
+        const debounce = setTimeout(() => {
+            console.log("SOMETHING WITH CURRENT GLYPH CHANGED", glyph);
+            dispatch(updateGlyph());
+        }, GLYPH_UPDATE_THROTTLE);
+        return () => clearTimeout(debounce);
+    }, [glyph, dispatch]);
 
     const dispatchLastTypedLetter = event => {
         event.preventDefault();
@@ -24,7 +39,8 @@ const ControlPanel = () => {
             return;
         }
         event.target.value = newLetter;
-        dispatch(assignLetter(newLetter));
+        dispatch(assignLetter({id: glyph._id, letter: newLetter}));
+        dispatch(updateGlyph());
     }
 
     React.useEffect(() => {
@@ -39,12 +55,11 @@ const ControlPanel = () => {
         }
     }, [glyphset, dispatch])
 
-    const dispatchAndUpdate = React.useCallback((action) => () => {
+    const dispatchAndUpdate = (action) => {
+        console.log("ACTION", action, glyphset);
         dispatch(action)
-        .then(() =>
-            dispatch(fetchLetterMap(glyphset))
-        );
-    }, [dispatch, glyphset]);
+            .then(() => dispatch(fetchGlyphset(glyphset.current)))
+    };
 
     return <GenericList>
         <div>
@@ -52,7 +67,7 @@ const ControlPanel = () => {
                 name = "iletter"
                 label = "Letter:"
                 type = "text"
-                defaultValue = {glyph ? glyph.letter : ''}
+                defaultValue = {(glyph && glyph.letter) || ''}
                 disabled = {!glyph}
                 onKeyPress = {dispatchLastTypedLetter}
             />
@@ -60,7 +75,7 @@ const ControlPanel = () => {
                 name = "iwidth"
                 label = "Width:"
                 type = "number"
-                value = {glyph ? glyph.width : 0}
+                value = {(glyph && glyph.width) || 0}
                 disabled = {!glyph}
                 onChange = {event => dispatch(resize({width: +event.target.value}))}
             />
@@ -68,48 +83,42 @@ const ControlPanel = () => {
                 name="iheight"
                 label="Height:"
                 type="number"
-                value={glyph ? glyph.height : 0}
+                value={(glyph && glyph.height) || 0}
                 disabled = {!glyph}
                 onChange={event => dispatch(resize({height: +event.target.value}))}
             />
         </div>
         <div style={{marginBottom: 20}}>
             <span>Glyphset: </span>
-            <select
-                value = {glyphset.current ? glyphset.current.title : ''}
-                onClick = {(event) => {
-                    dispatch(selectGlyphsetByTitle(event.target.value));
-                    if (event.target.value) {
-                        setGlyphsetTitleInput(event.target.value);
-                    }
+            <Select
+                value = {glyphsetOptionList.find(option => glyphset.current && glyphset.current.title === option.label)}
+                onChange = {value => {
+                    dispatch(selectGlyphsetByTitle(value));
+                    value && setGlyphsetTitleInput(value);
                 }}
+                options = {glyphsetOptionList}
                 disabled = {glyphset.status !== OK}
-                style = {{width: 200, marginLeft: 20}}>
-                {
-                    glyphset.status === OK
-                    ? glyphsetTitleList.map((item, index) =>
-                        <option key={index}>{item}</option>
-                    )
-                    : <option>{glyphset.status}</option>
-                }
-            </select>
-            <input
-                type = "text"
-                value = {glyphsetTitleInput}
-                onChange = {event => setGlyphsetTitleInput(event.target.value)}
-                style = {{margin: "0 30px"}}
             />
-            <button
-                disabled = {!glyphsetTitleInput || glyphsetTitleList.includes(glyphsetTitleInput)}
-                onClick = {() => dispatch(createGlyphset(glyphsetTitleInput))}>
-                    +
-            </button>
+            <div className="ui input" style={{marginTop: 15}}>
+                <input
+                    type = "text"
+                    value = {glyphsetTitleInput}
+                    onChange = {event => setGlyphsetTitleInput(event.target.value)}
+                    style = {{margin: "0 30px"}}
+                />
+                <button
+                    style = {{width: 50}}
+                    disabled = {!glyphsetTitleInput || glyphsetTitleList.includes(glyphsetTitleInput)}
+                    onClick = {() => dispatch(createGlyphset(glyphsetTitleInput))}>
+                        +
+                </button>
+            </div>
         </div>
         <GlyphSelector/>
         <div>
-            <Button disabled={!glyphset.current} onClick={dispatchAndUpdate(addGlyph())}>New Glyph</Button>
-            <Button disabled={!glyphset.current} onClick={dispatchAndUpdate(copyGlyph())}>Copy Glyph</Button>
-            <Button disabled={!glyphset.current} onClick={dispatchAndUpdate(deleteGlyph())}>Delete Glyph</Button>
+            <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(addGlyph())}>New Glyph</Button>
+            <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(copyGlyph())}>Copy Glyph</Button>
+            <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(deleteGlyph())}>Delete Glyph</Button>
         </div>
     </GenericList>;
 }

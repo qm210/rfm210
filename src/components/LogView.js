@@ -36,8 +36,13 @@ const RectList = ({collection, ItemClass, label}) => {
 };
 
 const LogView = () => {
-    const pixels = useSelector(state => state.glyph.pixels);
+    const glyph = useSelector(state => state.glyph.current);
     const [onceClicked, setOnceClicked] = React.useState(false);
+
+    if (!glyph) {
+        return null;
+    }
+    const pixels = glyph.pixels;
     const [allRects, orphanPixels] = RectAlgebra.getAllRectsAndOrphanPixels(pixels);
     const sufficientRects = RectAlgebra.getSufficientRects(pixels, allRects, orphanPixels);
     return <LogList>

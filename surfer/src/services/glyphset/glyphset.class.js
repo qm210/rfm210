@@ -13,9 +13,7 @@ exports.Glyphset = class Glyphset extends Service {
     }
 
     async addGlyph(glyphsetId, glyphId) {
-        console.log("ADD TO GLYPHSET");
         const glyphset = await this.get(glyphsetId);
-        console.log(glyphset);
         return this.patch(glyphsetId, {
             glyphList: [
                 ...glyphset.glyphList,
@@ -24,4 +22,10 @@ exports.Glyphset = class Glyphset extends Service {
         });
     }
 
+    async deleteGlyph(glyphsetId, glyphId) {
+        const glyphset = await this.get(glyphsetId);
+        return this.patch(glyphsetId, {
+            glyphList: glyphset.glyphList.filter(id => id !== glyphId)
+        });
+    }
 };

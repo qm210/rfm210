@@ -12,7 +12,11 @@ const StyledMatrix = styled.div`
 `;
 
 const Matrix = () => {
-    const pixels = useSelector(state => state.glyph.pixels);
+    const glyph = useSelector(state => state.glyph.current);
+    if (!glyph) {
+        return <div>No Glyph Selected.</div>
+    }
+    const pixels = glyph.pixels;
     return <StyledMatrix
         style = {{
             width: width2D(pixels) * displayPixelSize(pixels),
@@ -26,7 +30,7 @@ const Matrix = () => {
                 <MatrixRow key={row} row={row} values={pixelRow}/>
             )
         }
-    </StyledMatrix>
+    </StyledMatrix>;
 };
 
 export default Matrix;

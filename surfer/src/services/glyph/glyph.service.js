@@ -16,9 +16,11 @@ module.exports = function (app) {
 
     const glyphsetService = app.service('glyphset');
 
-    service.on('created', async glyph => {
-        await glyphsetService.addGlyph(glyph.glyphsetId, glyph._id);
-        console.log("Created", glyph);
+    service.on('created', glyph => {
+        console.log("glyph created");
+        glyphsetService.addGlyph(glyph.glyphsetId, glyph._id);
     });
-    service.on('removed', glyph => console.log("Removed", glyph));
+    service.on('removed', glyph  => {
+        glyphsetService.deleteGlyph(glyph.glyphsetId, glyph._id);
+    });
 };

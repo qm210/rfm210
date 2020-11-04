@@ -8,13 +8,14 @@ import { fetchLetterMap } from './../slices/glyphSlice';
 // TODO: save last glyphset and glyph ID in local state, and fetch these again up reload.
 const GlyphSelector = () => {
     const glyphset = useSelector(state => state.glyphset.current);
-    const glyph = useSelector(state => state.glyph);
+    const glyph = useSelector(state => state.glyph.current);
     const dispatch = useDispatch();
 
     React.useEffect(() => {
         if (glyphset && !glyphset.letterMap) {
-            const promise = dispatch(fetchLetterMap(glyphset));
-            return () => promise.abort();
+            //const promise =
+            dispatch(fetchLetterMap(glyphset));
+            //return () => {console.log("abort!"); promise.abort();} //TODO: find out whether this is good style or rather bad
         }
     }, [dispatch, glyphset])
 
@@ -28,6 +29,7 @@ const GlyphSelector = () => {
                 fontSize: '1.2rem',
                 width: '99%',
                 padding: 15,
+                minHeight: 60,
                 backgroundColor: !glyphset.letterMap ? 'lightgrey' : 'none'
             }}>
             <Loader active={!glyphset.letterMap}/>

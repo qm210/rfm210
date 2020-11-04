@@ -10,29 +10,41 @@ const CheckBox = styled.div`
 `
 
 const MatrixPixel = ({coord}) => {
-    const value = useSelector(state => at2D(state.glyph.pixels, coord));
+    const value = useSelector(state => at2D(state.glyph.current.pixels, coord));
     const [dragMode, dragValue] = useSelector(state => [state.glyph.dragMode, state.glyph.dragValue]);
-    const pixelSize = useSelector(state => displayPixelSize(state.glyph.pixels));
-    const id = useSelector(state => state.glyph._id);
+    const pixelSize = useSelector(state => displayPixelSize(state.glyph.current.pixels));
+    const id = useSelector(state => state.glyph.current._id);
     const dispatch = useDispatch();
 
     const enterDragModeWithValue = React.useCallback(event => {
         event.preventDefault();
         if (event.ctrlKey) {
-            dispatch(setPixel(true));
+            dispatch(setPixel({coord, value: true}));
             dispatch(enterDragMode(true));
         } else {
-            dispatch(togglePixel());
+            dispatch(togglePixel(coord));
             dispatch(enterDragMode(!value));
         }
-    }, [dispatch, value]);
+    }, [dispatch, coord, value]);
 
     return !id ? null : <CheckBox
         value = {value}
-        onMouseDown = {() => dispatch(enterDragModeWithValue())}
-        onMouseUp = {() => dispatch(leaveDragMode())}
-        onContextMenu = {(event) => {event.preventDefault(); fillArea(value);}}
-        onMouseEnter = {() => dragMode ? setPixel(dragValue) : {}}
+        onMouseDown = {enterDragModeWithValue}
+        onMouseUp = {() =>
+            dispatch(leaveDragMode())
+        }
+        onContextMenu = {event => {
+            event.preventDefault();
+            console.log("fill!", coord, !value);
+            dispatch(fillArea({coord, value}));
+        }}
+        onMouseEnter = {() =>
+            dragMode && dispatch(
+                setPixel({
+                    coord,
+                    value: dragValue
+                })
+        )}
         title = {`(${coord.column}, ${coord.row})`}
         style = {{
             width: pixelSize,
