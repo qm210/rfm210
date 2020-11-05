@@ -27,7 +27,7 @@ export const clearGlyphsetsAndGlyphs = createAsyncThunk('glyphsets/clear', async
     await surfer.service('glyph').remove(null);
 });
 
-export const glyphsetSlice = createSlice({
+const glyphsetSlice = createSlice({
     name: 'glyphset',
     initialState: {
         all: [],

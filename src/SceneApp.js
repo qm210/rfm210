@@ -1,44 +1,16 @@
 import React from 'react';
-import {connect} from 'react-redux';
-import * as State from './slices/glyphSlice';
+import { useSelector } from 'react-redux';
 import {MainView, MainColumn, LabelledInput, QuickButton} from './components';
 import SceneShaderView from './components/SceneShaderView';
 import Initial from './Initial';
 import {joinObject, splitToObject, whenSubmitted} from './Utils';
 
-const mapStateToProps = (state) => ({
-    scenes: state.scenes,
-    scene: State.currentScene(state),
-    phrase: State.currentPhrase(state),
-    defines: state.defines,
-});
+export default () => {
+    const scenes = useSelector(store => store.scene.all);
+    const scene = useSelector(store => store.scene.current);
+    const thing = useSelector(currentThing);
+    const params = useSelector(store => store.scene)
 
-const mapDispatchToProps = (dispatch) => ({
-    setWidth: width => dispatch({type: State.UPDATE_SCENE, payload: {width}}),
-    setHeight: height => dispatch({type: State.UPDATE_SCENE, payload: {height}}),
-    setDuration: duration => dispatch({type: State.UPDATE_SCENE, payload: {duration}}),
-    setSceneQmd: qmd => dispatch({type: State.UPDATE_SCENE, payload: {qmd}}),
-    setPhraseQmd: qmd => dispatch({type: State.UPDATE_PHRASE, payload: {qmd}}),
-    setDefines: defines => dispatch({type: State.SET_DEFINES, payload: defines}),
-    addNewPhrase: () => dispatch({type: State.ADD_NEW_PHRASE}),
-    copyPhrase: () => dispatch({type: State.COPY_PHRASE}),
-    deletePhrase: () => dispatch({type: State.DELETE_PHRASE}),
-
-    onSetPhraseChars: event =>
-        dispatch({type: State.UPDATE_PHRASE, payload: {chars: event.target.value}}),
-    onSetPhraseX: event =>
-        dispatch({type: State.UPDATE_PHRASE, payload: {x: +event.target.value}}),
-    onSetPhraseY: event =>
-        dispatch({type: State.UPDATE_PHRASE, payload: {y: +event.target.value}}),
-    onSetPhraseRotate: event =>
-        dispatch({type: State.UPDATE_PHRASE,  payload: {rotate: +event.target.value * Math.PI / 180}}),
-    onLoadPhrase: event =>
-        dispatch({type: State.LOAD_PHRASE, payload: +event.target.value})
-});
-
-const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDuration, setSceneQmd,
-    onSetPhraseChars, onSetPhraseX, onSetPhraseY, onSetPhraseRotate, setPhraseQmd, setDefines,
-    addNewPhrase, copyPhrase, deletePhrase, onLoadPhrase}) => {
     const [inputSceneQmd, setInputSceneQmd] = React.useState(scene.qmd.join('\n'));
     const [inputPhraseQmd, setInputPhraseQmd] = React.useState(phrase.qmd.join('\n'));
     const [inputDefines, setInputDefines] = React.useState(joinObject(defines, ' ', '\n'));
@@ -197,4 +169,3 @@ const SceneApp = ({scenes, scene, phrase, defines, setWidth, setHeight, setDurat
     </>;
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(SceneApp);

@@ -8,7 +8,7 @@ import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets, fetchGlyphset } 
 import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph, updateGlyph } from '../slices/glyphSlice';
 import { OK } from './../const';
 
-const GLYPH_UPDATE_DEBOUNCE = 1000;
+const GLYPH_UPDATE_DEBOUNCE = 500;
 
 const option = value => ({value, label: value});
 
@@ -22,6 +22,9 @@ export default () => {
     const glyphsetOptionList = glyphset.status !== OK
         ? [option(glyphset.status)]
         : glyphsetTitleList.map(title => option(title))
+    const glyphsetOptionCurrent = glyphset.status !== OK
+        ? glyphsetOptionList[0]
+        : glyphsetOptionList.find(option => glyphset.current && glyphset.current.title === option.label)
 
     React.useEffect(() => {
         const debounce = setTimeout(() => {
@@ -91,13 +94,13 @@ export default () => {
         <div style={{marginBottom: 20}}>
             <span>Glyphset: </span>
             <Select
-                value = {glyphsetOptionList.find(option => glyphset.current && glyphset.current.title === option.label)}
+                value = {glyphsetOptionCurrent}
                 onChange = {value => {
                     dispatch(selectGlyphsetByTitle(value));
                     value && setGlyphsetTitleInput(value);
                 }}
                 options = {glyphsetOptionList}
-                disabled = {glyphset.status !== OK}
+                isDisabled = {glyphset.status !== OK}
             />
             <div className="ui input" style={{marginTop: 15}}>
                 <input

@@ -1,7 +1,7 @@
 import React from 'react';
 import {NavLink, Route} from 'react-router-dom';
 import GlyphApp from './GlyphApp';
-//import SceneApp from './SceneApp';
+import SceneApp from './SceneApp';
 import StoreDebugger from './StoreDebugger';
 import 'fomantic-ui-css/semantic.min.css';
 
@@ -19,7 +19,7 @@ export default () => (
             </NavLink>
         </div>
         <Route exact path="/" component={GlyphApp}/>
-        <Route path="/scene" component={null}/>
+        <Route path="/scene" component={SceneApp}/>
         <Route path="/store" component={StoreDebugger}/>
     </>
 );

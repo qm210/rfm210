@@ -1,8 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loadStore } from './../LocalStorage';
 import { fetchGlyph } from './glyphSlice';
-
-// documentation what could be in here: ...
 
 const localSlice = createSlice({
     name: 'local',

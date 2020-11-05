@@ -5,7 +5,10 @@ module.exports = {
     all: [],
     find: [],
     get: [],
-    create: [],
+    create: [async context => {
+        context.data.kerningMap = {};
+        return context;
+    }],
     update: [],
     patch: [],
     remove: []
