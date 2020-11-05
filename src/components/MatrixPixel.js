@@ -9,7 +9,7 @@ const CheckBox = styled.div`
     border: 1px solid black;
 `
 
-const MatrixPixel = ({coord}) => {
+export default ({coord}) => {
     const value = useSelector(state => at2D(state.glyph.current.pixels, coord));
     const [dragMode, dragValue] = useSelector(state => [state.glyph.dragMode, state.glyph.dragValue]);
     const pixelSize = useSelector(state => displayPixelSize(state.glyph.current.pixels));
@@ -52,5 +52,3 @@ const MatrixPixel = ({coord}) => {
         }}
     />;
 };
-
-export default MatrixPixel;

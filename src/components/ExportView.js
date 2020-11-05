@@ -4,7 +4,8 @@ import { replacePixels } from '../slices/glyphSlice';
 import { ExportList, ExportTextArea, ErrorLabel } from '.';
 import Initial from '../Initial';
 
-const ExportView = () => {
+export default () => {
+
     const pixels = useSelector(state => state.glyph.pixels);
     const dispatch = useDispatch();
     const [errorLabel, setErrorLabel] = React.useState('');
@@ -69,5 +70,3 @@ const ExportView = () => {
 
     </ExportList>;
 };
-
-export default ExportView;

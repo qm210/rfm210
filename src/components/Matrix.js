@@ -11,7 +11,7 @@ const StyledMatrix = styled.div`
     border: 2px solid black;
 `;
 
-const Matrix = () => {
+export default () => {
     const glyph = useSelector(state => state.glyph.current);
     if (!glyph) {
         return <div>No Glyph Selected.</div>
@@ -32,5 +32,3 @@ const Matrix = () => {
         }
     </StyledMatrix>;
 };
-
-export default Matrix;

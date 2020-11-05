@@ -8,11 +8,11 @@ import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets, fetchGlyphset } 
 import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph, updateGlyph } from '../slices/glyphSlice';
 import { OK } from './../const';
 
-const GLYPH_UPDATE_THROTTLE = 1000;
+const GLYPH_UPDATE_DEBOUNCE = 1000;
 
 const option = value => ({value, label: value});
 
-const ControlPanel = () => {
+export default () => {
     const glyphset = useSelector(state => state.glyphset);
     const glyph = useSelector(state => state.glyph.current);
     const dispatch = useDispatch();
@@ -25,9 +25,9 @@ const ControlPanel = () => {
 
     React.useEffect(() => {
         const debounce = setTimeout(() => {
-            console.log("SOMETHING WITH CURRENT GLYPH CHANGED", glyph);
+            console.log("update glyph to surfer:", glyph);
             dispatch(updateGlyph());
-        }, GLYPH_UPDATE_THROTTLE);
+        }, GLYPH_UPDATE_DEBOUNCE);
         return () => clearTimeout(debounce);
     }, [glyph, dispatch]);
 
@@ -122,5 +122,3 @@ const ControlPanel = () => {
         </div>
     </GenericList>;
 }
-
-export default ControlPanel;

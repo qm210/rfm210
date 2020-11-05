@@ -5,8 +5,8 @@ import GlyphApp from './GlyphApp';
 import StoreDebugger from './StoreDebugger';
 import 'fomantic-ui-css/semantic.min.css';
 
-const App = () => {
-    return <>
+export default () => (
+    <>
         <div className="ui three item menu">
             <NavLink className="item" activeClassName="active" exact to="/">
                 Glyph Editor
@@ -21,7 +21,5 @@ const App = () => {
         <Route exact path="/" component={GlyphApp}/>
         <Route path="/scene" component={null}/>
         <Route path="/store" component={StoreDebugger}/>
-    </>;
-}
-
-export default App;
+    </>
+);

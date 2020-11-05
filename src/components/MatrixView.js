@@ -2,9 +2,11 @@ import React from 'react';
 import { QuickButton, ButtonBar } from '../components';
 import Matrix from './Matrix';
 import { clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight } from '../slices/glyphSlice';
+import { useDispatch } from 'react-redux';
 
 
-const MatrixView = () => {
+export default () => {
+    const dispatch = useDispatch();
     return <div
         style={{
             display: "flex",
@@ -12,23 +14,21 @@ const MatrixView = () => {
         }}>
         <Matrix/>
         <ButtonBar>
-            <QuickButton onClick = {clearAllPixels}>
+            <QuickButton onClick = {() => dispatch(clearAllPixels())}>
                 Clear!
             </QuickButton>
-            <QuickButton onClick = {shiftUp}>
+            <QuickButton onClick = {() => dispatch(shiftUp())}>
                 &#8593;
             </QuickButton>
-            <QuickButton onClick = {shiftDown}>
+            <QuickButton onClick = {() => dispatch(shiftDown())}>
                 &#8595;
             </QuickButton>
-            <QuickButton onClick = {shiftLeft}>
+            <QuickButton onClick = {() => dispatch(shiftLeft())}>
                 &#8592;
             </QuickButton>
-            <QuickButton onClick = {shiftRight}>
+            <QuickButton onClick = {() => dispatch(shiftRight())}>
                 &#8594;
             </QuickButton>
         </ButtonBar>
     </div>;
 }
-
-export default MatrixView;

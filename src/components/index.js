@@ -58,8 +58,8 @@ export const QuickButton = styled.button`
 export const ButtonBar = styled.div`
     display: flex;
     flex-direction: row;
-    margin-top: 15;
-    margin-bottom: 15;
+    margin-top: 15px;
+    margin-bottom: 15px;
 `;
 
 export const ShaderFrame = styled.div`

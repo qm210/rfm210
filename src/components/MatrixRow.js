@@ -1,7 +1,7 @@
 import React from 'react';
 import MatrixPixel from '../components/MatrixPixel';
 
-const MatrixRow = ({row, values}) =>
+export default ({row, values}) =>
     <div
         style={{
             display: "flex",
@@ -16,5 +16,3 @@ const MatrixRow = ({row, values}) =>
         )
     }
     </div>;
-
-export default MatrixRow;

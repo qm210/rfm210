@@ -5,7 +5,7 @@ import ExportView from './components/ExportView';
 import ControlPanel from './components/ControlPanel';
 import {MainView, MainColumn} from './components';
 
-const GlyphApp = () => {
+export default () => {
     return (
         <MainView>
             <MainColumn>
@@ -21,5 +21,3 @@ const GlyphApp = () => {
         </MainView>
     );
 };
-
-export default GlyphApp;

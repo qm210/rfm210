@@ -35,7 +35,7 @@ const RectList = ({collection, ItemClass, label}) => {
     </>;
 };
 
-const LogView = () => {
+export default () => {
     const glyph = useSelector(state => state.glyph.current);
     const [onceClicked, setOnceClicked] = React.useState(false);
 
@@ -57,5 +57,3 @@ const LogView = () => {
         }
     </LogList>;
 };
-
-export default LogView;
