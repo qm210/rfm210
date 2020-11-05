@@ -5,7 +5,8 @@ import {Provider} from 'react-redux';
 import throttle from 'lodash.throttle';
 import GlyphReducer from './slices/glyphSlice';
 import GlyphsetReducer from './slices/glyphsetSlice';
-import {saveStore} from './LocalStorage';
+import LocalReducer from './slices/localSlice';
+import { saveStore, loadStore } from './LocalStorage';
 import {BrowserRouter} from "react-router-dom";
 import App from './App';
 import './index.css';
@@ -23,13 +24,17 @@ export const store = configureStore({
     reducer: {
         glyphset: GlyphsetReducer,
         glyph: GlyphReducer,
+        local: LocalReducer,
+    },
+    preloadedState: {
+        local: loadStore()
     },
     devTools: true,
 });
 
 store.subscribe(throttle(() => {
     saveStore(store.getState().local); // could only take {pixels: store.getState().pixels} or something
-}, 1000));
+}, 3000));
 
 const rootElement = document.getElementById('root');
 

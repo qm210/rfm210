@@ -4,13 +4,15 @@ import { fetchGlyph } from './glyphSlice';
 
 // documentation what could be in here: ...
 
-export const localSlice = createSlice({
+const localSlice = createSlice({
     name: 'local',
-    initialState: loadStore(),
+    initialState: {
+        lastGlyphId: undefined,
+    },
     reducers: {
         removeItem: (state, {payload}) => {
             if (payload in state) {
-                delete state[payload];
+                state[payload] = undefined;
             }
         }
     },
@@ -23,4 +25,4 @@ export const localSlice = createSlice({
 
 export const {removeItem} = localSlice.actions;
 
-export default localSlice;
+export default localSlice.reducer;

@@ -9,6 +9,7 @@ import { fetchLetterMap } from './../slices/glyphSlice';
 const GlyphSelector = () => {
     const glyphset = useSelector(state => state.glyphset.current);
     const glyph = useSelector(state => state.glyph.current);
+    const lastGlyphId = useSelector(state => state.local.lastGlyphId);
     const dispatch = useDispatch();
 
     React.useEffect(() => {
@@ -18,6 +19,14 @@ const GlyphSelector = () => {
             //return () => {console.log("abort!"); promise.abort();} //TODO: find out whether this is good style or rather bad
         }
     }, [dispatch, glyphset])
+
+    React.useEffect(() => {
+        if (glyphset && glyphset.letterMap && !glyph && lastGlyphId) {
+            if (glyphset.glyphList.includes(lastGlyphId)) {
+                dispatch(fetchGlyph(lastGlyphId));
+            }
+        }
+    }, [glyphset, glyph, lastGlyphId, dispatch]);
 
     const selected = item => glyph && glyph._id === item._id;
 

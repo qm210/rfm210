@@ -134,9 +134,6 @@ export const glyphSlice = createSlice({
             state.status = FAIL;
             state.error = error.message;
         },
-        [addGlyph.rejected]: (state, action) => {
-            console.warn("add glyph rejected", action);
-        }
     }
 });
 
@@ -159,27 +156,7 @@ export const {
     shiftRight,
 } = glyphSlice.actions;
 
-
 /*
-const Reducer = (state = Initial.state, {type, payload}) => {
-    const pixels = currentPixels(state);
-    switch (type) {
-        case SET_PIXEL:
-            return withUpdatedPixels(state, update2D(pixels, payload, payload.value));
-        case TOGGLE_PIXEL:
-            return withUpdatedPixels(state, update2D(pixels, payload, !at2D(pixels, payload)));
-        case FILL_AREA:
-            return withUpdatedPixels(state, fillConnectedArea(pixels, payload));
-        case CLEAR_ALL_PIXELS:
-            return withUpdatedPixels(state, fill2D(pixels, false));
-        case FILL_ALL_PIXELS:
-            return withUpdatedPixels(state, fill2D(pixels, true));
-
-        case ENTER_DRAGMODE:
-            return {...state, dragMode: true, dragValue: payload.value};
-        case LEAVE_DRAGMODE:
-            return {...state, dragMode: false};
-
 
         case OVERWRITE_PIXELS:
             return withUpdatedPixels(state, payload);
