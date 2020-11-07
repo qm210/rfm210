@@ -1,9 +1,9 @@
 import React from 'react';
-import MatrixView from './components/MatrixView';
-import LogView from './components/LogView';
-import ExportView from './components/ExportView';
-import ControlPanel from './components/ControlPanel';
-import {MainView, MainColumn} from './components';
+import MatrixView from './MatrixView';
+import LogView from './LogView';
+import ExportView from './ExportView';
+import ControlPanel from './ControlPanel';
+import {MainView, MainColumn} from '.';
 
 export default () => {
     return (

@@ -1,21 +1,25 @@
 import React from 'react';
-import {connect} from 'react-redux';
+import { useSelector } from 'react-redux';
 import ShadertoyReact from 'shadertoy-react';
-import {ShaderFrame} from '.';
-import * as GL from 'gl-react';
-//import * as GLDom from 'gl-react-dom';
-import RectAlgebra from '../RectAlgebra';
-import * as State from '../slices/glyphSlice';
-import {CodeFrame} from '../components';
-import { shaderAlias, hardCodeKerningMap } from '../GlyphModel';
-import {liveMode} from '..'
+import { ShaderFrame } from '.';
+import { asFloat, asFloatOrStr, shadertoyify } from '../logic/shader';
+import RectAlgebra from '../logic/RectAlgebra';
+import { placeholder } from '../logic/glyph';
+import { glslForPhrase, phraseFuncName, glslForGlyph, kerning, glyphFuncName, glslForRect } from './../logic/shader';
+import { CodeFrame } from '../components';
+import { selectFigureList } from './../slices/sceneSlice';
+import { initWidth, initHeight } from '../Initial';
 
 
 export default ()  => {
+    const scene = useSelector(store => store.scene.current);
+    const figureList = useSelector(selectFigureList);
+    const glyphset = useSelector(store => store.glyphset);
 
-    const [millis, setMillis] = React.useState(0);
-    const reqRef = React.useRef();
-    const prevReqRef = React.useRef();
+    /*
+    const [millis, setMillis] = useState(0);
+    const reqRef = useRef();
+    const prevReqRef = useRef();
 
     const animate = React.useCallback(time => {
         if (prevReqRef.current !== undefined) {
@@ -30,6 +34,7 @@ export default ()  => {
         reqRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(reqRef.current);
       }, [animate]);
+    */
 
     const parsePhraseQmd = React.useCallback((script) => {
         const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod'];
@@ -44,32 +49,34 @@ export default ()  => {
             const qmd = rawArgs.shift().toLowerCase();
             const arg = Object.fromEntries(rawArgs.map(r => r.split('=')));
             if (acceptedPhraseQmds.includes(qmd)) {
-                qmds.push({start: asFloat(+start), end: asFloat(+end || scene.duration), qmd, arg});
+                qmds.push({start: asFloat(+start), end: asFloat(+end || scene.duration || 0), qmd, arg});
             }
         }
         return qmds;
     }, [scene.duration]);
 
-    const usesTime = React.useMemo(() => scene.phrases[0].qmd.length > 0, [scene]);
+    //const usesTime = React.useMemo(() => scene &&  scene.figures[0].qmd.length > 0, [scene]);
+    const usesTime = true;
 
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
         var usedGlyphs = {};
         var terrifyingCode = '';
         var phraseCode = '';
-        for(const phrase of scene.phrases) {
+        const transform = {};
+        for (const phrase of figureList) {
             var phraseObjects = [];
             var postProcess = [];
             var params = [];
-            const cosPhi = Math.cos(phrase.rotate);
-            const sinPhi = Math.sin(phrase.rotate);
+            const cosPhi = Math.cos(phrase.phi);
+            const sinPhi = Math.sin(phrase.phi);
 
             // parse qmds
             const qmds = parsePhraseQmd(phrase.qmd);
 
-            phrase.transform = {
+            transform[phrase.id] = {
                 offsetX: asFloat(phrase.x),
                 offsetY: asFloat(phrase.y),
-                rotate: asFloat(phrase.rotate),
+                rotate: asFloat(phrase.phi),
             };
 
             // construct rects
@@ -77,9 +84,9 @@ export default ()  => {
             var maxHeight = 0;
             var lastChar = undefined;
             for (const char of phrase.chars.split('')) {
-                const glyph = State.glyphForLetter(glyphset, char);
+                const glyph = glyphset.letterMap[char] || placeholder(initWidth, initHeight, char !== ' ');
                 const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
-                const kern = kerning(lastChar, char);
+                const kern = kerning(glyphset, lastChar, char);
                 maxWidth += kern.x;
                 const transform = {
                     offsetX: maxWidth * cosPhi + kern.y * sinPhi,
@@ -135,12 +142,11 @@ export default ()  => {
             }
             terrifyingCode += params.map(p =>
                 `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
-            ) + glslForPhrase(phrase, phrase.transform) + '\n' + ' '.repeat(8);
+            ) + glslForPhrase(phrase, transform[phrase.id]) + '\n' + ' '.repeat(8);
             phraseCode += `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, in float spac, out float d)
     {d = 1.;
     ${phraseObjects.map(obj =>
-                    glslForGlyph(obj.glyph, obj.transform)
-                ).join('\n' + ' '.repeat(4))}
+        glslForGlyph(obj.glyph, obj.transform)).join('\n' + ' '.repeat(4))}
             }`
         }
         const glyphCode = `
@@ -156,20 +162,14 @@ ${usedGlyphs[glyph].map(rect =>
             ).join('')
         }`;
         return [terrifyingCode, glyphCode, phraseCode];
-    }, [scene, glyphset, parsePhraseQmd]);
-// Einfach mal shadertoy-react implementieren
-    const shaderCode = React.useMemo(() => GL.GLSL`
+    }, [glyphset, parsePhraseQmd, figureList]);
+
+    const shaderCode = React.useMemo(() => !scene ? '' : `
     precision highp float;
     varying vec2 uv;
     ${usesTime ? 'uniform float time;' : ''}
     const vec3 c = vec3(1.,0.,-1.);
     uniform vec2 iResolution; // qm hacked this
-
-    ${Object.keys(defines).map(key => `#define ${key} ${defines[key]}`).join('\n')} // nr4 advice: hardcode replace these
-    #define PIXEL .005
-    #define CONTOUR .01
-    #define DARKBORDER 0.1
-    #define DARKENING col*col*col
 
     float smstep(float a, float b, float x) {return smoothstep(a, b, clamp(x, a, b));}
     void rand(in vec2 x, out float n)
@@ -219,7 +219,7 @@ ${usedGlyphs[glyph].map(rect =>
     ${phraseCode}
     void main()
     {
-        ${usesTime ? `float t = mod(time, ${asFloat(scene.duration)});` : ''}
+        ${usesTime ? `float t = mod(time, ${asFloat(scene.duration || 0)});` : ''}
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
         vec2 UV = vec2((uv.x - .5)*${asFloat(scene.width/scene.height)}, uv.y - .5); // qm hack
         vec3 col = vec3(1.,.8,1.);
@@ -228,29 +228,16 @@ ${usedGlyphs[glyph].map(rect =>
         float blur = 1.;
         ${terrifyingCode}
         gl_FragColor = vec4(clamp(col,0.,1.),1.); // qm hack fragColor -> gl_FragColor
-    }
-    `, [terrifyingCode, glyphCode, phraseCode, defines, scene, usesTime]);
-
-    const shaders = React.useMemo(() => GL.Shaders.create({
-        nr4template: {
-            frag: shaderCode
-        }
-    }), [shaderCode]);
+    }`
+        .replaceAll('PIXEL', '.005')
+        .replaceAll('CONTOUR', '.01')
+        .replaceAll('DARKBORDER', '.1')
+        .replaceAll('DARKENING', 'col*col*col')
+    , [terrifyingCode, glyphCode, phraseCode, scene, usesTime]);
 
     return <>
         <ShaderFrame>
             <b>This is the AWESOME part!</b><br/>
-            {/*
-            <GLDom.Surface width={scene.width} height={scene.height}>
-                <GL.Node
-                    shader={shaders.nr4template}
-                    uniforms={{
-                        iResolution: [scene.width, scene.height],
-                        ...(usesTime ? {time: millis/1000} : {})
-                    }}
-                />
-            </GLDom.Surface>
-            */}
             <ShadertoyReact fs={shadertoyify(shaderCode)}/>
         </ShaderFrame>
         <CodeFrame>

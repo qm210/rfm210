@@ -1,41 +1,13 @@
-import * as Glyph from './glyphUtils';
+import {newFrom} from './logic/glyph';
 
 // model constants
-const width = 9;
-const height = 16;
-export const initGlyph = Glyph.newFrom({width, height}, 0);
+export const initWidth = 9;
+export const initHeight = 16;
+export const initGlyph = newFrom({initWidth, initHeight}, 0);
 
-const newGlyphSet = (title, spacing, lineSpacing) => ({
-    title,
-    spacing,
-    lineSpacing,
-    glyphs: [initGlyph]
-});
+export const importExample = '[[false,false,false,false,false,false,false,false,false],[false,true,false,true,true,true,true,true,false],[false,true,false,true,false,false,false,false,false],[false,true,false,true,true,true,true,false,false],[false,false,false,false,false,false,true,false,false],[false,true,false,false,false,false,true,false,false],[false,false,false,false,true,true,true,false,false],[false,false,false,false,true,false,false,false,false],[false,true,false,false,true,false,false,true,false],[false,false,false,false,false,false,false,true,false],[false,true,false,false,true,false,false,true,false],[false,false,false,true,true,true,false,true,false],[false,true,false,false,true,false,false,true,false],[false,true,false,false,false,false,false,true,false],[false,true,true,true,true,true,true,true,false],[false,false,false,false,false,false,false,false,false]]';
 
-export const newScene = (id) => ({
-    id: id || 0,
-    title: '',
-    duration: 10,
-    width: 640,
-    height: 320,
-    backgroundColor: 'white',
-    qmd: [],
-});
-
-const state = {
-    dragMode: false,
-    dragValue: undefined,
-    glyphId: null,
-    glyphset: null,
-    sceneId: 0,
-    phraseId: 0,
-    scene: null,
-    defines: {}
-};
-
-const importExample = '[[false,false,false,false,false,false,false,false,false],[false,true,false,true,true,true,true,true,false],[false,true,false,true,false,false,false,false,false],[false,true,false,true,true,true,true,false,false],[false,false,false,false,false,false,true,false,false],[false,true,false,false,false,false,true,false,false],[false,false,false,false,true,true,true,false,false],[false,false,false,false,true,false,false,false,false],[false,true,false,false,true,false,false,true,false],[false,false,false,false,false,false,false,true,false],[false,true,false,false,true,false,false,true,false],[false,false,false,true,true,true,false,true,false],[false,true,false,false,true,false,false,true,false],[false,true,false,false,false,false,false,true,false],[false,true,true,true,true,true,true,true,false],[false,false,false,false,false,false,false,false,false]]';
-
-const doc = [
+export const doc = [
     "Documentation:",
     "Per default, all existing Phrases are rendered constantly during a scene.",
     "",

@@ -53,6 +53,7 @@ export const QuickButton = styled.button`
     font-size: 20px;
     font-weight: bold;
     margin-left: 4px;
+    padding: 3px 8px 8px;
 `;
 
 export const ButtonBar = styled.div`

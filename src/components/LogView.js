@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-import RectAlgebra from '../RectAlgebra';
+import RectAlgebra from '../logic/RectAlgebra';
 
 const LogList = styled.div`
     display: flex;

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { leaveDragMode } from '../slices/glyphSlice';
 import MatrixRow from './MatrixRow';
-import { width2D, height2D, displayPixelSize } from '../Utils';
+import { width2D, height2D, displayNicePixelSize } from '../logic/array2d';
 
 const StyledMatrix = styled.div`
     display: flex;
@@ -19,8 +19,8 @@ export default () => {
     const pixels = glyph.pixels;
     return <StyledMatrix
         style = {{
-            width: width2D(pixels) * displayPixelSize(pixels),
-            height: height2D(pixels) * displayPixelSize(pixels) + 4,
+            width: width2D(pixels) * displayNicePixelSize(pixels),
+            height: height2D(pixels) * displayNicePixelSize(pixels) + 4,
         }}
         pixels = {pixels}
         onMouseLeave = {leaveDragMode}

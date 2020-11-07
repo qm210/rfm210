@@ -5,10 +5,11 @@ import {Provider} from 'react-redux';
 import throttle from 'lodash.throttle';
 import GlyphReducer from './slices/glyphSlice';
 import GlyphsetReducer from './slices/glyphsetSlice';
+import SceneReducer from './slices/sceneSlice';
 import LocalReducer from './slices/localSlice';
-import { saveStore, loadStore } from './LocalStorage';
+import { saveStore, loadStore } from './logic/storage';
 import {BrowserRouter} from "react-router-dom";
-import App from './App';
+import App from './components/App';
 import './index.css';
 import {parse} from 'query-string';
 import socketio from 'socket.io-client';
@@ -24,6 +25,7 @@ export const store = configureStore({
     reducer: {
         glyphset: GlyphsetReducer,
         glyph: GlyphReducer,
+        scene: SceneReducer,
         local: LocalReducer,
     },
     preloadedState: {

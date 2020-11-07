@@ -1,6 +1,6 @@
 import React from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import { alias } from '../glyphUtils';
+import { alias } from '../logic/glyph';
 import { fetchGlyph } from '../slices/glyphSlice';
 import { Loader, Segment } from 'semantic-ui-react';
 import { fetchLetterMap } from './../slices/glyphSlice';

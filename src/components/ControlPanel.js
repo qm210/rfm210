@@ -3,10 +3,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import Select from 'react-select';
 import GlyphSelector from './GlyphSelector';
 import { GenericList, LabelledInput, Button } from '.';
-import { IDLE } from '../const';
+import { STATUS } from '../const';
 import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets, fetchGlyphset } from '../slices/glyphsetSlice';
 import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph, updateGlyph } from '../slices/glyphSlice';
-import { OK } from './../const';
 
 const GLYPH_UPDATE_DEBOUNCE = 500;
 
@@ -19,10 +18,10 @@ export default () => {
     const [glyphsetTitleInput, setGlyphsetTitleInput] = React.useState('Matzdings');
 
     const glyphsetTitleList = (glyphset.all || []).map(item => item.title);
-    const glyphsetOptionList = glyphset.status !== OK
+    const glyphsetOptionList = glyphset.status !== STATUS.OK
         ? [option(glyphset.status)]
         : glyphsetTitleList.map(title => option(title))
-    const glyphsetOptionCurrent = glyphset.status !== OK
+    const glyphsetOptionCurrent = glyphset.status !== STATUS.OK
         ? glyphsetOptionList[0]
         : glyphsetOptionList.find(option => glyphset.current && glyphset.current.title === option.label)
 
@@ -47,7 +46,7 @@ export default () => {
     }
 
     React.useEffect(() => {
-        if (glyphset.status === IDLE) {
+        if (glyphset.status === STATUS.IDLE) {
             dispatch(fetchGlyphsets())
         }
     }, [glyphset.status, dispatch]);
@@ -59,7 +58,6 @@ export default () => {
     }, [glyphset, dispatch])
 
     const dispatchAndUpdate = (action) => {
-        console.log("ACTION", action, glyphset);
         dispatch(action)
             .then(() => dispatch(fetchGlyphset(glyphset.current)))
     };
@@ -100,7 +98,7 @@ export default () => {
                     value && setGlyphsetTitleInput(value);
                 }}
                 options = {glyphsetOptionList}
-                isDisabled = {glyphset.status !== OK}
+                isDisabled = {glyphset.status !== STATUS.OK}
             />
             <div className="ui input" style={{marginTop: 15}}>
                 <input

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { togglePixel, setPixel, enterDragMode, leaveDragMode, fillArea } from '../slices/glyphSlice';
-import { at2D, displayPixelSize } from '../Utils';
+import { at2D, displayNicePixelSize } from '../logic/array2d';
 
 const CheckBox = styled.div`
     background-color: ${props => props.value ? "black" : "white"};
@@ -12,7 +12,7 @@ const CheckBox = styled.div`
 export default ({coord}) => {
     const value = useSelector(state => at2D(state.glyph.current.pixels, coord));
     const [dragMode, dragValue] = useSelector(state => [state.glyph.dragMode, state.glyph.dragValue]);
-    const pixelSize = useSelector(state => displayPixelSize(state.glyph.current.pixels));
+    const pixelSize = useSelector(state => displayNicePixelSize(state.glyph.current.pixels));
     const id = useSelector(state => state.glyph.current._id);
     const dispatch = useDispatch();
 

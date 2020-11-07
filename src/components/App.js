@@ -2,11 +2,31 @@ import React from 'react';
 import {NavLink, Route} from 'react-router-dom';
 import GlyphApp from './GlyphApp';
 import SceneApp from './SceneApp';
-import StoreDebugger from './StoreDebugger';
+import StoreDebugger from '../StoreDebugger';
 import 'fomantic-ui-css/semantic.min.css';
 
-export default () => (
-    <>
+import {deleteAllScenes} from '../slices/sceneSlice';
+import { useDispatch } from 'react-redux';
+
+const shortcutActions = {
+    'F4': deleteAllScenes()
+};
+
+export const App = () => {
+    const dispatch = useDispatch();
+
+    React.useEffect(() => {
+        const shortcutHandler = event => {
+            if (event.key in shortcutActions) {
+                event.preventDefault();
+                dispatch(shortcutActions[event.key]);
+            }
+        }
+        document.addEventListener('keyup', shortcutHandler);
+        return () => document.removeEventListener('keyup', shortcutHandler);
+    }, [dispatch]);
+
+    return <>
         <div className="ui three item menu">
             <NavLink className="item" activeClassName="active" exact to="/">
                 Glyph Editor
@@ -21,5 +41,7 @@ export default () => (
         <Route exact path="/" component={GlyphApp}/>
         <Route path="/scene" component={SceneApp}/>
         <Route path="/store" component={StoreDebugger}/>
-    </>
-);
+    </>;
+};
+
+export default App;

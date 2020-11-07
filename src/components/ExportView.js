@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { replacePixels } from '../slices/glyphSlice';
 import { ExportList, ExportTextArea, ErrorLabel } from '.';
-import Initial from '../Initial';
+import * as Initial from '../Initial';
 
 export default () => {
 

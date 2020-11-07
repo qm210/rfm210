@@ -3,6 +3,7 @@ import { QuickButton, ButtonBar } from '../components';
 import Matrix from './Matrix';
 import { clearAllPixels, shiftUp, shiftDown, shiftLeft, shiftRight } from '../slices/glyphSlice';
 import { useDispatch } from 'react-redux';
+import { SYMBOL } from './../const';
 
 
 export default () => {
@@ -18,16 +19,16 @@ export default () => {
                 Clear!
             </QuickButton>
             <QuickButton onClick = {() => dispatch(shiftUp())}>
-                &#8593;
+                {SYMBOL.UP}
             </QuickButton>
             <QuickButton onClick = {() => dispatch(shiftDown())}>
-                &#8595;
+                {SYMBOL.DOWN}
             </QuickButton>
             <QuickButton onClick = {() => dispatch(shiftLeft())}>
-                &#8592;
+                {SYMBOL.LEFT}
             </QuickButton>
             <QuickButton onClick = {() => dispatch(shiftRight())}>
-                &#8594;
+                {SYMBOL.RIGHT}
             </QuickButton>
         </ButtonBar>
     </div>;

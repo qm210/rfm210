@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { surfer } from '..';
-import { update2D, at2D, fill2D, size2D, clone2D, resize2D } from "../Utils";
-import { FAIL, IDLE, LOADING, OK } from '../const';
-import { nextLetter } from './../glyphUtils';
+import { update2D, at2D, fill2D, resize2D } from "../logic/array2d";
+import { STATUS } from '../const';
+import { nextLetter, fillConnectedArea } from '../logic/glyph';
 
 const service = () => surfer.service('glyph');
 
@@ -61,7 +61,7 @@ const glyphSlice = createSlice({
         current: null,
         dragMode: false,
         dragValue: null,
-        status: IDLE,
+        status: STATUS.IDLE,
         error: null,
     },
     reducers: {
@@ -119,7 +119,7 @@ const glyphSlice = createSlice({
     },
     extraReducers: {
         [fetchGlyph.pending]: (state) => {
-            state.status = LOADING;
+            state.status = STATUS.LOADING;
         },
         [fetchGlyph.fulfilled]: (state, {payload}) => ({
                 ...state,
@@ -127,11 +127,11 @@ const glyphSlice = createSlice({
                     ...state.current,
                     ...payload,
                 },
-                status: OK,
+                status: STATUS.OK,
                 error: null
         }),
         [fetchGlyph.rejected]: (state, {error}) => {
-            state.status = FAIL;
+            state.status = STATUS.FAIL;
             state.error = error.message;
         },
     }

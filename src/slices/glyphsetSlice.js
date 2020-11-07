@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { surfer } from '..';
-import { IDLE, OK, LOADING, FAIL } from '../const';
+import { STATUS } from '../const';
 import { fetchLetterMap, assignLetter } from './glyphSlice';
 
 const service = () => surfer.service('glyphset');
@@ -22,17 +22,18 @@ export const createGlyphset = createAsyncThunk('glyphset/create', async (title, 
     return response;
 });
 
-export const clearGlyphsetsAndGlyphs = createAsyncThunk('glyphsets/clear', async () => {
+export const deleteAllGlyphsetsAndGlyphs = createAsyncThunk('glyphsets/clear', async () => {
     await service().remove(null);
     await surfer.service('glyph').remove(null);
 });
+
 
 const glyphsetSlice = createSlice({
     name: 'glyphset',
     initialState: {
         all: [],
         current: null,
-        status: IDLE,
+        status: STATUS.IDLE,
         error: null
     },
     reducers: {
@@ -46,29 +47,26 @@ const glyphsetSlice = createSlice({
     },
     extraReducers: {
         [fetchGlyphsets.pending]: (state) => {
-            state.status = LOADING;
+            state.status = STATUS.LOADING;
         },
         [fetchGlyphsets.fulfilled]: (state, action) => {
             state.all = action.payload;
-            state.status = OK;
+            state.status = STATUS.OK;
         },
         [fetchGlyphsets.rejected]: (state, action) => {
-            console.warn("error", action);
-            state.status = FAIL;
+            state.status = STATUS.FAIL;
             state.error = action.error.message;
         },
         [fetchGlyphset.fulfilled]: (state, action) => {
-            console.log("was:", state.current);
             state.current = action.payload;
-            console.log("is:", state.current);
         },
         [createGlyphset.fulfilled]: (state, action) => {
             state.all.push(action.payload);
             state.all.sort();
             state.current = action.payload;
         },
-        [clearGlyphsetsAndGlyphs.fulfilled]: (state) => {
-            state.status = IDLE;
+        [deleteAllGlyphsetsAndGlyphs.fulfilled]: (state) => {
+            state.status = STATUS.IDLE;
             state.all = [];
             state.current = null;
         },
@@ -93,3 +91,5 @@ const glyphsetSlice = createSlice({
 export const {selectGlyphsetByTitle} = glyphsetSlice.actions;
 
 export default glyphsetSlice.reducer;
+
+export const selectLetterMap = store => (store.glyphset.current && store.glyphset.current.letterMap) || null;

@@ -1,11 +1,12 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {ExportList, ExportTextArea, ErrorLabel, Button} from './components';
-import {clearStore} from './LocalStorage';
-import {clearGlyphsetsAndGlyphs} from './slices/glyphsetSlice';
+import {clearStore} from './logic/storage';
+import {deleteAllGlyphsetsAndGlyphs} from './slices/glyphsetSlice';
+import {deleteAllScenes} from './slices/sceneSlice';
 import { surferUrl } from '.';
 
-const debugFeathersEndpoints = ['glyph', 'glyphset'];
+const debugFeathersEndpoints = ['glyph', 'glyphset', 'scene'];
 
 const StoreDebugger = () => {
     const [errorLabel, setErrorLabel] = React.useState('');
@@ -58,7 +59,6 @@ const StoreDebugger = () => {
         <Button onClick={clearStore}>
             Clear Cache
         </Button>
-        <Button onClick={() => dispatch(clearGlyphsetsAndGlyphs())}>Surfer: Clear Glyphsets &amp; Glyphs</Button>
         <div>
         {
             debugFeathersEndpoints.map((endpoint, index) =>
@@ -72,6 +72,10 @@ const StoreDebugger = () => {
             </React.Fragment>
             )
         }
+        </div>
+        <div>
+            <Button onClick={() => dispatch(deleteAllGlyphsetsAndGlyphs())}>Surfer: Delete All Glyphsets &amp; Glyphs</Button>
+            <Button onClick={() => dispatch(deleteAllScenes())}>Surfer: Delete All Scenes</Button>
         </div>
         <Button onClick={() => console.log(state)}>
             DEBUG
