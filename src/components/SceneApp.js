@@ -122,7 +122,7 @@ export const SceneApp = () => {
                     <select
                         size = "10"
                         style = {{width: 300}}
-                        value = {inputs.sceneId}
+                        value = {inputs.sceneId || ''}
                         name = {'sceneId'}
                         onChange = {event => {
                             handleInput(event);
@@ -143,7 +143,7 @@ export const SceneApp = () => {
                             label = "&#916;T/sec:"
                             type = "number"
                             style = {{width: 55}}
-                            value = {scene ? scene.duration : 0}
+                            value = {scene && scene.duration || 0}
                             onChange = {event => dispatch(updateScene({duration: +event.target.value}))}
                             disabled = {!scene}
                         />
