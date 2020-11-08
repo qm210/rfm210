@@ -36,7 +36,7 @@ export const selectFigureList = store => toList(store.scene.figures);
 export const selectSceneList = store => toList(store.scene.all).sort((a,b) => a.order - b.order);
 
 export const fetchScenes = createAsyncThunk('scene/fetchAll', async () => ({
-    all: await service().find()
+    all: await service().find({reduced: true})
 }));
 
 export const fetchScene = createAsyncThunk('scene/fetch', async (id, {getState, dispatch}) => {
@@ -64,12 +64,14 @@ export const addNewScene = createAsyncThunk('scene/add', async (data, {getState}
 });
 
 export const reorderScene = createAsyncThunk('scene/reorder', async (delta, {getState}) => {
-    if (!getState().scene.current) {
+    const current = getState().scene.current;
+    if (!current) {
         return {};
     }
-    const current = await service().reorderScene(getState().scene.current, delta);
+    console.log("CID", current._id, delta);
+    const newCurrent = await service().patch(current._id, {swapOrder: delta});
     const all = await service().find();
-    return {current, all};
+    return {current: newCurrent, all};
 });
 
 export const deleteScene = createAsyncThunk('scene/delete', async (id, {dispatch, getState}) => {
@@ -83,8 +85,13 @@ export const deleteAllScenes = createAsyncThunk('scenes/clear', async () =>
     await service().remove(null)
 );
 
+export const patchScene = createAsyncThunk('scene/update', async (_, {getState}) => {
+    const scene = getState().scene.current;
+    return await service().patch(scene._id, scene);
+});
+
 const setSuccess = (state, action) => {
-    console.log("SUCESS", action.type, action.payload);
+    console.log("SUCCESS", action.type, action.payload);
     return ({
         ...state,
         ...action.payload,

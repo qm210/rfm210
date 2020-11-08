@@ -8,6 +8,9 @@ import { whenSubmitted } from '../logic/utils';
 import { ButtonBar } from './index';
 import { STATUS, SYMBOL } from '../const';
 import { Header, Segment, Loader } from 'semantic-ui-react';
+import { patchScene } from './../slices/sceneSlice';
+
+const SCENE_UPDATE_DEBOUNCE = 500;
 
 export const SceneApp = () => {
     const scene = useSelector(store => store.scene.current);
@@ -44,6 +47,7 @@ export const SceneApp = () => {
     }, [status, setLoader]);
 
     React.useEffect(() => {
+        console.log("SCENE", scene && (scene._id + ' ' + scene.title + ' ' + scene.duration));
         if (!scene) {
             return;
         }
@@ -59,6 +63,14 @@ export const SceneApp = () => {
             dispatch(fetchScene(sceneList[0]._id));
         }
     }, [dispatch, status, scene, sceneList]);
+
+    React.useEffect(() => {
+        const debounce = setTimeout(() => {
+            console.log("update scene to surfer:", scene);
+            dispatch(patchScene());
+        }, SCENE_UPDATE_DEBOUNCE);
+        return () => clearTimeout(debounce);
+    }, [scene, dispatch]);
 
     const handleInput = event => {
         const {name, value} = event.target;
@@ -92,13 +104,13 @@ export const SceneApp = () => {
                         </QuickButton>
                         <QuickButton
                             onClick = {() => dispatch(reorderScene(-1))}
-                            disabled = {!scene}
+                            disabled = {!scene || scene.order === 0}
                             >
                             {SYMBOL.UP}
                         </QuickButton>
                         <QuickButton
                             onClick = {() => dispatch(reorderScene(+1))}
-                            disabled = {!scene}
+                            disabled = {!scene || scene.order === sceneList.length - 1}
                             >
                             {SYMBOL.DOWN}
                         </QuickButton>
@@ -142,6 +154,7 @@ export const SceneApp = () => {
                             name = "iduration"
                             label = "&#916;T/sec:"
                             type = "number"
+                            min = "0"
                             style = {{width: 55}}
                             value = {scene && scene.duration || 0}
                             onChange = {event => dispatch(updateScene({duration: +event.target.value}))}

@@ -3,10 +3,16 @@ const { Service } = require('feathers-nedb');
 exports.Scene = class Scene extends Service {
 
     async find(params) {
-        const all = await super.find(params);
-        return all.map(
-            ({_id, title, order}) => ({_id, title, order})
-        );
+        if (params.reduced || (params.query && params.query.reduced)) {
+            delete params.query.reduced;
+            const all = await super.find(params);
+            return all.map(scene => ({
+                _id: scene._id,
+                title: scene.title,
+                order: scene.order
+            }));
+        }
+        return super.find(params);
     }
 
     async create(data, params) {
@@ -73,8 +79,19 @@ exports.Scene = class Scene extends Service {
         );
     }
 
+    async patch(id, data, params) {
+        console.log("PATCH", id, data);
+        if (data.swapOrder) {
+            return this.reorderScene(id, data.swapOrder);
+        }
+        else {
+            return super.patch(id, data, params);
+        }
+    }
+
     async reorderScene(id, delta) {
-        const scenes = this.scenesInOrder();
+        const scenes = await this.scenesInOrder();
+        console.log("LOL ALSO", scenes);
         const thisScene = scenes.find(it => it._id == id);
         const newOrder = thisScene.order + delta;
         const otherScene = scenes.find(it => it.order === newOrder);

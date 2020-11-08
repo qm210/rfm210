@@ -6,7 +6,7 @@ import {deleteAllGlyphsetsAndGlyphs} from './slices/glyphsetSlice';
 import {deleteAllScenes} from './slices/sceneSlice';
 import { surferUrl } from '.';
 
-const debugFeathersEndpoints = ['glyph', 'glyphset', 'scene'];
+const debugFeathersEndpoints = ['glyph', 'glyphset', 'scene?reduced'];
 
 const StoreDebugger = () => {
     const [errorLabel, setErrorLabel] = React.useState('');
