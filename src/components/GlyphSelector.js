@@ -14,9 +14,7 @@ const GlyphSelector = () => {
 
     React.useEffect(() => {
         if (glyphset && !glyphset.letterMap) {
-            //const promise =
             dispatch(fetchLetterMap(glyphset));
-            //return () => {console.log("abort!"); promise.abort();} //TODO: find out whether this is good style or rather bad
         }
     }, [dispatch, glyphset])
 

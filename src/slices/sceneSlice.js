@@ -29,10 +29,12 @@ const initFigure = {
     qmd: [],
 };
 
-export const selectCurrentFigure = store => store.scene.figures[store.scene.currentFigureId];
+export const selectCurrentFigure = store =>
+    store.scene.current && store.scene.current.figures[store.scene.current.currentFigureId];
 
 const toList = obj => Object.values(obj || {});
-export const selectFigureList = store => toList(store.scene.figures);
+
+export const selectFigureList = store => toList(store.scene.current && store.scene.current.figures);
 export const selectSceneList = store => toList(store.scene.all).sort((a,b) => a.order - b.order);
 
 export const fetchScenes = createAsyncThunk('scene/fetchAll', async () => ({
@@ -111,16 +113,22 @@ const setFail = (state, action) => {
     console.warn("EH!", state.error, action);
 }
 
+const addFigure = (extraState = {}) => (state, action) => {
+    state.current.figures[state.current.nextId] = {
+        ...initFigure,
+        ...extraState,
+        ...action.payload,
+        id: state.current.nextId,
+    };
+    state.current.currentFigureId = state.current.nextId;
+    state.current.nextId += 1;
+};
+
 const sceneSlice = createSlice({
     name: 'scene',
     initialState: {
         current: null,
         all: [],
-        figures: {},
-        currentFigureId: null,
-        params: {},
-        currentParamId: null,
-        nextId: 0,
         status: STATUS.IDLE,
         error: null,
     },
@@ -129,67 +137,60 @@ const sceneSlice = createSlice({
             state.current = {
                 ...state.current,
                 ...action.payload
-            }
-        },
-        addNewFigure: (state, action) => {
-            state.figures[state.nextId] = {
-                ...initFigure,
-                ...action.payload,
-                id: state.nextId,
             };
-            state.nextId += 1;
         },
-        addNewPhrase: (state, action) => {
-            state.figures[state.nextId] = {
-                ...initFigure,
-                type: PHRASE,
-                chars: "",
-                ...action.payload,
-                id: state.nextId,
-            };
-            state.nextId += 1;
-        },
+        addNewFigure: addFigure(),
+        addNewPhrase: addFigure({
+            type: PHRASE,
+            chars: "",
+            glyphset: null
+        }),
         copyFigure: (state) => {
-            const origin = state.figures[state.currentFigureId];
-            state.figures[state.nextId] = {
+            const origin = state.current.figures[state.current.currentFigureId];
+            state.current.figures[state.current.nextId] = {
                 ...origin,
-                id: state.nextId,
+                id: state.current.nextId,
             };
-            state.currentFigureId = state.nextId;
-            state.nextId += 1;
+            state.current.currentFigureId = state.current.nextId;
+            state.current.nextId += 1;
         },
         deleteFigure: (state, action) => {
-            delete state.figures[state.currentFigureId];
-            state.currentFigureId = null;
+            delete state.current.figures[state.current.currentFigureId];
+            while (!state.current.figures[--state.current.currentFigureId]) {
+                if (state.current.currentFigureId < 0) {
+                    state.current.currentFigureId = +Object.keys(state.current.figures)[0];
+                    break;
+                }
+            };
         },
         addParam: (state, action) => {
-            state.params[action.payload.id] = action.payload;
+            state.current.params[action.payload.id] = action.payload;
         },
         deleteParamById: (state, action) => {
-            delete state.params[action.payload.id];
+            delete state.current.params[action.payload.id];
         },
         updateFigure: (state, action) => {
-            if (state.currentFigureId) {
-                state.figures[state.currentFigureId] = {
-                    ...state.figures[state.currentFigureId],
+            if (state.current.currentFigureId) {
+                state.current.figures[state.current.currentFigureId] = {
+                    ...state.current.figures[state.current.currentFigureId],
                     ...action.payload
                 }
             }
         },
         updateParam: (state, action) => {
-            state.param[action.payload.id] = {
-                ...state.param[action.payload.id],
+            state.current.params[action.payload.id] = {
+                ...state.current.params[action.payload.id],
                 ...action.payload,
             }
         },
         selectById: (state, action) => {
             console.log("SELECT", action.payload);
             const id = +action.payload;
-            if (id in state.figures) {
-                state.currentFigureId = id;
+            if (id in state.current.figures) {
+                state.current.currentFigureId = id;
             }
-            else if (id in state.params) {
-                state.currentParamId = id;
+            else if (id in state.current.params) {
+                state.current.currentParamId = id;
             }
             else {
                 console.log("tried to select something with ID", action.payload, " - don't know what this is.");

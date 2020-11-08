@@ -36,11 +36,12 @@ export const SceneApp = () => {
     }, [dispatch, status]);
 
     React.useEffect(() => {
-        var timeout = null;
+        var timeout;
         if (status === STATUS.LOADING) {
             timeout = setTimeout(() => setLoader(true), 500);
         }
         else {
+            clearTimeout(timeout);
             setLoader(false);
         }
         return () => clearTimeout(timeout);
@@ -65,7 +66,7 @@ export const SceneApp = () => {
     }, [dispatch, status, scene, sceneList]);
 
     React.useEffect(() => {
-        const debounce = setTimeout(() => {
+        const debounce = scene && setTimeout(() => {
             console.log("update scene to surfer:", scene);
             dispatch(patchScene());
         }, SCENE_UPDATE_DEBOUNCE);
@@ -156,7 +157,7 @@ export const SceneApp = () => {
                             type = "number"
                             min = "0"
                             style = {{width: 55}}
-                            value = {scene && scene.duration || 0}
+                            value = {(scene && scene.duration) || 0}
                             onChange = {event => dispatch(updateScene({duration: +event.target.value}))}
                             disabled = {!scene}
                         />
@@ -182,7 +183,7 @@ export const SceneApp = () => {
                 <Segment attached>
                     <ButtonBar>
                         <QuickButton
-                            onClick={() => dispatch(addNewPhrase())}
+                            onClick={() => {console.log("LEL!"); dispatch(addNewPhrase())}}
                             disabled = {!scene}
                             >
                             + Figure

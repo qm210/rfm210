@@ -33,10 +33,13 @@ exports.Scene = class Scene extends Service {
         }
         data = {
             duration: 10,
-            figures: [],
+            figures: {},
             sceneQmd: [],
             phraseQmd: [],
             params: {},
+            currentFigureId: null,
+            currentParamId: null,
+            nextId: 0,
             ...data,
         };
         return super.create(data, params);

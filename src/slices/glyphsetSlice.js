@@ -11,14 +11,16 @@ export const fetchGlyphsets = createAsyncThunk('glyphset/find', async () => {
 });
 
 export const fetchGlyphset = createAsyncThunk('glyphset/get', async (glyphset) => {
-    const lel = await service().get(glyphset._id);
-    return lel;
+    if (!glyphset) {
+        const all = await dispatchEvent(fetchGlyphsets());
+        console.log("NOW TAKE FIRST OF", all);
+        return all[0];
+    }
+    return await service().get(glyphset._id);
 });
 
 export const createGlyphset = createAsyncThunk('glyphset/create', async (title, {getState}) => {
-    const response = await service().create({
-        title
-    });
+    const response = await service().create({title});
     return response;
 });
 

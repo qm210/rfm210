@@ -1,5 +1,5 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import ShadertoyReact from 'shadertoy-react';
 import { ShaderFrame } from '.';
 import { asFloat, asFloatOrStr, shadertoyify } from '../logic/shader';
@@ -7,17 +7,22 @@ import RectAlgebra from '../logic/RectAlgebra';
 import { placeholder } from '../logic/glyph';
 import { glslForPhrase, phraseFuncName, glslForGlyph, kerning, glyphFuncName, glslForRect } from './../logic/shader';
 import { CodeFrame } from '../components';
-import { selectFigureList } from './../slices/sceneSlice';
+import { PHRASE, selectFigureList } from '../slices/sceneSlice';
+import { fetchGlyphset } from '../slices/glyphsetSlice';
+import { fetchLetterMap } from '../slices/glyphSlice';
 import { initWidth, initHeight } from '../Initial';
+import { Loader, Segment } from 'semantic-ui-react';
+
+const sceneWidth = 640;
+const sceneHeight = 320;
 
 
-export default ()  => {
+const SceneShaderView = ()  => {
     const scene = useSelector(store => store.scene.current);
     const figureList = useSelector(selectFigureList);
     const glyphset = useSelector(store => store.glyphset);
-
-    const sceneWidth = 640;
-    const sceneHeight = 320;
+    const dispatch = useDispatch();
+    const [loader, setLoader] = useState(!glyphset.current);
 
     /*
     const [millis, setMillis] = useState(0);
@@ -38,6 +43,21 @@ export default ()  => {
         return () => cancelAnimationFrame(reqRef.current);
       }, [animate]);
     */
+
+    React.useEffect(() => {
+        if (glyphset.current) {
+            return;
+        }
+        setLoader(true);
+        dispatch(fetchGlyphset())
+            .then(({firstGlyphset}) =>
+                dispatch(fetchLetterMap(firstGlyphset)))
+            .then(() =>
+                setLoader(false)
+            )
+            .catch(error => console.warn("IN LOADING LETTER MAP:", error));
+    }, [glyphset, dispatch, setLoader])
+
 
     const parsePhraseQmd = React.useCallback((script) => {
         const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod'];
@@ -66,27 +86,27 @@ export default ()  => {
         var terrifyingCode = '';
         var phraseCode = '';
         const transform = {};
-        for (const phrase of figureList) {
+        for (const figure of figureList.filter(figure => figure.type !== PHRASE)) {
             var phraseObjects = [];
             var postProcess = [];
             var params = [];
-            const cosPhi = Math.cos(phrase.phi);
-            const sinPhi = Math.sin(phrase.phi);
+            const cosPhi = Math.cos(figure.phi);
+            const sinPhi = Math.sin(figure.phi);
 
             // parse qmds
-            const qmds = parsePhraseQmd(phrase.qmd);
+            const qmds = parsePhraseQmd(figure.qmd);
 
-            transform[phrase.id] = {
-                offsetX: asFloat(phrase.x),
-                offsetY: asFloat(phrase.y),
-                rotate: asFloat(phrase.phi),
+            transform[figure.id] = {
+                offsetX: asFloat(figure.x),
+                offsetY: asFloat(figure.y),
+                rotate: asFloat(figure.phi),
             };
 
             // construct rects
             var maxWidth = 0;
             var maxHeight = 0;
             var lastChar = undefined;
-            for (const char of phrase.chars.split('')) {
+            for (const char of figure.chars.split('')) {
                 const glyph = glyphset.letterMap[char] || placeholder(initWidth, initHeight, char !== ' ');
                 const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
                 const kern = kerning(glyphset, lastChar, char);
@@ -96,7 +116,7 @@ export default ()  => {
                     offsetY: maxWidth * sinPhi + kern.y * cosPhi,
                     rotate: 0,
                 };
-                phraseObjects.push({phrase, char, glyph, pixelRects, transform});
+                phraseObjects.push({phrase: figure, char, glyph, pixelRects, transform});
                 maxHeight = Math.max(maxHeight, glyph.height);
                 maxWidth += glyph.width;
                 lastChar = char;
@@ -117,11 +137,11 @@ export default ()  => {
                 return acc;
             }, usedGlyphs);
             // quick hack before UC10: use every glyph
-            usedGlyphs = glyphset.glyphs.reduce((acc, glyph) => {
-                if (!(glyph.letter in acc)) {
-                    acc[glyph.letter] = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);;
+            usedGlyphs = glyphset.current.letterMap.reduce((allLetters, glyph) => {
+                if (!(glyph.letter in allLetters)) {
+                    allLetters[glyph.letter] = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);;
                 }
-                return acc;
+                return allLetters;
             }, usedGlyphs);
             //////////////////////////////
             for (const {start, end, qmd, arg} of qmds) {
@@ -145,8 +165,8 @@ export default ()  => {
             }
             terrifyingCode += params.map(p =>
                 `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
-            ) + glslForPhrase(phrase, transform[phrase.id]) + '\n' + ' '.repeat(8);
-            phraseCode += `void ${phraseFuncName(phrase)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, in float spac, out float d)
+            ) + glslForPhrase(figure, transform[figure.id]) + '\n' + ' '.repeat(8);
+            phraseCode += `void ${phraseFuncName(figure)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, in float spac, out float d)
     {d = 1.;
     ${phraseObjects.map(obj =>
         glslForGlyph(obj.glyph, obj.transform)).join('\n' + ' '.repeat(4))}
@@ -239,12 +259,19 @@ ${usedGlyphs[glyph].map(rect =>
     , [terrifyingCode, glyphCode, phraseCode, scene, usesTime]);
 
     return <>
-        <ShaderFrame>
-            <b>This is the AWESOME part!</b><br/>
-            <ShadertoyReact fs={shadertoyify(shaderCode)}/>
-        </ShaderFrame>
-        <CodeFrame>
-            {shadertoyify(shaderCode)}
-        </CodeFrame>
+        <Segment attached>
+            <Loader active={loader} size="massive"/>
+            <ShaderFrame>
+                <b>This is the AWESOME part!</b><br/>
+                <ShadertoyReact fs={shadertoyify(shaderCode)}/>
+            </ShaderFrame>
+        </Segment>
+        <Segment>
+            <CodeFrame>
+                {shadertoyify(shaderCode)}
+            </CodeFrame>
+        </Segment>
     </>;
 };
+
+export default SceneShaderView;
