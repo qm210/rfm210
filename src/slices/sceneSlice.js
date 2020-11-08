@@ -114,11 +114,14 @@ const setFail = (state, action) => {
 }
 
 const addFigure = (extraState = {}) => (state, action) => {
-    state.current.figures[state.current.nextId] = {
-        ...initFigure,
-        ...extraState,
-        ...action.payload,
-        id: state.current.nextId,
+    state.current.figures = {
+        ...state.current.figures,
+        [state.current.nextId]: {
+            ...initFigure,
+            ...extraState,
+            ...action.payload,
+            id: state.current.nextId,
+        }
     };
     state.current.currentFigureId = state.current.nextId;
     state.current.nextId += 1;

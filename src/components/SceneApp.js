@@ -242,7 +242,7 @@ export const SceneApp = () => {
                     <LabelledInput
                             type = "checkbox"
                             label = "Phrase?"
-                            value = {figure && figure.type === PHRASE}
+                            value = {!!figure && figure.type === PHRASE}
                             disabled = {!figure}
                             onChange = {event => dispatch(updateFigure(event.target.value ? {type: PHRASE} : {}))}
                         />
