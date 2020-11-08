@@ -35,46 +35,74 @@ const toList = obj => Object.values(obj || {});
 export const selectFigureList = store => toList(store.scene.figures);
 export const selectSceneList = store => toList(store.scene.all).sort((a,b) => a.order - b.order);
 
-export const fetchScenes = createAsyncThunk('scene/fetchAll', async () =>
-    await service().find()
-);
+export const fetchScenes = createAsyncThunk('scene/fetchAll', async () => ({
+    all: await service().find()
+}));
 
-export const fetchScene = createAsyncThunk('scene/fetch', async (id) =>
-    await service().get(id)
-);
+export const fetchScene = createAsyncThunk('scene/fetch', async (id, {getState, dispatch}) => {
+    const newCurrent = await service().get(id);
+    if (newCurrent) {
+        return {current: newCurrent};
+    }
+    console.log("NOT FOUND", newCurrent);
+    await dispatch(fetchScenes());
+    const foundCurrent = getState().scene.all.find(scene => scene._id);
+    console.log("now stuff is...", foundCurrent);
+    return {current: foundCurrent};
+});
 
 export const addNewScene = createAsyncThunk('scene/add', async (data, {getState}) => {
     const current = getState().scene.current;
+    console.log("ORDER??", current ? current.order + 1 : null);
     const newScene = await service().create({
         order: current ? current.order + 1 : null,
         ...data
     });
-    const allScenes = (await service().find()).data;
+    const allScenes = await service().find();
+    console.log("HEHE", newScene, allScenes)
     return {current: newScene, all: allScenes};
 });
 
-export const reorderScene = createAsyncThunk('scene/reorder', async (data, {getState}) => ({
-    current: await service().reorderScene(getState().scene.current, data),
-    all: await service().find()
-}), {
-    condition: (_, {getState}) => !!getState().scene.current
+export const reorderScene = createAsyncThunk('scene/reorder', async (delta, {getState}) => {
+    if (!getState().scene.current) {
+        return {};
+    }
+    const current = await service().reorderScene(getState().scene.current, delta);
+    const all = await service().find();
+    return {current, all};
 });
 
-export const deleteScene = createAsyncThunk('scene/delete', async ({getState, dispatch}) => {
-    const removed = await service().remove(getState().current.id);
+export const deleteScene = createAsyncThunk('scene/delete', async (id, {dispatch, getState}) => {
+    const previousScene = await service().remove(id);
+    // question: need to await?
     dispatch(fetchScenes());
-    return removed;
-});
+    return {current: previousScene};
+}, {condition: id => !!id});
 
 export const deleteAllScenes = createAsyncThunk('scenes/clear', async () =>
     await service().remove(null)
 );
 
-const actionFulfilled = (state, action) => ({
-    ...state,
-    ...action.payload,
-    status: STATUS.OK
-});
+const setSuccess = (state, action) => {
+    console.log("SUCESS", action.type, action.payload);
+    return ({
+        ...state,
+        ...action.payload,
+        status: STATUS.OK,
+    });
+};
+
+const setLoading = (state) => {
+    state.status = STATUS.LOADING;
+    state.error = null;
+}
+
+const setFail = (state, action) => {
+    state.current = null;
+    state.status = STATUS.FAIL;
+    state.error = action.error;
+    console.warn("EH!", state.error, action);
+}
 
 const sceneSlice = createSlice({
     name: 'scene',
@@ -162,27 +190,30 @@ const sceneSlice = createSlice({
         }
     },
     extraReducers: {
-        [fetchScenes.pending]: (state) => {
-            state.status = STATUS.LOADING;
-        },
-        [fetchScenes.fulfilled]: (state, action) => {
-            state.all = action.payload.data;
-            state.status = STATUS.OK;
-        },
-        [addNewScene.fulfilled]: actionFulfilled,
-        [addNewScene.rejected]: (state, action) => {
-            state.current = null;
-            state.status = STATUS.FAIL;
-        },
-        [deleteScene.fulfilled]: (state, action) => {
-            console.log("Deleted, and now..?", action);
-        },
-        [deleteAllScenes.fulfilled]: (state) => {
-            state.status = STATUS.IDLE;
-            state.all = [];
-            state.current = null;
-        },
-        [reorderScene.fulfilled]: actionFulfilled,
+        [fetchScenes.pending]: setLoading,
+        [fetchScenes.fulfilled]: setSuccess,
+        [fetchScenes.rejected]: setFail,
+
+        [fetchScene.pending]: setLoading,
+        [fetchScene.fulfilled]: setSuccess,
+        [fetchScene.rejected]: setFail,
+
+        [addNewScene.fulfilled]: setSuccess,
+        [addNewScene.rejected]: setFail,
+
+        [deleteAllScenes.pending]: setLoading,
+        [deleteAllScenes.fulfilled]: (state) => ({
+            ...state,
+            current: null,
+            all: [],
+            status: STATUS.IDLE,
+        }),
+        [deleteAllScenes.rejected]: setFail,
+
+        [deleteScene.fulfilled]: setSuccess,
+        [deleteScene.rejected]: setFail,
+
+        [reorderScene.fulfilled]: setSuccess,
     }
 });
 
@@ -193,7 +224,7 @@ export const {
     addNewPhrase,
     addNewFigure,
     copyFigure,
-    deleteFigure
+    deleteFigure,
 } = sceneSlice.actions;
 
 export default sceneSlice.reducer;

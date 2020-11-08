@@ -4,7 +4,7 @@ module.exports = {
   before: {
     all: [],
     find: [],
-    get: [],
+    get: [context => console.log("GET", context.arguments)],
     create: [],
     update: [],
     patch: [],

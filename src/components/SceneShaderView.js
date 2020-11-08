@@ -16,6 +16,9 @@ export default ()  => {
     const figureList = useSelector(selectFigureList);
     const glyphset = useSelector(store => store.glyphset);
 
+    const sceneWidth = 640;
+    const sceneHeight = 320;
+
     /*
     const [millis, setMillis] = useState(0);
     const reqRef = useRef();
@@ -221,7 +224,7 @@ ${usedGlyphs[glyph].map(rect =>
     {
         ${usesTime ? `float t = mod(time, ${asFloat(scene.duration || 0)});` : ''}
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
-        vec2 UV = vec2((uv.x - .5)*${asFloat(scene.width/scene.height)}, uv.y - .5); // qm hack
+        vec2 UV = vec2((uv.x - .5)*${asFloat(sceneWidth/sceneHeight)}, uv.y - .5); // qm hack
         vec3 col = vec3(1.,.8,1.);
         float d;
         float alpha = 1.;

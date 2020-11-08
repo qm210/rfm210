@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react';
+import React, { useState, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {MainView, MainColumn, LabelledInput, QuickButton} from '.';
 import SceneShaderView from './SceneShaderView';
@@ -18,17 +18,47 @@ export const SceneApp = () => {
     const dispatch = useDispatch();
     const [inputs, setInputs] = useReducer((state, newState) => ({...state, ...newState}), {
         sceneTitle: "A horse walks into a bar...",
+        sceneId: scene ? scene._id : '',
         sceneQmd: "",
         figureQmd: "",
         params: "",
         shaderFunc: "",
     });
+    const [loader, setLoader] = useState(false);
 
     React.useEffect(() => {
         if (status === STATUS.IDLE) {
             dispatch(fetchScenes())
         }
-    }, [status, dispatch]);
+    }, [dispatch, status]);
+
+    React.useEffect(() => {
+        var timeout = null;
+        if (status === STATUS.LOADING) {
+            timeout = setTimeout(() => setLoader(true), 500);
+        }
+        else {
+            setLoader(false);
+        }
+        return () => clearTimeout(timeout);
+    }, [status, setLoader]);
+
+    React.useEffect(() => {
+        if (!scene) {
+            return;
+        }
+        setInputs({
+            sceneTitle: scene.title,
+            sceneId: scene._id
+        });
+    }, [scene, setInputs]);
+
+    React.useEffect(() => {
+        if (!scene && sceneList.length > 0 && status === STATUS.OK) {
+            console.log("DO IT", sceneList.map(s => s._id), scene);
+            dispatch(fetchScene(sceneList[0]._id));
+        }
+    }, [dispatch, status, scene, sceneList]);
 
     const handleInput = event => {
         const {name, value} = event.target;
@@ -41,25 +71,21 @@ export const SceneApp = () => {
     const handleFigureUpdate = name =>
         event => dispatch(updateFigure({[name]: event.target.value}));
 
-    console.log("SL", sceneList);
-
     return <>
-        <Loader active={status === STATUS.LOADING}/>
+        <Loader active={loader} size="massive"/>
         <MainView>
             <MainColumn>
                 <Header as='h4' attached='top'>Scenes</Header>
                 <Segment attached>
                     <ButtonBar>
                         <QuickButton
-                            onClick = {() => dispatch(addNewScene({
-                                title: inputs.sceneTitle
-                            }))}
+                            onClick = {() => dispatch(addNewScene({title: inputs.sceneTitle}))}
                             disabled = {!inputs.sceneTitle}
                             >
                             + Scene
                         </QuickButton>
                         <QuickButton
-                            onClick = {() => dispatch(deleteScene())}
+                            onClick = {() => dispatch(deleteScene(scene._id))}
                             disabled = {!scene}
                             >
                             Delete
@@ -87,44 +113,32 @@ export const SceneApp = () => {
                             name = "sceneTitle"
                             value = {inputs.sceneTitle}
                             onChange = {handleInput}
-                            onKeyDown = {event => whenSubmitted(event, handleInput)}
+                            onKeyDown = {event => whenSubmitted(event, () =>
+                                dispatch(addNewScene({title: inputs.sceneTitle}))
+                            )}
                         />
                     </div>
 
                     <select
-                        size = {10}
+                        size = "10"
                         style = {{width: 300}}
-                        value = {scene ? scene._id : ''}
-                        onChange = {event => dispatch(fetchScene(event.target.value))}
+                        value = {inputs.sceneId}
+                        name = {'sceneId'}
+                        onChange = {event => {
+                            handleInput(event);
+                            dispatch(fetchScene(event.target.value));
+                        }}
                         >
-                        {sceneList.map((eachScene, index) =>
-                            <option key={index} value={eachScene._id}>
-                                {eachScene.title || `<unnamed ${eachScene._id}>`}
+                        {sceneList.map((it, index) =>
+                            <option key={index} value={it._id}>
+                                {it.title + ' ' + it._id || `<unnamed ${it._id}>`}
                             </option>
                         )}
                     </select>
                 </Segment>
                 <Segment attached>
                     <div>
-                        <LabelledInput
-                            name = "ix"
-                            label = "W:"
-                            type ="number"
-                            style = {{width: 55}}
-                            value = {scene ? scene.width : 0}
-                            onChange = {event => dispatch(updateScene({width: +event.target.value}))}
-                            disabled = {!scene}
-                        />
-                        <LabelledInput
-                            name = "iy"
-                            label = "H:"
-                            type = "number"
-                            style = {{width: 55}}
-                            value = {scene ? scene.height : 0}
-                            onChange = {event => dispatch(updateScene({height: +event.target.value}))}
-                            disabled = {!scene}
-                        />
-                        <LabelledInput
+                    <LabelledInput
                             name = "iduration"
                             label = "&#916;T/sec:"
                             type = "number"
