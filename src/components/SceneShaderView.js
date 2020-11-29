@@ -5,8 +5,8 @@ import { ShaderFrame } from '.';
 import { asFloat, asFloatOrStr, shadertoyify } from '../logic/shader';
 import RectAlgebra from '../logic/RectAlgebra';
 import { placeholder } from '../logic/glyph';
-import { glslForPhrase, phraseFuncName, glslForGlyph, kerning, glyphFuncName, glslForRect } from './../logic/shader';
-import { CodeFrame } from '../components';
+import { glslForPhrase, phraseFuncName, glslForGlyph, kerning, glyphFuncName, glslForRect } from '../logic/shader';
+import { CodeFrame } from '.';
 import { PHRASE, selectFigureList } from '../slices/sceneSlice';
 import { fetchGlyphset } from '../slices/glyphsetSlice';
 import { fetchLetterMap } from '../slices/glyphSlice';
@@ -16,6 +16,7 @@ import { Loader, Segment } from 'semantic-ui-react';
 const sceneWidth = 640;
 const sceneHeight = 320;
 
+const joinLines = (array, indent) => array.map(it => ' '.repeat(indent) + it.toString()).join('\n');
 
 const SceneShaderView = ()  => {
     const scene = useSelector(store => store.scene.current);
@@ -81,7 +82,19 @@ const SceneShaderView = ()  => {
     //const usesTime = React.useMemo(() => scene &&  scene.figures[0].qmd.length > 0, [scene]);
     const usesTime = true;
 
+    const placeholderCode = React.useMemo(() => {
+        const placeholderFunctionCall = figure =>
+            `placeholder(UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);`
+        const lineArray = figureList
+            .filter(figure => figure.placeholder)
+            .map(placeholderFunctionCall);
+        return joinLines(lineArray);
+    }, [figureList]);
+
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
+        if (!glyphset.current) {
+            return ['', '', ''];
+        }
         var usedGlyphs = {};
         var terrifyingCode = '';
         var phraseCode = '';
@@ -194,6 +207,17 @@ ${usedGlyphs[glyph].map(rect =>
     const vec3 c = vec3(1.,0.,-1.);
     uniform vec2 iResolution; // qm hacked this
 
+    const float w = .05;
+    const float eps = 1.e-5;
+
+    float norm(in vec2 coord)
+    {
+        return max(abs(coord.x), abs(coord.y));
+    }
+    vec2 quant(in vec2 coord)
+    {
+        return floor(coord/w + .5)*w;
+    }
     float smstep(float a, float b, float x) {return smoothstep(a, b, clamp(x, a, b));}
     void rand(in vec2 x, out float n)
     {
@@ -240,6 +264,22 @@ ${usedGlyphs[glyph].map(rect =>
     }
     ${glyphCode}
     ${phraseCode}
+    void placeholder (in vec2 coord, in vec2 center, in vec2 scale, inout vec3 col)
+    {
+        vec2 cent = (coord-center);
+        vec2 centq = quant(cent/scale);
+        float cnorm = max(abs(cent.x/scale.x), abs(cent.y/scale.y));
+
+        if (cnorm < 1.)
+        {
+            if (cnorm > 1.-w)
+            {
+                col = c.xxx;
+            }
+            else if(w + centq.x > -centq.y + eps && centq.x < -centq.y + w) {col = .5*col;}
+            else if(w + centq.x > centq.y + eps&& centq.x < centq.y + w) {col = .5*col;}
+        }
+    }
     void main()
     {
         ${usesTime ? `float t = mod(time, ${asFloat(scene.duration || 0)});` : ''}
@@ -249,7 +289,8 @@ ${usedGlyphs[glyph].map(rect =>
         float d;
         float alpha = 1.;
         float blur = 1.;
-        ${terrifyingCode}
+        //this is where terrifyingCode was
+        ${placeholderCode}
         gl_FragColor = vec4(clamp(col,0.,1.),1.); // qm hack fragColor -> gl_FragColor
     }`
         .replaceAll('PIXEL', '.005')
@@ -261,7 +302,10 @@ ${usedGlyphs[glyph].map(rect =>
     return <>
         <Segment attached>
             <Loader active={loader} size="massive"/>
-            <ShaderFrame>
+            <ShaderFrame style = {{
+                width: sceneWidth,
+                height: sceneHeight
+            }}>
                 <b>This is the AWESOME part!</b><br/>
                 <ShadertoyReact fs={shadertoyify(shaderCode)}/>
             </ShaderFrame>

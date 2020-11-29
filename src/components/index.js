@@ -27,10 +27,22 @@ export const SpacedInput = styled.input`
     font-size: 1.2em;
 `;
 
-export const LabelledInput = (props) => <>
-    <label htmlFor={props.name}>{props.label}</label>
-    <SpacedInput {...props}/>
-</>;
+export const LabelledInput = (props) => {
+    let extraStyle = {};
+    if (props.type === "number") {
+        extraStyle.width = 60;
+    }
+    return <>
+        <label htmlFor={props.name} style={{whiteSpace: 'nowrap'}}>{props.label}</label>
+        <SpacedInput
+            {...props}
+            style={{
+                ...props.style,
+                ...extraStyle,
+            }}
+        />
+    </>
+};
 
 export const ExportTextArea = styled.textarea`
     resize: none;

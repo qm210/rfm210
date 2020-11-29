@@ -236,15 +236,27 @@ export const SceneApp = () => {
             </MainColumn>
 
             <MainColumn>
-                <Header as='h5' attached='top'>Figure</Header>
+                <Header as='h5' attached='top'
+                    onDoubleClick = {() => {
+                        console.log("FIGURE", figure);
+                    }}
+                >
+                    Figure</Header>
                 <Segment attached>
                     <div>
-                    <LabelledInput
+                        <LabelledInput
                             type = "checkbox"
                             label = "Phrase?"
-                            value = {!!figure && figure.type === PHRASE}
+                            checked = {!!figure && figure.type === PHRASE}
                             disabled = {!figure}
-                            onChange = {event => dispatch(updateFigure(event.target.value ? {type: PHRASE} : {}))}
+                            onChange = {event => dispatch(updateFigure({type: event.target.checked ? PHRASE : null}))}
+                        />
+                        <LabelledInput
+                            type = "checkbox"
+                            label = "Render placeholder"
+                            checked = {!!figure && figure.placeholder}
+                            disabled = {!figure}
+                            onChange = {event => dispatch(updateFigure({placeholder: event.target.checked}))}
                         />
                     </div>
                     <div>
@@ -273,12 +285,11 @@ export const SceneApp = () => {
                         />
                         }
                     </div>
-                    <div>
+                    <div style={{display: 'flex', alignItems: 'center'}}>
                         <LabelledInput
                             name = "ix"
                             label = "X:"
                             type = "number"
-                            style = {{width: 60}}
                             value = {figure ? figure.x : 0}
                             onChange = {event => dispatch(updateFigure({x: +event.target.value}))}
                             disabled = {!figure}
@@ -287,7 +298,6 @@ export const SceneApp = () => {
                             name="iy"
                             label="Y:"
                             type="number"
-                            style={{width: 60}}
                             value={figure ? figure.y : 0}
                             onChange = {event => dispatch(updateFigure({y: +event.target.value}))}
                             disabled = {!figure}
@@ -296,9 +306,37 @@ export const SceneApp = () => {
                             name="iphi"
                             label="&#966;/°:"
                             type="number"
-                            style={{width: 60}}
                             value={figure ? 180 / Math.PI * figure.phi : 0}
                             onChange = {event => dispatch(updateFigure({phi: +event.target.value * Math.PI/180}))}
+                            disabled = {!figure}
+                        />
+                    </div>
+                    <div style={{display: 'flex', alignItems: 'center'}}>
+                        <LabelledInput
+                            name="iscale"
+                            label="scale:"
+                            type="number"
+                            step={.01}
+                            value={figure ? figure.scale : 1}
+                            onChange = {event => dispatch(updateFigure({scale: +event.target.value}))}
+                            disabled = {!figure}
+                        />
+                        <LabelledInput
+                            name="iscalex"
+                            label="scaleX:"
+                            type="number"
+                            step={.01}
+                            value={figure ? figure.scaleX : 1}
+                            onChange = {event => dispatch(updateFigure({scaleX: +event.target.value}))}
+                            disabled = {!figure}
+                        />
+                        <LabelledInput
+                            name="iscaley"
+                            label="scaleY:"
+                            type="number"
+                            step={.01}
+                            value={figure ? figure.scaleY : 1}
+                            onChange = {event => dispatch(updateFigure({scaleY: +event.target.value}))}
                             disabled = {!figure}
                         />
                     </div>

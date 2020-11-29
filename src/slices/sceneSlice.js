@@ -12,10 +12,9 @@ const initFigure = {
     y: 0,
     phi: 0,
     active: true,
-    scale: {
-        x: 1,
-        y: 1,
-    },
+    scale: .5,
+    scaleX: 1,
+    scaleY: 1,
     spacing: 0,
     color: {
         r: 0,
@@ -27,6 +26,7 @@ const initFigure = {
     endTime: 0,
     shaderFunc: "",
     qmd: [],
+    placeholder: true,
 };
 
 export const selectCurrentFigure = store =>
