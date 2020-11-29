@@ -2,6 +2,7 @@ import React, { useState, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {MainView, MainColumn, LabelledInput, QuickButton} from '.';
 import SceneShaderView from './SceneShaderView';
+import ParamEditor from './ParamEditor';
 import { fetchScene, updateScene, updateFigure, selectById, addNewPhrase, copyFigure, deleteFigure, selectCurrentFigure, selectFigureList, selectSceneList, addNewScene, deleteScene, reorderScene, PHRASE, fetchScenes } from '../slices/sceneSlice';
 import { doc } from '../Initial';
 import { whenSubmitted } from '../logic/utils';
@@ -28,10 +29,12 @@ export const SceneApp = () => {
         shaderFunc: "",
     });
     const [loader, setLoader] = useState(false);
+    const sceneUpdateTimeout = React.useRef();
 
     React.useEffect(() => {
         if (status === STATUS.IDLE) {
             dispatch(fetchScenes())
+                .then(it => console.log("FETCHY", it));
         }
     }, [dispatch, status]);
 
@@ -48,13 +51,15 @@ export const SceneApp = () => {
     }, [status, setLoader]);
 
     React.useEffect(() => {
-        console.log("SCENE", scene && (scene._id + ' ' + scene.title + ' ' + scene.duration));
         if (!scene) {
             return;
         }
+        console.log("RELOAD", scene.params);
         setInputs({
             sceneTitle: scene.title,
-            sceneId: scene._id
+            sceneId: scene._id,
+            params: scene.params,
+            // ADD other fields here!
         });
     }, [scene, setInputs]);
 
@@ -79,7 +84,16 @@ export const SceneApp = () => {
     };
 
     const handleSceneUpdate = name =>
-        event => dispatch(updateScene({[name]: event.target.value}));
+        event => {
+            if (sceneUpdateTimeout.current) {
+                clearTimeout(sceneUpdateTimeout.current);
+            }
+            event.persist();
+            sceneUpdateTimeout.current = setTimeout(() =>
+                dispatch(updateScene({[name]: event.target.value})),
+                200
+            );
+        }
 
     const handleFigureUpdate = name =>
         event => dispatch(updateFigure({[name]: event.target.value}));
@@ -228,11 +242,12 @@ export const SceneApp = () => {
                         value = {inputs.params}
                         name = {'params'}
                         onChange = {handleInput}
-                        onKeyDown = {event => whenSubmitted(event, handleSceneUpdate('params'))}
+                        onKeyDown = {handleSceneUpdate('params')}
                         onBlur = {handleSceneUpdate('params')}
                         disabled = {!scene}
                     />
                 </Segment>
+                <ParamEditor/>
             </MainColumn>
 
             <MainColumn>
@@ -290,52 +305,54 @@ export const SceneApp = () => {
                             name = "ix"
                             label = "X:"
                             type = "number"
+                            step = {.01}
                             value = {figure ? figure.x : 0}
                             onChange = {event => dispatch(updateFigure({x: +event.target.value}))}
                             disabled = {!figure}
                         />
                         <LabelledInput
-                            name="iy"
-                            label="Y:"
-                            type="number"
-                            value={figure ? figure.y : 0}
+                            name = "iy"
+                            label = "Y:"
+                            type = "number"
+                            step = {.01}
+                            value = {figure ? figure.y : 0}
                             onChange = {event => dispatch(updateFigure({y: +event.target.value}))}
                             disabled = {!figure}
                         />
                         <LabelledInput
-                            name="iphi"
-                            label="&#966;/°:"
-                            type="number"
-                            value={figure ? 180 / Math.PI * figure.phi : 0}
+                            name = "iphi"
+                            label = "&#966;/°:"
+                            type = "number"
+                            value = {figure ? 180 / Math.PI * figure.phi : 0}
                             onChange = {event => dispatch(updateFigure({phi: +event.target.value * Math.PI/180}))}
                             disabled = {!figure}
                         />
                     </div>
                     <div style={{display: 'flex', alignItems: 'center'}}>
                         <LabelledInput
-                            name="iscale"
-                            label="scale:"
-                            type="number"
-                            step={.01}
-                            value={figure ? figure.scale : 1}
+                            name = "iscale"
+                            label = "scale:"
+                            type = "number"
+                            step = {.01}
+                            value = {figure ? figure.scale : 1}
                             onChange = {event => dispatch(updateFigure({scale: +event.target.value}))}
                             disabled = {!figure}
                         />
                         <LabelledInput
-                            name="iscalex"
-                            label="scaleX:"
-                            type="number"
-                            step={.01}
-                            value={figure ? figure.scaleX : 1}
+                            name = "iscalex"
+                            label = "scaleX:"
+                            type = "number"
+                            step = {.01}
+                            value = {figure ? figure.scaleX : 1}
                             onChange = {event => dispatch(updateFigure({scaleX: +event.target.value}))}
                             disabled = {!figure}
                         />
                         <LabelledInput
-                            name="iscaley"
-                            label="scaleY:"
-                            type="number"
-                            step={.01}
-                            value={figure ? figure.scaleY : 1}
+                            name = "iscaley"
+                            label = "scaleY:"
+                            type = "number"
+                            step = {.01}
+                            value = {figure ? figure.scaleY : 1}
                             onChange = {event => dispatch(updateFigure({scaleY: +event.target.value}))}
                             disabled = {!figure}
                         />

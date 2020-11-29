@@ -84,7 +84,7 @@ const SceneShaderView = ()  => {
 
     const placeholderCode = React.useMemo(() => {
         const placeholderFunctionCall = figure =>
-            `placeholder(UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);`
+            `vec3 col_${figure.id} = c.xxx; placeholder(UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);`
         const lineArray = figureList
             .filter(figure => figure.placeholder)
             .map(placeholderFunctionCall);
@@ -297,15 +297,18 @@ ${usedGlyphs[glyph].map(rect =>
         .replaceAll('CONTOUR', '.01')
         .replaceAll('DARKBORDER', '.1')
         .replaceAll('DARKENING', 'col*col*col')
-    , [terrifyingCode, glyphCode, phraseCode, scene, usesTime]);
+    , [placeholderCode, terrifyingCode, glyphCode, phraseCode, scene, usesTime]);
 
     return <>
         <Segment attached>
             <Loader active={loader} size="massive"/>
-            <ShaderFrame style = {{
-                width: sceneWidth,
-                height: sceneHeight
-            }}>
+            <ShaderFrame
+                style = {{
+                    width: sceneWidth,
+                    height: sceneHeight
+                }}
+                dummyProp = {shaderCode}
+                >
                 <b>This is the AWESOME part!</b><br/>
                 <ShadertoyReact fs={shadertoyify(shaderCode)}/>
             </ShaderFrame>

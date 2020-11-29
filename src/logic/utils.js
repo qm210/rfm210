@@ -2,8 +2,7 @@ export const millis = () => (new Date()).getTime();
 export const sec = () => Math.round((new Date()).getTime() / 1000);
 
 export const whenSubmitted = (event, func) => {
-    event.persist();
-    if (['Enter', 'Backspace'].includes(event.key)) {
+    if (['Enter', 'Backspace'].includes(event.key)) { // why is Backspace in there??
         func(event);
     }
 };
