@@ -11,7 +11,7 @@ const newHandle = (index, x,y) => ({
     y,
 });
 
-const nodeRadius = 10;
+const nodeRadius = 6;
 const canvasHeight = 150;
 const scaling = 1;
 
@@ -157,6 +157,7 @@ const ParamEditor = () => {
                     }
                 <ParamCanvas
                     param = {param}
+                    handles = {handles}
                     />
                 </div>
             </Segment>
@@ -179,17 +180,29 @@ const DebugSegment = ({obj}) =>
     }
     </Segment>;
 
-const ParamCanvas = ({param}) => {
+const ParamCanvas = ({param, handles}) => {
     const canvasRef = React.useRef();
 
     React.useEffect(() => {
         const ctx = canvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasHeight);
 
+        if (handles.length === 0) {
+            return;
+        }
         ctx.beginPath();
-        ctx.moveTo(15, 120);
-        ctx.lineTo(275, 120);
+        ctx.lineWidth = 3;
+        handles.forEach((handle, index) => {
+            const y = canvasHeight - handle.y - 1;
+            if (index === 0) {
+                ctx.moveTo(handle.x, y);
+            }
+            else {
+                ctx.lineTo(handle.x, y);
+            }
+        })
         ctx.stroke();
-    }, []);
+    }, [handles]);
 
     return <canvas
         ref = {canvasRef}
@@ -207,10 +220,11 @@ const Circle = styled.div`
     height: ${nodeRadius * 2 * scaling}px;
     border-radius: ${nodeRadius * scaling}px;
     border: ${2 * scaling}px solid black;
+    box-sizing: border-box;
     background-color: silver;
     position: absolute;
-    left: ${props => props.x * scaling}px;
-    bottom: ${props => props.y * scaling}px;
+    left: ${props => (props.x - nodeRadius) * scaling}px;
+    bottom: ${props => (props.y - nodeRadius) * scaling}px;
     transform: translate(-50%, -50%);
     margin-left: 10px;
     cursor: move;
