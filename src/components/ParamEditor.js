@@ -11,76 +11,217 @@ const newHandle = (index, x,y) => ({
     y,
 });
 
+const nodeRadius = 10;
+const canvasHeight = 150;
+const scaling = 1;
+
+const initDragState = {
+    dragging: false,
+    dragIndex: null,
+    startX: null,
+    offsetX: null,
+    startY: null,
+    offsetY: null,
+    original: {},
+}
+
+const DRAG = Object.freeze({
+    START: 'drag/start',
+    END: 'drag/end',
+    UPDATE: 'drag/update',
+    CANCEL: 'drag/cancel',
+});
+
+const dragReducer = (state, action) => {
+    switch(action.type) {
+        case DRAG.START:
+            return {
+                ...state,
+                dragging: true,
+                dragIndex: action.payload.handle.index,
+                original: {...action.payload.handle},
+                startX: action.payload.startX,
+                startY: action.payload.startY,
+                offsetX: 0,
+                offsetY: 0,
+            };
+
+        case DRAG.END:
+            return initDragState;
+
+        case DRAG.UPDATE:
+            return {
+                ...state,
+                offsetX: action.payload.dragX - state.startX,
+                offsetY: action.payload.dragY - state.startY,
+            };
+
+        default:
+            return state;
+    }
+};
+
 const ParamEditor = () => {
     const scene = useSelector(store => store.scene.current);
     const params = sceneParamList(scene);
+    const [dragState, dragDispatch] = React.useReducer(dragReducer, initDragState);
 
-    console.log("P", params);
+    const [handles, setHandles] = React.useState(
+        Array(3).fill().map((_, index) => newHandle(index, index * 50, 0))
+    );
+
     if (params.length === 0) {
         return null;
     }
 
-    const handles = Array(3).map((_, index) => newHandle(index, index * 20, 0));
+    const onDragStart = handle => event => {
+        if (dragState.dragging) {
+            return;
+        }
+        event.persist();
+        dragDispatch({type: DRAG.START, payload: {
+            handle,
+            startX: event.clientX,
+            startY: event.clientY,
+        }});
+    };
 
-    return params.map((param, index) =>
-        <Segment key={index}>
-            <div
-                style = {{
-                    position: 'relative'
-                }}
-                >
-                {param}
-            </div>
-            <ParamCanvas
-                param = {param}
-                >
-                {
-                    handles.map((handle, index) =>
-                        <DragCircle
-                            key = {index}
-                            handle = {handle}
-                        />
-                    )
+    const onDragUpdate = event => {
+        if (!dragState.dragging) {
+            return;
+        }
+        event.persist();
+        const drag = {
+            x: event.clientX - dragState.startX,
+            y: event.clientY - dragState.startY,
+        };
+        setHandles(state => state.map(handle =>
+            handle.index === dragState.dragIndex
+                ? {
+                    ...handle,
+                    x: dragState.original.x + drag.x,
+                    y: dragState.original.y - drag.y,
                 }
-            </ParamCanvas>
-        </Segment>
+                : handle
+        ));
+        dragDispatch({type: DRAG.UPDATE, payload: drag});
+    };
+
+    const onDragEnd = event => {
+        if (!dragState.dragging) {
+            return;
+        }
+        if (event.type === 'mouseleave') {
+            setHandles(state => state.map(handle =>
+                handle.index === dragState.dragIndex
+                    ? {
+                        ...handle,
+                        x: dragState.original.x,
+                        y: dragState.original.y,
+                    }
+                    : handle
+            ));
+        }
+        dragDispatch({type: DRAG.END});
+    };
+
+    const onDragCancel = event => {
+        console.log("EVENT", event, event.type, event.name)
+        if (!dragState.dragging) {
+            return;
+        }
+        dragDispatch({type: DRAG.CANCEL});
+    }
+
+    console.log(dragState);
+    return params.map((param, index) =>
+        <React.Fragment key={index}>
+            <Segment>
+                {param}
+                <div
+                    onMouseUp = {onDragEnd}
+                    onMouseLeave = {onDragEnd}
+                    onMouseMove = {onDragUpdate}
+                    style = {{
+                        position: 'relative'
+                    }}
+                    >
+                    {
+                        handles.map((handle) =>
+                            <DragCircle
+                                key = {handle.index}
+                                handle = {handle}
+                                onDragStart = {onDragStart(handle)}
+                            />
+                        )
+                    }
+                <ParamCanvas
+                    param = {param}
+                    />
+                </div>
+            </Segment>
+            <DebugSegment obj={dragState}/>
+        </React.Fragment>
     );
 };
 
 export default ParamEditor;
 
-const nodeRadius = 10;
+const DebugSegment = ({obj}) =>
+    <Segment style={{display: 'grid', gridTemplateColumns: '1fr 1fr'}}>
+    {
+        Object.entries(obj).map(([key, val]) =>
+            <React.Fragment key={key}>
+                <div>{key}:</div>
+                <div>{val !== null ? val.toString() : "null"}</div>
+            </React.Fragment>
+        )
+    }
+    </Segment>;
 
 const ParamCanvas = ({param}) => {
     const canvasRef = React.useRef();
 
     React.useEffect(() => {
         const ctx = canvasRef.current.getContext('2d');
-        /*
-            ctx.beginPath();
-            ctx.arc(100, 75, nodeRadius, 0, 2 * Math.PI);
-            ctx.stroke();
-        */
+
+        ctx.beginPath();
+        ctx.moveTo(15, 120);
+        ctx.lineTo(275, 120);
+        ctx.stroke();
     }, []);
 
-    return <canvas ref={canvasRef} width="300" height="150"/>;
+    return <canvas
+        ref = {canvasRef}
+        width = {300}
+        height = {canvasHeight}
+        style = {{
+            border: '1px solid black',
+            borderRadius: 3,
+        }}
+    />;
 }
 
 const Circle = styled.div`
-    width: ${nodeRadius * 2};
-    height: ${nodeRadius * 2};
-    border-radius: ${nodeRadius};
-    border: 2px solid black;
+    width: ${nodeRadius * 2 * scaling}px;
+    height: ${nodeRadius * 2 * scaling}px;
+    border-radius: ${nodeRadius * scaling}px;
+    border: ${2 * scaling}px solid black;
     background-color: silver;
     position: absolute;
-    left: ${props => props.x};
-    top: ${props => props.y};
+    left: ${props => props.x * scaling}px;
+    bottom: ${props => props.y * scaling}px;
+    transform: translate(-50%, -50%);
+    margin-left: 10px;
+    cursor: move;
 `;
 
-const DragCircle = ({handle}) => {
+const DragCircle = ({handle, onDragStart, onDragUpdate}) => {
 
     return <Circle
         x = {handle.x}
         y = {handle.y}
+        onMouseDown = {onDragStart}
+        onMouseMove = {onDragUpdate}
     />
 };

@@ -13,6 +13,7 @@
     "fomantic-ui-css": "^2.8.6",
     "gl-react": "^4.0.1",
     "gl-react-dom": "^4.0.1",
+    "immer": "^8.0.0",
     "lodash.throttle": "^4.1.1",
     "nedb": "^1.8.0",
     "nodemon": "^2.0.4",
@@ -34,7 +35,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "cd surfer && set NODE_ENV=development& yarn run dev"
   },
   "eslintConfig": {
     "extends": "react-app"
