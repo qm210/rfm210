@@ -1,10 +1,40 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Segment } from 'semantic-ui-react';
 import styled from 'styled-components';
 import produce from 'immer';
 
 const sceneParamList = scene => scene ? (scene.params || '').split('\n').filter(it => it !== '') : [];
+
+const parseParam = (paramStr) => {
+    const paramArray = paramStr.split();
+    const param = {
+        name: paramArray[0],
+        timeScale: paramArray[1] || 1,
+    };
+
+    return param;
+}
+
+const ParamEditors = () => {
+    const scene = useSelector(store => store.scene.current);
+    const params = React.useMemo(() => sceneParamList(scene).map(parseParam), [scene]);
+    const refreshOnce = React.useRef();
+    const dispatch = useDispatch();
+
+    React.useEffect(() => {
+        if (!refreshOnce.current) {
+            console.log(params);
+            refreshOnce.current = true;
+        }
+    }, [params]);
+
+    return params.map((param, index) =>
+        <ParamEditor param={param} key={index}/>
+    );
+};
+
+export default ParamEditors;
 
 const nodeRadius = 6;
 const canvasWidth = 300;
@@ -62,9 +92,7 @@ const dragReducer = (state, action) => {
     }
 };
 
-const ParamEditor = () => {
-    const scene = useSelector(store => store.scene.current);
-    const params = sceneParamList(scene);
+const ParamEditor = ({param}) => {
     const canvasRef = React.useRef();
     const [dragState, dragDispatch] = React.useReducer(dragReducer, initDragState);
 
@@ -79,10 +107,6 @@ const ParamEditor = () => {
     );
     const [selectedHandleIndex, setSelectedHandleIndex] = React.useState(0);
 
-    if (params.length === 0) {
-        return null;
-    }
-
     const onDragStart = handle => event => {
         if (dragState.dragging) {
             return;
@@ -93,9 +117,6 @@ const ParamEditor = () => {
             setHandles(produce(draft => {
                 draft[handle.index].y = 0;
             }))
-            return;
-        }
-        if (handle.fixedX) {
             return;
         }
         if (event.button !== MOUSE.LEFT) {
@@ -117,6 +138,9 @@ const ParamEditor = () => {
             x: event.clientX - dragState.startX,
             y: event.clientY - dragState.startY,
         };
+        if (handles[dragState.dragIndex].fixedX) {
+            drag.x = 0;
+        }
         const {x,y} = {
             x: dragState.original.x + drag.x,
             y: dragState.original.y - drag.y,
@@ -219,45 +243,37 @@ const ParamEditor = () => {
         }));
     };
 
-    console.log(handles);
-
-    return params.map((param, index) =>
-        <React.Fragment key={index}>
-            <Segment>
-                {param}
-                <div
-                    onMouseUp = {onDragEnd}
-                    onMouseLeave = {onDragCancel}
-                    onMouseMove = {onDragUpdate}
-                    onDoubleClick = {onDoubleClick()}
-                    onContextMenu = {event => event.preventDefault()}
-                    style = {{
-                        position: 'relative'
-                    }}
-                    >
-                    {
-                        handles.map((handle) =>
-                            <Circle
-                                key = {handle.index}
-                                handle = {handle}
-                                selected = {selectedHandleIndex === handle.index}
-                                onDoubleClick = {onDoubleClick(handle)}
-                                onMouseDown = {onDragStart(handle)}
-                            />
-                        )
-                    }
-                <ParamCanvas
-                    canvasRef = {canvasRef}
-                    param = {param}
-                    handles = {handles}
+    return <Segment>
+        {param.name}
+        <div
+            onMouseUp = {onDragEnd}
+            onMouseLeave = {onDragCancel}
+            onMouseMove = {onDragUpdate}
+            onDoubleClick = {onDoubleClick()}
+            onContextMenu = {event => event.preventDefault()}
+            style = {{
+                position: 'relative'
+            }}
+            >
+            {
+                handles.map((handle) =>
+                    <Circle
+                        key = {handle.index}
+                        handle = {handle}
+                        selected = {selectedHandleIndex === handle.index}
+                        onDoubleClick = {onDoubleClick(handle)}
+                        onMouseDown = {onDragStart(handle)}
                     />
-                </div>
-            </Segment>
-        </React.Fragment>
-    );
+                )
+            }
+        <ParamCanvas
+            canvasRef = {canvasRef}
+            param = {param}
+            handles = {handles}
+            />
+        </div>
+    </Segment>;
 };
-
-export default ParamEditor;
 
 const ParamCanvas = ({canvasRef, param, handles}) => {
 
@@ -276,7 +292,10 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
                 ctx.moveTo(handle.x, y);
             }
             else {
-                ctx.lineTo(handle.x, y);
+                const split = 100;
+                for(let i = 0; i < split; i++) {
+                    ctx.lineTo(handle.x, y);
+                }
             }
         })
         ctx.stroke();
