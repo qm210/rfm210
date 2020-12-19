@@ -167,10 +167,20 @@ const sceneSlice = createSlice({
             };
         },
         addParam: (state, action) => {
-            state.current.params[action.payload.id] = action.payload;
+            if (!action.payload) {
+                return;
+            }
+            state.current.params.push({
+                name: action.payload,
+                timeScale: 1,
+                points: [
+                    {x: 0, y: 0},
+                    {x: 1, y: 0}
+                ]
+            });
         },
-        deleteParamById: (state, action) => {
-            delete state.current.params[action.payload.id];
+        deleteParam: (state, action) => {
+            state.current.params = state.current.params.filter(it => it.name !== action.payload);
         },
         updateFigure: (state, action) => {
             if (state.current.currentFigureId) {
@@ -181,9 +191,14 @@ const sceneSlice = createSlice({
             }
         },
         updateParam: (state, action) => {
-            state.current.params[action.payload.id] = {
-                ...state.current.params[action.payload.id],
+            const index = state.current.params.findIndex(it => it.name === action.payload.name);
+            if (index === -1) {
+                return;
+            }
+            state.current.params[index] = {
+                ...state.current.params[index],
                 ...action.payload,
+                name: action.payload.rename || action.payload.name,
             }
         },
         selectById: (state, action) => {
@@ -236,6 +251,9 @@ export const {
     addNewFigure,
     copyFigure,
     deleteFigure,
+    addParam,
+    deleteParam,
+    updateParam,
 } = sceneSlice.actions;
 
 export default sceneSlice.reducer;

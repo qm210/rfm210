@@ -2,8 +2,10 @@ import React, { useState, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {MainView, MainColumn, LabelledInput, QuickButton} from '.';
 import SceneShaderView from './SceneShaderView';
-import ParamEditor from './ParamEditor';
-import { fetchScene, updateScene, updateFigure, selectById, addNewPhrase, copyFigure, deleteFigure, selectCurrentFigure, selectFigureList, selectSceneList, addNewScene, deleteScene, reorderScene, PHRASE, fetchScenes } from '../slices/sceneSlice';
+import ParamEditors, { dumpParams } from './ParamEditor';
+import { fetchScene, updateScene, updateFigure, selectById, addNewPhrase, copyFigure, deleteFigure,
+    selectCurrentFigure, selectFigureList, selectSceneList, addNewScene, deleteScene, reorderScene,
+    PHRASE, fetchScenes, addParam, deleteParam } from '../slices/sceneSlice';
 import { doc } from '../Initial';
 import { whenSubmitted } from '../logic/utils';
 import { ButtonBar } from './index';
@@ -54,18 +56,17 @@ export const SceneApp = () => {
         if (!scene) {
             return;
         }
-        console.log("RELOAD", scene.params);
+        console.log("RELOAD", "params:", scene.params);
         setInputs({
             sceneTitle: scene.title,
             sceneId: scene._id,
-            params: scene.params,
+            params: dumpParams(scene.params),
             // ADD other fields here!
         });
     }, [scene, setInputs]);
 
     React.useEffect(() => {
         if (!scene && sceneList.length > 0 && status === STATUS.OK) {
-            console.log("DO IT", sceneList.map(s => s._id), scene);
             dispatch(fetchScene(sceneList[0]._id));
         }
     }, [dispatch, status, scene, sceneList]);
@@ -197,7 +198,7 @@ export const SceneApp = () => {
                 <Segment attached>
                     <ButtonBar>
                         <QuickButton
-                            onClick={() => {console.log("LEL!"); dispatch(addNewPhrase())}}
+                            onClick={() => {dispatch(addNewPhrase())}}
                             disabled = {!scene}
                             >
                             + Figure
@@ -244,10 +245,25 @@ export const SceneApp = () => {
                         onChange = {handleInput}
                         onKeyDown = {handleSceneUpdate('params')}
                         onBlur = {handleSceneUpdate('params')}
-                        disabled = {!scene}
+                        disabled
                     />
+                    <div style={{display: 'flex'}}>
+                        <button
+                            style = {{flex: 1}}
+                            onClick = {() => {
+                                const name = window.prompt("parameter name pls");
+                                if (name) {
+                                    dispatch(addParam(name))
+                                }
+                            }}>
+                                + param
+                        </button>
+                    </div>
                 </Segment>
-                <ParamEditor/>
+                {
+                    scene &&
+                    <ParamEditors/>
+                }
             </MainColumn>
 
             <MainColumn>

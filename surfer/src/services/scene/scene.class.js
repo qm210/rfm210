@@ -16,7 +16,6 @@ exports.Scene = class Scene extends Service {
     }
 
     async create(data, params) {
-        console.log("CREATE SCENE", data);
         const scenes = await this.find();
         console.log("what?", !data.order);
         if (!data.order) {
@@ -24,7 +23,7 @@ exports.Scene = class Scene extends Service {
         } else {
             await this.preorderScenes(scenes, data.order);
         }
-        console.log("well!", data.order);
+
         const existingTitles = Object.values(scenes).map(scene => scene.title);
         console.log("existing titles", existingTitles, data.title);
         while (existingTitles.includes(data.title)) {

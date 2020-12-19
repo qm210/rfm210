@@ -3,32 +3,39 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Segment } from 'semantic-ui-react';
 import styled from 'styled-components';
 import produce from 'immer';
-import smoothstep from 'smoothstep';
+import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
 
-const sceneParamList = scene => scene ? (scene.params || '').split('\n').filter(it => it !== '') : [];
-
-const parseParam = (paramStr) => {
-    const paramArray = paramStr.split();
-    const param = {
-        name: paramArray[0],
-        timeScale: paramArray[1] || 1,
-    };
-
-    return param;
+export const dumpParams = (params) => {
+    if (typeof(params) === "string") {
+        return params;
+    }
+    return params.map(param => [
+        param.name,
+        param.timeScale,
+        ...param.points.map(Object.values)
+    ].join(' ')).join('\n');
 }
 
 const ParamEditors = () => {
     const scene = useSelector(store => store.scene.current);
-    const params = React.useMemo(() => sceneParamList(scene).map(parseParam), [scene]);
-    const refreshOnce = React.useRef();
+    const params = scene.params;
+    const dumpedParams = React.useRef();
     const dispatch = useDispatch();
 
+    console.log("PARMS", params);
+
     React.useEffect(() => {
-        if (!refreshOnce.current) {
-            console.log(params);
-            refreshOnce.current = true;
+        const dump = dumpParams(params);
+        if (dump !== dumpedParams.current) {
+            dispatch(updateScene({params}));
+            dumpedParams.current = dump;
         }
-    }, [params]);
+    }, [params, dispatch]);
+
+    if (typeof(params) === "string") {
+        dispatch(updateScene({params: []}));
+        return null;
+    }
 
     return params.map((param, index) =>
         <ParamEditor param={param} key={index}/>
@@ -96,6 +103,7 @@ const dragReducer = (state, action) => {
 const ParamEditor = ({param}) => {
     const canvasRef = React.useRef();
     const [dragState, dragDispatch] = React.useReducer(dragReducer, initDragState);
+    const dispatch = useDispatch();
 
     const handleNumber = 3;
     const [handles, setHandles] = React.useState(
@@ -245,7 +253,36 @@ const ParamEditor = ({param}) => {
     };
 
     return <Segment>
-        {param.name}
+        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+            <input
+                value = {param.name}
+                onChange = {event => dispatch(updateParam({name: param.name, rename: event.target.value}))}
+                style = {{fontWeight: 'bold', width: 130, marginRight: 10}}
+            />
+            <div style={{flex: 1}}>
+                <label>T/sec =</label>
+                <input
+                    type = "number"
+                    style = {{width: 60}}
+                    value = {param.timeScale}
+                    onChange = {event => dispatch(updateParam({
+                        name: param.name,
+                        timeScale: +event.target.value
+                    }))}
+                    step = {.1}
+                    min = {0}
+                />
+            </div>
+            <button
+                onClick = {() => alert("right click if sure")}
+                onContextMenu = {event => {
+                    event.preventDefault();
+                    dispatch(deleteParam(param.name));
+                }}
+            >
+                delete
+            </button>
+        </div>
         <div
             onMouseUp = {onDragEnd}
             onMouseLeave = {onDragCancel}
@@ -300,7 +337,7 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
             }
             else {
                 // in case we want some tension functions, e.g. Math.pow() or its opposite
-                const split = 20;
+                const split = 12;
                 for(let i = 0; i < split; i++) {
                     const fract = (i+1)/split;
                     const nextX = last.x + (current.x - last.x) * fract;

@@ -113,7 +113,7 @@ export const Button = styled.button`
     padding: 10px;
 `;
 
-const DebugSegment = ({obj}) =>
+export const DebugSegment = ({obj}) =>
     <Segment style={{display: 'grid', gridTemplateColumns: '1fr 1fr'}}>
     {
         Object.entries(obj).map(([key, val]) =>
