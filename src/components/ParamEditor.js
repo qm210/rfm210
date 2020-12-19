@@ -27,6 +27,11 @@ const DRAG = Object.freeze({
     UPDATE: 'drag/update',
 });
 
+const MOUSE = Object.freeze({
+    LEFT: 0,
+    RIGHT: 2,
+});
+
 const dragReducer = (state, action) => {
     switch(action.type) {
         case DRAG.START:
@@ -82,7 +87,7 @@ const ParamEditor = () => {
             return;
         }
         setSelectedHandleIndex(handle.index);
-        if (event.button === 2) {
+        if (event.button === MOUSE.RIGHT) {
             setHandles(produce(draft => {
                 draft[handle.index].y = 0;
             }))
@@ -92,7 +97,7 @@ const ParamEditor = () => {
             return;
         }
         event.persist();
-        if (event.button !== 0) {
+        if (event.button !== MOUSE.LEFT) {
             return;
         }
         dragDispatch({type: DRAG.START, payload: {
@@ -120,15 +125,10 @@ const ParamEditor = () => {
             dragDispatch({type: DRAG.END});
             return;
         }
-        setHandles(state => state.map(handle =>
-            handle.index === dragState.dragIndex
-                ? {
-                    ...handle,
-                    x,
-                    y,
-                }
-                : handle
-        ));
+        setHandles(produce(draft => {
+            draft[dragState.dragIndex].x = x;
+            draft[dragState.dragIndex].y = y;
+        }))
         dragDispatch({type: DRAG.UPDATE, payload: {drag, dragIndex}});
     };
 
@@ -175,6 +175,37 @@ const ParamEditor = () => {
         dragDispatch({type: DRAG.END});
     };
 
+    const onDoubleClick = handle => event => {
+        console.log(handle);
+        event.stopPropagation();
+        if (handle) {
+            deleteHandle(handle);
+            return;
+        }
+        event.persist();
+        addHandle(event.clientX, event.clientY);
+    };
+
+    const deleteHandle = handle => {
+        if (handle.fixedX) {
+            return;
+        }
+        setHandles(handlesAfterRemoving(handle));
+        setSelectedHandleIndex(index => index > 0 ? index - 1 : 0);
+    };
+
+    const handlesAfterRemoving = handle =>
+        state => state.filter(it => it.index !== handle.index)
+            .map(produce(draft => {
+                if (draft.index > handle.index) {
+                    draft.index -= 1;
+                }
+            }));
+
+    const addHandle = (x,y) => {
+        console.log(x,y);
+    }
+
     return params.map((param, index) =>
         <React.Fragment key={index}>
             <Segment>
@@ -183,6 +214,7 @@ const ParamEditor = () => {
                     onMouseUp = {onDragEnd}
                     onMouseLeave = {onDragCancel}
                     onMouseMove = {onDragUpdate}
+                    onDoubleClick = {onDoubleClick()}
                     onContextMenu = {event => event.preventDefault()}
                     style = {{
                         position: 'relative'
@@ -190,11 +222,12 @@ const ParamEditor = () => {
                     >
                     {
                         handles.map((handle) =>
-                            <DragCircle
+                            <Circle
                                 key = {handle.index}
                                 handle = {handle}
                                 selected = {selectedHandleIndex === handle.index}
-                                onDragStart = {onDragStart(handle)}
+                                onDoubleClick = {onDoubleClick(handle)}
+                                onMouseDown = {onDragStart(handle)}
                             />
                         )
                     }
@@ -260,12 +293,3 @@ const Circle = styled.div.attrs(props => ({
     position: absolute;
     transform: translate(-50%, -50%);
 `;
-
-const DragCircle = ({handle, selected, onDragStart, onDragUpdate}) => {
-    return <Circle
-        handle = {handle}
-        selected = {selected}
-        onMouseDown = {onDragStart}
-        onMouseMove = {onDragUpdate}
-    />
-};
