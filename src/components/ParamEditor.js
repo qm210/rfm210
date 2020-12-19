@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Segment } from 'semantic-ui-react';
 import styled from 'styled-components';
+import produce from 'immer';
 
 const sceneParamList = scene => scene ? (scene.params || '').split('\n').filter(it => it !== '') : [];
 
@@ -24,7 +25,6 @@ const DRAG = Object.freeze({
     START: 'drag/start',
     END: 'drag/end',
     UPDATE: 'drag/update',
-    CANCEL: 'drag/cancel',
 });
 
 const dragReducer = (state, action) => {
@@ -68,7 +68,7 @@ const ParamEditor = () => {
             index,
             x: index * .5 * canvasWidth,
             y: 0,
-            fixed: index === 0 || index === handleNumber - 1,
+            fixedX: index === 0 || index === handleNumber - 1,
         }))
     );
     const [selectedHandleIndex, setSelectedHandleIndex] = React.useState(0);
@@ -82,7 +82,18 @@ const ParamEditor = () => {
             return;
         }
         setSelectedHandleIndex(handle.index);
-        if (handle.fixed) {
+        if (event.button === 2) {
+            setHandles(state => state.map(it =>
+                it.index === handle.index
+                    ? {
+                        ...handle,
+                        y: 0,
+                    }
+                    : it
+            ));
+            return;
+        }
+        if (handle.fixedX) {
             return;
         }
         event.persist();
@@ -129,7 +140,7 @@ const ParamEditor = () => {
     const mightSwitchIndex = (handles, x, dragIndex) => {
         if (dragIndex > 0) {
             if (x < handles[dragIndex - 1].x) {
-                if (handles[dragIndex - 1].fixed) {
+                if (handles[dragIndex - 1].fixedX) {
                     return null;
                 }
                 return dragIndex - 1;
@@ -137,7 +148,7 @@ const ParamEditor = () => {
         }
         if (dragIndex < handles.length - 1) {
             if (x > handles[dragIndex + 1].x) {
-                if (handles[dragIndex + 1].fixed) {
+                if (handles[dragIndex + 1].fixedX) {
                     return null;
                 }
                 return dragIndex + 1;
@@ -217,7 +228,7 @@ const ParamCanvas = ({param, handles}) => {
         ctx.beginPath();
         ctx.lineWidth = 3;
         handles.forEach((handle, index) => {
-            const y = canvasHeight - handle.y - 1;
+            const y = .5 * canvasHeight - handle.y - 1;
             if (index === 0) {
                 ctx.moveTo(handle.x, y);
             }
@@ -242,9 +253,9 @@ const ParamCanvas = ({param, handles}) => {
 const Circle = styled.div.attrs(props => ({
     style: {
         left: (props.handle.x) * scaling,
-        bottom: (props.handle.y - nodeRadius) * scaling,
+        bottom: (props.handle.y - nodeRadius) * scaling + canvasHeight / 2,
         backgroundColor: props.selected ? '#afd' : 'silver',
-        cursor: props.handle.fixed ? 'pointer' : 'move',
+        cursor: props.handle.fixedX ? 'pointer' : 'move',
     }}))`
     width: ${nodeRadius * 2 * scaling}px;
     height: ${nodeRadius * 2 * scaling}px;
