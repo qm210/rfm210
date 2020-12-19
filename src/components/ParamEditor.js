@@ -65,6 +65,7 @@ const dragReducer = (state, action) => {
 const ParamEditor = () => {
     const scene = useSelector(store => store.scene.current);
     const params = sceneParamList(scene);
+    const canvasRef = React.useRef();
     const [dragState, dragDispatch] = React.useReducer(dragReducer, initDragState);
 
     const handleNumber = 3;
@@ -86,6 +87,7 @@ const ParamEditor = () => {
         if (dragState.dragging) {
             return;
         }
+        event.persist();
         setSelectedHandleIndex(handle.index);
         if (event.button === MOUSE.RIGHT) {
             setHandles(produce(draft => {
@@ -96,7 +98,6 @@ const ParamEditor = () => {
         if (handle.fixedX) {
             return;
         }
-        event.persist();
         if (event.button !== MOUSE.LEFT) {
             return;
         }
@@ -176,7 +177,6 @@ const ParamEditor = () => {
     };
 
     const onDoubleClick = handle => event => {
-        console.log(handle);
         event.stopPropagation();
         if (handle) {
             deleteHandle(handle);
@@ -203,8 +203,23 @@ const ParamEditor = () => {
             }));
 
     const addHandle = (x,y) => {
-        console.log(x,y);
-    }
+        const canvasOffset = canvasRef.current.getBoundingClientRect();
+        x -= canvasOffset.left;
+        y -= canvasOffset.top + .5 * canvasHeight;
+        y *= -1;
+        const index = handles.slice(0, -1).findIndex(it => (it.x < x) && handles[it.index + 1].x > x) + 1;
+        setHandles(produce(draft => {
+            draft.splice(index, 0, {
+                index,
+                x,
+                y,
+                fixedX: false
+            });
+            draft.forEach((handle, h) => handle.index = h);
+        }));
+    };
+
+    console.log(handles);
 
     return params.map((param, index) =>
         <React.Fragment key={index}>
@@ -232,6 +247,7 @@ const ParamEditor = () => {
                         )
                     }
                 <ParamCanvas
+                    canvasRef = {canvasRef}
                     param = {param}
                     handles = {handles}
                     />
@@ -243,8 +259,7 @@ const ParamEditor = () => {
 
 export default ParamEditor;
 
-const ParamCanvas = ({param, handles}) => {
-    const canvasRef = React.useRef();
+const ParamCanvas = ({canvasRef, param, handles}) => {
 
     React.useEffect(() => {
         const ctx = canvasRef.current.getContext('2d');
