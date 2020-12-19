@@ -52,8 +52,9 @@ const dragReducer = (state, action) => {
         case DRAG.UPDATE:
             return {
                 ...state,
-                offsetX: action.payload.dragX - state.startX,
-                offsetY: action.payload.dragY - state.startY,
+                offsetX: action.payload.drag.x - state.startX,
+                offsetY: action.payload.drag.x - state.startY,
+                dragIndex: action.payload.dragIndex === undefined ? state.dragIndex : action.payload.dragIndex,
             };
 
         default:
@@ -69,6 +70,7 @@ const ParamEditor = () => {
     const [handles, setHandles] = React.useState(
         Array(3).fill().map((_, index) => newHandle(index, index * 50, 0))
     );
+    const [selectedHandleIndex, setSelectedHandleIndex] = React.useState(0);
 
     if (params.length === 0) {
         return null;
@@ -79,11 +81,15 @@ const ParamEditor = () => {
             return;
         }
         event.persist();
+        if (event.button !== 0) {
+            return;
+        }
         dragDispatch({type: DRAG.START, payload: {
             handle,
             startX: event.clientX,
             startY: event.clientY,
         }});
+        setSelectedHandleIndex(handle.index);
     };
 
     const onDragUpdate = event => {
@@ -95,43 +101,60 @@ const ParamEditor = () => {
             x: event.clientX - dragState.startX,
             y: event.clientY - dragState.startY,
         };
+        const {x,y} = {
+            x: dragState.original.x + drag.x,
+            y: dragState.original.y - drag.y,
+        };
+        const dragIndex = mightSwitchIndex(handles, x, dragState.dragIndex);
         setHandles(state => state.map(handle =>
             handle.index === dragState.dragIndex
                 ? {
                     ...handle,
-                    x: dragState.original.x + drag.x,
-                    y: dragState.original.y - drag.y,
+                    x,
+                    y,
                 }
                 : handle
         ));
-        dragDispatch({type: DRAG.UPDATE, payload: drag});
+        dragDispatch({type: DRAG.UPDATE, payload: {drag, dragIndex}});
     };
 
-    const onDragEnd = event => {
+    const mightSwitchIndex = (handles, x, dragIndex) => {
+        console.log(x, handles, dragIndex);
+        if (dragIndex > 0) {
+            if (x < handles[dragIndex - 1].x) {
+                return dragIndex - 1;
+            }
+        }
+        if (dragIndex < handles.length - 1) {
+            if (x > handles[dragIndex + 1].x) {
+                return dragIndex + 1;
+            }
+        }
+        return dragIndex;
+    }
+
+    const onDragEnd = () => {
         if (!dragState.dragging) {
             return;
-        }
-        if (event.type === 'mouseleave') {
-            setHandles(state => state.map(handle =>
-                handle.index === dragState.dragIndex
-                    ? {
-                        ...handle,
-                        x: dragState.original.x,
-                        y: dragState.original.y,
-                    }
-                    : handle
-            ));
         }
         dragDispatch({type: DRAG.END});
     };
 
-    const onDragCancel = event => {
-        console.log("EVENT", event, event.type, event.name)
+    const onDragCancel = () => {
         if (!dragState.dragging) {
             return;
         }
-        dragDispatch({type: DRAG.CANCEL});
-    }
+        setHandles(state => state.map(handle =>
+            handle.index === dragState.dragIndex
+                ? {
+                    ...handle,
+                    x: dragState.original.x,
+                    y: dragState.original.y,
+                }
+                : handle
+        ));
+        dragDispatch({type: DRAG.END});
+    };
 
     console.log(dragState);
     return params.map((param, index) =>
@@ -140,8 +163,9 @@ const ParamEditor = () => {
                 {param}
                 <div
                     onMouseUp = {onDragEnd}
-                    onMouseLeave = {onDragEnd}
+                    onMouseLeave = {onDragCancel}
                     onMouseMove = {onDragUpdate}
+                    onContextMenu = {event => event.preventDefault()}
                     style = {{
                         position: 'relative'
                     }}
@@ -151,6 +175,7 @@ const ParamEditor = () => {
                             <DragCircle
                                 key = {handle.index}
                                 handle = {handle}
+                                selected = {selectedHandleIndex === handle.index}
                                 onDragStart = {onDragStart(handle)}
                             />
                         )
@@ -161,7 +186,6 @@ const ParamEditor = () => {
                     />
                 </div>
             </Segment>
-            <DebugSegment obj={dragState}/>
         </React.Fragment>
     );
 };
@@ -215,26 +239,27 @@ const ParamCanvas = ({param, handles}) => {
     />;
 }
 
-const Circle = styled.div`
+const Circle = styled.div.attrs(props => ({
+    style: {
+        left: (props.x) * scaling,
+        bottom: (props.y - nodeRadius) * scaling,
+        backgroundColor: props.selected ? '#afd' : 'silver',
+    }}))`
     width: ${nodeRadius * 2 * scaling}px;
     height: ${nodeRadius * 2 * scaling}px;
     border-radius: ${nodeRadius * scaling}px;
     border: ${2 * scaling}px solid black;
     box-sizing: border-box;
-    background-color: silver;
     position: absolute;
-    left: ${props => (props.x - nodeRadius) * scaling}px;
-    bottom: ${props => (props.y - nodeRadius) * scaling}px;
     transform: translate(-50%, -50%);
-    margin-left: 10px;
     cursor: move;
 `;
 
-const DragCircle = ({handle, onDragStart, onDragUpdate}) => {
-
+const DragCircle = ({handle, selected, onDragStart, onDragUpdate}) => {
     return <Circle
         x = {handle.x}
         y = {handle.y}
+        selected = {selected}
         onMouseDown = {onDragStart}
         onMouseMove = {onDragUpdate}
     />
