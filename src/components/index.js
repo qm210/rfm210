@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Segment } from 'semantic-ui-react';
 
 export const MainView = styled.div`
     display: flex;
@@ -111,3 +112,15 @@ export const Button = styled.button`
     margin: 10px;
     padding: 10px;
 `;
+
+const DebugSegment = ({obj}) =>
+    <Segment style={{display: 'grid', gridTemplateColumns: '1fr 1fr'}}>
+    {
+        Object.entries(obj).map(([key, val]) =>
+            <React.Fragment key={key}>
+                <div>{key}:</div>
+                <div>{val !== null ? val.toString() : "null"}</div>
+            </React.Fragment>
+        )
+    }
+    </Segment>;

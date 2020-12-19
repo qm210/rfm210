@@ -5,13 +5,8 @@ import styled from 'styled-components';
 
 const sceneParamList = scene => scene ? (scene.params || '').split('\n').filter(it => it !== '') : [];
 
-const newHandle = (index, x,y) => ({
-    index,
-    x,
-    y,
-});
-
 const nodeRadius = 6;
+const canvasWidth = 300;
 const canvasHeight = 150;
 const scaling = 1;
 
@@ -67,8 +62,14 @@ const ParamEditor = () => {
     const params = sceneParamList(scene);
     const [dragState, dragDispatch] = React.useReducer(dragReducer, initDragState);
 
+    const handleNumber = 3;
     const [handles, setHandles] = React.useState(
-        Array(3).fill().map((_, index) => newHandle(index, index * 50, 0))
+        Array(handleNumber).fill().map((_, index) => ({
+            index,
+            x: index * .5 * canvasWidth,
+            y: 0,
+            fixed: index === 0 || index === handleNumber - 1,
+        }))
     );
     const [selectedHandleIndex, setSelectedHandleIndex] = React.useState(0);
 
@@ -80,6 +81,10 @@ const ParamEditor = () => {
         if (dragState.dragging) {
             return;
         }
+        setSelectedHandleIndex(handle.index);
+        if (handle.fixed) {
+            return;
+        }
         event.persist();
         if (event.button !== 0) {
             return;
@@ -89,7 +94,6 @@ const ParamEditor = () => {
             startX: event.clientX,
             startY: event.clientY,
         }});
-        setSelectedHandleIndex(handle.index);
     };
 
     const onDragUpdate = event => {
@@ -106,6 +110,10 @@ const ParamEditor = () => {
             y: dragState.original.y - drag.y,
         };
         const dragIndex = mightSwitchIndex(handles, x, dragState.dragIndex);
+        if (dragIndex === null) {
+            dragDispatch({type: DRAG.END});
+            return;
+        }
         setHandles(state => state.map(handle =>
             handle.index === dragState.dragIndex
                 ? {
@@ -119,14 +127,19 @@ const ParamEditor = () => {
     };
 
     const mightSwitchIndex = (handles, x, dragIndex) => {
-        console.log(x, handles, dragIndex);
         if (dragIndex > 0) {
             if (x < handles[dragIndex - 1].x) {
+                if (handles[dragIndex - 1].fixed) {
+                    return null;
+                }
                 return dragIndex - 1;
             }
         }
         if (dragIndex < handles.length - 1) {
             if (x > handles[dragIndex + 1].x) {
+                if (handles[dragIndex + 1].fixed) {
+                    return null;
+                }
                 return dragIndex + 1;
             }
         }
@@ -156,7 +169,6 @@ const ParamEditor = () => {
         dragDispatch({type: DRAG.END});
     };
 
-    console.log(dragState);
     return params.map((param, index) =>
         <React.Fragment key={index}>
             <Segment>
@@ -192,18 +204,6 @@ const ParamEditor = () => {
 
 export default ParamEditor;
 
-const DebugSegment = ({obj}) =>
-    <Segment style={{display: 'grid', gridTemplateColumns: '1fr 1fr'}}>
-    {
-        Object.entries(obj).map(([key, val]) =>
-            <React.Fragment key={key}>
-                <div>{key}:</div>
-                <div>{val !== null ? val.toString() : "null"}</div>
-            </React.Fragment>
-        )
-    }
-    </Segment>;
-
 const ParamCanvas = ({param, handles}) => {
     const canvasRef = React.useRef();
 
@@ -230,7 +230,7 @@ const ParamCanvas = ({param, handles}) => {
 
     return <canvas
         ref = {canvasRef}
-        width = {300}
+        width = {canvasWidth}
         height = {canvasHeight}
         style = {{
             border: '1px solid black',
@@ -241,9 +241,10 @@ const ParamCanvas = ({param, handles}) => {
 
 const Circle = styled.div.attrs(props => ({
     style: {
-        left: (props.x) * scaling,
-        bottom: (props.y - nodeRadius) * scaling,
+        left: (props.handle.x) * scaling,
+        bottom: (props.handle.y - nodeRadius) * scaling,
         backgroundColor: props.selected ? '#afd' : 'silver',
+        cursor: props.handle.fixed ? 'pointer' : 'move',
     }}))`
     width: ${nodeRadius * 2 * scaling}px;
     height: ${nodeRadius * 2 * scaling}px;
@@ -252,13 +253,11 @@ const Circle = styled.div.attrs(props => ({
     box-sizing: border-box;
     position: absolute;
     transform: translate(-50%, -50%);
-    cursor: move;
 `;
 
 const DragCircle = ({handle, selected, onDragStart, onDragUpdate}) => {
     return <Circle
-        x = {handle.x}
-        y = {handle.y}
+        handle = {handle}
         selected = {selected}
         onMouseDown = {onDragStart}
         onMouseMove = {onDragUpdate}
