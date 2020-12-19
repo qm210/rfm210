@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Segment } from 'semantic-ui-react';
 import styled from 'styled-components';
 import produce from 'immer';
+import smoothstep from 'smoothstep';
 
 const sceneParamList = scene => scene ? (scene.params || '').split('\n').filter(it => it !== '') : [];
 
@@ -284,18 +285,29 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
         if (handles.length === 0) {
             return;
         }
+        let current = {};
+        let last = {};
         ctx.beginPath();
         ctx.lineWidth = 3;
         handles.forEach((handle, index) => {
-            const y = .5 * canvasHeight - handle.y - 1;
+            current = {
+                x: handle.x,
+                y: .5 * canvasHeight - handle.y - 1,
+            };
             if (index === 0) {
-                ctx.moveTo(handle.x, y);
+                ctx.moveTo(current.x, current.y);
+                last = current;
             }
             else {
-                const split = 100;
+                // in case we want some tension functions, e.g. Math.pow() or its opposite
+                const split = 20;
                 for(let i = 0; i < split; i++) {
-                    ctx.lineTo(handle.x, y);
+                    const fract = (i+1)/split;
+                    const nextX = last.x + (current.x - last.x) * fract;
+                    const nextY = last.y + (current.y - last.y) * fract;
+                    ctx.lineTo(nextX, nextY);
                 }
+                last = current;
             }
         })
         ctx.stroke();
