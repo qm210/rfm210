@@ -83,14 +83,9 @@ const ParamEditor = () => {
         }
         setSelectedHandleIndex(handle.index);
         if (event.button === 2) {
-            setHandles(state => state.map(it =>
-                it.index === handle.index
-                    ? {
-                        ...handle,
-                        y: 0,
-                    }
-                    : it
-            ));
+            setHandles(produce(draft => {
+                draft[handle.index].y = 0;
+            }))
             return;
         }
         if (handle.fixedX) {
