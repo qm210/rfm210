@@ -299,13 +299,18 @@ ${usedGlyphs[glyph].map(rect =>
         .replaceAll('DARKENING', 'col*col*col')
     , [placeholderCode, glyphCode, phraseCode, scene, usesTime]);
 
-    return <>
+    return <div
+        style = {{
+            position: 'fixed',
+            top: 64,
+            right: 20,
+        }}>
         <Segment attached>
             <Loader active={loader} size="massive"/>
             <ShaderFrame
                 style = {{
                     width: sceneWidth,
-                    height: sceneHeight
+                    height: sceneHeight,
                 }}
                 dummyProp = {terrifyingCode}
                 >
@@ -318,7 +323,7 @@ ${usedGlyphs[glyph].map(rect =>
                 {shadertoyify(shaderCode)}
             </CodeFrame>
         </Segment>
-    </>;
+    </div>;
 };
 
 export default SceneShaderView;

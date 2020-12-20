@@ -27,7 +27,7 @@ export const App = () => {
     }, [dispatch]);
 
     return <>
-        <div className="ui three item menu">
+        <div className="ui three item menu" style={{position: 'fixed', top: 0, zIndex: 10}}>
             <NavLink className="item" activeClassName="active" exact to="/">
                 Glyph Editor
             </NavLink>
@@ -38,7 +38,8 @@ export const App = () => {
                 Store Debugger
             </NavLink>
         </div>
-        <Route exact path="/" component={GlyphApp}/>
+        <div style={{height: 42, backgroundColor: 'lightgrey'}}/>
+        <Route path="/" exact component={GlyphApp}/>
         <Route path="/scene" component={SceneApp}/>
         <Route path="/store" component={StoreDebugger}/>
     </>;

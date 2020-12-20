@@ -124,12 +124,6 @@ export const SceneApp = () => {
                     <SceneShaderView/>
                 }
             </MainColumn>
-
-            <MainColumn>
-                <code style={{whiteSpace: 'pre-line'}}>
-                    {doc}
-                </code>
-            </MainColumn>
         </MainView>
     </>;
 };
