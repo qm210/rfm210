@@ -190,6 +190,22 @@ const sceneSlice = createSlice({
                 }
             }
         },
+        addFigureQmd: (state, action) => {
+            if (state.current.currentFigureId) {
+                state.current.figures[state.current.currentFigureId].qmd
+                    .splice(action.payload.index, 0, "");
+            }
+        },
+        deleteFigureQmd: (state, action) => {
+            if (state.current.currentFigureId) {
+                delete state.current.figures[state.current.currentFigureId].qmd[action.payload.index];
+            }
+        },
+        updateFigureQmd: (state, action) => {
+            if (state.current.currentFigureId) {
+                state.current.figures[state.current.currentFigureId].qmd[action.payload.index] = action.payload.qmd;
+            }
+        },
         updateParam: (state, action) => {
             const index = state.current.params.findIndex(it => it.name === action.payload.name);
             if (index === -1) {
@@ -213,7 +229,7 @@ const sceneSlice = createSlice({
             else {
                 console.log("tried to select something with ID", action.payload, " - don't know what this is.");
             }
-        }
+        },
     },
     extraReducers: {
         [fetchScenes.pending]: setLoading,
@@ -254,6 +270,9 @@ export const {
     addParam,
     deleteParam,
     updateParam,
+    addFigureQmd,
+    deleteFigureQmd,
+    updateFigureQmd,
 } = sceneSlice.actions;
 
 export default sceneSlice.reducer;

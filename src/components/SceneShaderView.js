@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import ShadertoyReact from 'shadertoy-react';
 import { ShaderFrame } from '.';
@@ -24,6 +24,7 @@ const SceneShaderView = ()  => {
     const glyphset = useSelector(store => store.glyphset);
     const dispatch = useDispatch();
     const [loader, setLoader] = useState(!glyphset.current);
+    const isRefreshed = useRef('');
 
     /*
     const [millis, setMillis] = useState(0);
@@ -45,7 +46,7 @@ const SceneShaderView = ()  => {
       }, [animate]);
     */
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (glyphset.current) {
             return;
         }
@@ -84,7 +85,8 @@ const SceneShaderView = ()  => {
 
     const placeholderCode = React.useMemo(() => {
         const placeholderFunctionCall = figure =>
-            `vec3 col_${figure.id} = c.xxx; placeholder(UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);`
+            `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${figure.phi.toFixed(3)}, R_${figure.id});
+        placeholder(R_${figure.id}*UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);\n`
         const lineArray = figureList
             .filter(figure => figure.placeholder)
             .map(placeholderFunctionCall);
@@ -299,6 +301,13 @@ ${usedGlyphs[glyph].map(rect =>
         .replaceAll('DARKENING', 'col*col*col')
     , [placeholderCode, glyphCode, phraseCode, scene, usesTime]);
 
+    useEffect(() => {
+        console.log("SHADERCODE CHANGED")
+        if (isRefreshed.current !== shaderCode) {
+            isRefreshed.current = shaderCode;
+        }
+    }, [shaderCode]);
+
     return <div
         style = {{
             position: 'fixed',
@@ -315,7 +324,10 @@ ${usedGlyphs[glyph].map(rect =>
                 dummyProp = {terrifyingCode}
                 >
                 <b>This is the AWESOME part!</b><br/>
-                <ShadertoyReact fs={shadertoyify(shaderCode)}/>
+                {
+                    isRefreshed.current === shaderCode &&
+                    <ShadertoyReact fs={shadertoyify(shaderCode)}/>
+                }
             </ShaderFrame>
         </Segment>
         <Segment>

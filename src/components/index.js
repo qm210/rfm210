@@ -90,7 +90,7 @@ export const CodeFrame = (props) =>
         <textarea
             style={{
                 width: '100%',
-                height: '100%',
+                height: 350,
                 fontSize: '.9rem',
                 overflow: 'scroll',
             }}

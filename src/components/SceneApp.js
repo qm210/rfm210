@@ -1,11 +1,12 @@
 import React, { useState, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {MainView, MainColumn, LabelledInput, QuickButton} from '.';
+import ContentEditable from 'react-contenteditable'
 import SceneShaderView from './SceneShaderView';
 import ParamEditors, { dumpParams } from './ParamEditor';
 import { fetchScene, updateScene, updateFigure, selectById, addNewPhrase, copyFigure, deleteFigure,
     selectCurrentFigure, selectFigureList, selectSceneList, addNewScene, deleteScene, reorderScene,
-    PHRASE, fetchScenes, addParam } from '../slices/sceneSlice';
+    PHRASE, fetchScenes, addParam, addFigureQmd, deleteFigureQmd, updateFigureQmd } from '../slices/sceneSlice';
 import { doc } from '../Initial';
 import { whenSubmitted } from '../logic/utils';
 import { ButtonBar } from './index';
@@ -28,6 +29,7 @@ export const SceneApp = () => {
         sceneId: scene ? scene._id : '',
         sceneQmd: "",
         shaderFunc: "",
+        figureQmd: "",
     });
     const [loader, setLoader] = useState(false);
     const sceneUpdateTimeout = React.useRef();
@@ -436,16 +438,25 @@ const FigureEditor = ({inputs, handleInput}) => {
             </Form>
 
             <FigureQmdEditor
+                inputs = {inputs}
+                handleInput = {handleInput}
                 handleFigureUpdate = {handleFigureUpdate}
             />
         </Segment>
     </>;
 };
 
-const FigureQmdEditor = ({handleFigureUpdate}) => {
+const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
+    const figure = useSelector(selectCurrentFigure);
     const dispatch = useDispatch();
 
-    return <>
+    React.useEffect(() => {
+        if (figure && !figure.qmd) {
+            dispatch(updateFigure({qmd: [""]}));
+        }
+    }, [dispatch, figure]);
+
+    return figure && figure.qmd && <>
         <Table celled compact="very">
             <Table.Header>
                 <Table.Row columns={2}>
@@ -458,16 +469,34 @@ const FigureQmdEditor = ({handleFigureUpdate}) => {
                 </Table.Row>
             </Table.Header>
             <Table.Body>
-                <Table.Row>
-                    <Table.Cell>
-                        lelelel
-                    </Table.Cell>
-                    <Table.Cell>
-                        <button>
-                            clear
-                        </button>
-                    </Table.Cell>
-                </Table.Row>
+            {
+                figure.qmd.map((qmd, index) =>
+                    <Table.Row>
+                        <Table.Cell>
+                            <input
+                                value = {qmd}
+                                onChange = {event => dispatch(updateFigureQmd({index, qmd: event.target.value}))}
+                                style = {{
+                                    outline: 0,
+                                    width: "100%",
+                                }}
+                            />
+                        </Table.Cell>
+                        <Table.Cell>
+                            <button style={{marginRight: 5}}
+                                onClick = {() => dispatch(addFigureQmd({index: index + 1}))}
+                            >
+                                +
+                            </button>
+                            <button
+                                onClick = {() => dispatch(addFigureQmd({index: index}))}
+                            >
+                                --
+                            </button>
+                        </Table.Cell>
+                    </Table.Row>
+                )
+            }
             </Table.Body>
         </Table>
     </>;
