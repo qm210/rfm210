@@ -16,3 +16,9 @@ export const joinObject = (obj, hSep, vSep) =>
 export const splitToObject = (str, hSep, vSep) =>
     Object.fromEntries(str.split(vSep).map(e => e.split(hSep)));
 
+export const objectWithout = (obj, excludes) =>
+    Object.fromEntries(
+        Object.entries(obj).filter(
+            entry => !excludes.includes(entry[0])
+        )
+    );

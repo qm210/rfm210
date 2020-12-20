@@ -4,7 +4,7 @@ import { Segment, Form } from 'semantic-ui-react';
 import styled from 'styled-components';
 import produce from 'immer';
 import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
-import { clamp } from '../logic/utils';
+import { objectWithout, clamp } from '../logic/utils';
 
 const saneGlslDelimiter = (str) => {
     str = str.replaceAll(' ', '_');
@@ -416,12 +416,12 @@ const ParamNumberInput = (props) =>
         <input
             type = "number"
             style = {{width: 60}}
-            value = {props.param[props.name] === undefined ? (props.defaultValue || 0) : props.param[props.name]}
+            value = {props.param[props.name] === undefined ? (props.default || 0) : props.param[props.name]}
             onChange = {event => props.dispatch(updateParam({
                 name: props.param.name,
                 [props.name]: +event.target.value
             }))}
-            {...props}
+            {...objectWithout(props, ["dispatch"])}
         />
     </Form.Group>;
 
@@ -464,7 +464,7 @@ const ParamEditorExtended = ({param}) => {
                 param = {param}
                 label = "tension="
                 name = "tension"
-                defaultValue = {0}
+                default = {0}
                 dispatch = {dispatch}
                 step = {1}
         />
