@@ -1,19 +1,26 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Segment } from 'semantic-ui-react';
+import { Segment, Form } from 'semantic-ui-react';
 import styled from 'styled-components';
 import produce from 'immer';
 import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
 import { clamp } from '../logic/utils';
+
+const saneGlslDelimiter = (str) => {
+    str = str.replaceAll(' ', '_');
+    str = str.replaceAll(/[^a-zA-Z0-9_]/g, "");
+    return str;
+};
 
 export const dumpParams = (params) => {
     if (typeof(params) === "string") {
         return params;
     }
     return params.map(param => [
-        param.name,
+        saneGlslDelimiter(param.name),
         param.timeScale,
-        ...param.points.map(Object.values)
+        ...param.points.map(Object.values),
+        param.tension,
     ].join(' ')).join('\n');
 }
 
@@ -286,36 +293,7 @@ const ParamEditor = ({param}) => {
     };
 
     return <Segment>
-        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
-            <input
-                value = {param.name}
-                onChange = {event => dispatch(updateParam({name: param.name, rename: event.target.value}))}
-                style = {{fontWeight: 'bold', width: 130, marginRight: 10}}
-            />
-            <div style={{flex: 1}}>
-                <label>T/sec =</label>
-                <input
-                    type = "number"
-                    style = {{width: 60}}
-                    value = {param.timeScale}
-                    onChange = {event => dispatch(updateParam({
-                        name: param.name,
-                        timeScale: +event.target.value
-                    }))}
-                    step = {.1}
-                    min = {0}
-                />
-            </div>
-            <button
-                onClick = {() => alert("right click if sure")}
-                onContextMenu = {event => {
-                    event.preventDefault();
-                    dispatch(deleteParam(param.name));
-                }}
-            >
-                delete
-            </button>
-        </div>
+        <ParamEditorHeader param={param}/>
         <div
             onMouseUp = {onDragEnd}
             onMouseLeave = {onDragCancel}
@@ -343,6 +321,7 @@ const ParamEditor = ({param}) => {
             handles = {handles}
             />
         </div>
+        <ParamEditorExtended param={param}/>
     </Segment>;
 };
 
@@ -378,18 +357,25 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
             }
             else {
                 // in case we want some tension functions, e.g. Math.pow() or its opposite
+                let yFunc = y => y;
+                if (param.tension > 0) {
+                    yFunc = y => Math.pow(y, 1 + param.tension/4);
+                }
+                if (param.tension < 0) {
+                    yFunc = y => 1 - Math.pow(1 - y, 1 - param.tension/4)
+                }
                 const split = 12;
                 for(let i = 0; i < split; i++) {
                     const fract = (i+1)/split;
                     const nextX = last.x + (current.x - last.x) * fract;
-                    const nextY = last.y + (current.y - last.y) * fract;
+                    const nextY = last.y + (current.y - last.y) * yFunc(fract);
                     ctx.lineTo(nextX, nextY);
                 }
                 last = current;
             }
         })
         ctx.stroke();
-    }, [handles, canvasRef]);
+    }, [handles, canvasRef, param.tension]);
 
     return <canvas
         ref = {canvasRef}
@@ -417,3 +403,70 @@ const Circle = styled.div.attrs(props => ({
     position: absolute;
     transform: translate(-50%, -50%);
 `;
+
+const FlexLine = styled.div`
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    `;
+
+const ParamNumberInput = (props) =>
+    <Form.Group>
+        <label>{props.label}</label>
+        <input
+            type = "number"
+            style = {{width: 60}}
+            value = {props.param[props.name] === undefined ? (props.defaultValue || 0) : props.param[props.name]}
+            onChange = {event => props.dispatch(updateParam({
+                name: props.param.name,
+                [props.name]: +event.target.value
+            }))}
+            {...props}
+        />
+    </Form.Group>;
+
+const ParamEditorHeader = ({param}) => {
+    const dispatch = useDispatch();
+
+    return <FlexLine>
+        <input
+            value = {param.name}
+            onChange = {event => dispatch(updateParam({name: param.name, rename: event.target.value}))}
+            style = {{fontWeight: 'bold', width: 130, marginRight: 10}}
+        />
+        <div style={{flex: 1}}>
+            <ParamNumberInput
+                param = {param}
+                label = "T/sec="
+                name = "timeScale"
+                dispatch = {dispatch}
+                step = {.1}
+                min = {0}
+            />
+        </div>
+        <button
+            onClick = {() => alert("right click if sure")}
+            onContextMenu = {event => {
+                event.preventDefault();
+                dispatch(deleteParam(param.name));
+            }}
+        >
+            delete
+        </button>
+    </FlexLine>
+};
+
+const ParamEditorExtended = ({param}) => {
+    const dispatch = useDispatch();
+
+    return <FlexLine>
+        <ParamNumberInput
+                param = {param}
+                label = "tension="
+                name = "tension"
+                defaultValue = {0}
+                dispatch = {dispatch}
+                step = {1}
+        />
+    </FlexLine>
+}
