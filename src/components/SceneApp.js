@@ -12,6 +12,7 @@ import { ButtonBar } from './index';
 import { STATUS, SYMBOL } from '../const';
 import { Header, Segment, Loader } from 'semantic-ui-react';
 import { patchScene } from './../slices/sceneSlice';
+import { saneGlslDelimiter } from './../logic/shader';
 
 const SCENE_UPDATE_DEBOUNCE = 500;
 
@@ -36,7 +37,6 @@ export const SceneApp = () => {
     React.useEffect(() => {
         if (status === STATUS.IDLE) {
             dispatch(fetchScenes())
-                .then(it => console.log("FETCHY", it));
         }
     }, [dispatch, status]);
 
@@ -56,7 +56,6 @@ export const SceneApp = () => {
         if (!scene) {
             return;
         }
-        console.log("RELOAD", "params:", scene.params);
         setInputs({
             sceneTitle: scene.title,
             sceneId: scene._id,
@@ -251,7 +250,7 @@ export const SceneApp = () => {
                         <button
                             style = {{flex: 1}}
                             onClick = {() => {
-                                const name = window.prompt("parameter name pls");
+                                const name = saneGlslDelimiter(window.prompt("parameter name pls"));
                                 if (name) {
                                     dispatch(addParam(name))
                                 }

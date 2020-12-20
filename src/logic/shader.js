@@ -4,6 +4,12 @@ export const asFloat = number => number.toString() + (Number.isInteger(number) ?
 
 export const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing.toString();
 
+export const saneGlslDelimiter = (str) => {
+    str = str.replaceAll(' ', '_');
+    str = str.replaceAll(/[^a-zA-Z0-9_]/g, "");
+    return str;
+};
+
 export const shadertoyify = code => (
     code
         .replace('precision highp float;', '')

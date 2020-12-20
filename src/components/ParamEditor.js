@@ -6,18 +6,12 @@ import produce from 'immer';
 import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
 import { objectWithout, clamp } from '../logic/utils';
 
-const saneGlslDelimiter = (str) => {
-    str = str.replaceAll(' ', '_');
-    str = str.replaceAll(/[^a-zA-Z0-9_]/g, "");
-    return str;
-};
-
 export const dumpParams = (params) => {
     if (typeof(params) === "string") {
         return params;
     }
     return params.map(param => [
-        saneGlslDelimiter(param.name),
+        param.name,
         param.timeScale,
         ...param.points.map(Object.values),
         param.tension,

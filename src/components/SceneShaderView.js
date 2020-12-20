@@ -297,7 +297,7 @@ ${usedGlyphs[glyph].map(rect =>
         .replaceAll('CONTOUR', '.01')
         .replaceAll('DARKBORDER', '.1')
         .replaceAll('DARKENING', 'col*col*col')
-    , [placeholderCode, terrifyingCode, glyphCode, phraseCode, scene, usesTime]);
+    , [placeholderCode, glyphCode, phraseCode, scene, usesTime]);
 
     return <>
         <Segment attached>
@@ -307,7 +307,7 @@ ${usedGlyphs[glyph].map(rect =>
                     width: sceneWidth,
                     height: sceneHeight
                 }}
-                dummyProp = {shaderCode}
+                dummyProp = {terrifyingCode}
                 >
                 <b>This is the AWESOME part!</b><br/>
                 <ShadertoyReact fs={shadertoyify(shaderCode)}/>

@@ -4,8 +4,8 @@ export const clip = x => clamp(x, -1, 1);
 export const millis = () => (new Date()).getTime();
 export const sec = () => Math.round((new Date()).getTime() / 1000);
 
-export const whenSubmitted = (event, func) => {
-    if (['Enter', 'Backspace'].includes(event.key)) { // why is Backspace in there??
+export const whenSubmitted = (event, func, additionalKeys = []) => {
+    if (['Enter', ...additionalKeys].includes(event.key)) {
         func(event);
     }
 };
