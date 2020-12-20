@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import produce from 'immer';
 import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
 import { objectWithout, clamp } from '../logic/utils';
+import { saneGlslDelimiter } from './../logic/shader';
 
 export const dumpParams = (params) => {
     if (typeof(params) === "string") {
@@ -425,7 +426,7 @@ const ParamEditorHeader = ({param}) => {
     return <FlexLine>
         <input
             value = {param.name}
-            onChange = {event => dispatch(updateParam({name: param.name, rename: event.target.value}))}
+            onChange = {event => dispatch(updateParam({name: param.name, rename: saneGlslDelimiter(event.target.value)}))}
             style = {{fontWeight: 'bold', width: 130, marginRight: 10}}
         />
         <div style={{flex: 1}}>

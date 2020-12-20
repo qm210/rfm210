@@ -383,6 +383,10 @@ export const SceneApp = () => {
                         onBlur = {handleFigureUpdate('qmd')}
                         disabled = {!figure}
                     />
+                    <pre contentEditable style={{border: "2px solid black", height: 200}}>
+                        bla shit!<br/>
+                        <mark style={{backgroundColor: 'green'}}>eumel</mark>
+                    </pre>
                 </Segment>
             </MainColumn>
 
