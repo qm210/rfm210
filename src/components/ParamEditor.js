@@ -4,6 +4,7 @@ import { Segment } from 'semantic-ui-react';
 import styled from 'styled-components';
 import produce from 'immer';
 import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
+import { clamp } from '../logic/utils';
 
 export const dumpParams = (params) => {
     if (typeof(params) === "string") {
@@ -21,8 +22,6 @@ const ParamEditors = () => {
     const params = scene.params;
     const dumpedParams = React.useRef();
     const dispatch = useDispatch();
-
-    console.log("PARMS", params);
 
     React.useEffect(() => {
         const dump = dumpParams(params);
@@ -100,21 +99,55 @@ const dragReducer = (state, action) => {
     }
 };
 
+const compare = (obj1, obj2) => {
+  const type1 = typeof(obj1);
+  const type2 = typeof(obj2);
+  if (type1 !== type2) {
+      return false;
+  }
+  if (type1 === "object") {
+      return Object.keys(obj1).length === Object.keys(obj2).length &&
+      Object.keys(obj1).every(key => compare(obj1[key], obj2[key]));
+  }
+  return obj1 === obj2;
+};
+
 const ParamEditor = ({param}) => {
     const canvasRef = React.useRef();
     const [dragState, dragDispatch] = React.useReducer(dragReducer, initDragState);
     const dispatch = useDispatch();
+    const changedHandles = React.useRef();
+    const debounce = React.useRef();
 
-    const handleNumber = 3;
     const [handles, setHandles] = React.useState(
-        Array(handleNumber).fill().map((_, index) => ({
+        param.points.map((point, index) => ({
             index,
-            x: index * .5 * canvasWidth,
-            y: 0,
-            fixedX: index === 0 || index === handleNumber - 1,
+            x: point.x * canvasWidth,
+            y: .5 * point.y * canvasHeight,
+            fixedX: index === 0 || index === param.points.length - 1,
         }))
     );
     const [selectedHandleIndex, setSelectedHandleIndex] = React.useState(0);
+
+    React.useEffect(() => {
+        if (compare(changedHandles.current, handles)) {
+            return;
+        }
+        if (debounce.current) {
+            clearTimeout(debounce.current);
+        }
+        debounce.current = setTimeout(() => {
+            dispatch(updateParam({
+                name: param.name,
+                points: handles.map(handle => ({
+                    x: +(handle.x / canvasWidth).toFixed(2),
+                    y: +(2 * handle.y / canvasHeight).toFixed(2),
+                }))
+            }));
+            debounce.current = null;
+            changedHandles.current = handles;
+        }, 500);
+    }, [param, handles, dispatch]);
 
     const onDragStart = handle => event => {
         if (dragState.dragging) {
@@ -161,7 +194,7 @@ const ParamEditor = ({param}) => {
         }
         setHandles(produce(draft => {
             draft[dragState.dragIndex].x = x;
-            draft[dragState.dragIndex].y = y;
+            draft[dragState.dragIndex].y = clamp(y, -canvasHeight/2, canvasHeight/2);
         }))
         dragDispatch({type: DRAG.UPDATE, payload: {drag, dragIndex}});
     };
@@ -348,7 +381,7 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
             }
         })
         ctx.stroke();
-    }, [handles]);
+    }, [handles, canvasRef]);
 
     return <canvas
         ref = {canvasRef}

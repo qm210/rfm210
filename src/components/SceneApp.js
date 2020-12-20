@@ -5,7 +5,7 @@ import SceneShaderView from './SceneShaderView';
 import ParamEditors, { dumpParams } from './ParamEditor';
 import { fetchScene, updateScene, updateFigure, selectById, addNewPhrase, copyFigure, deleteFigure,
     selectCurrentFigure, selectFigureList, selectSceneList, addNewScene, deleteScene, reorderScene,
-    PHRASE, fetchScenes, addParam, deleteParam } from '../slices/sceneSlice';
+    PHRASE, fetchScenes, addParam } from '../slices/sceneSlice';
 import { doc } from '../Initial';
 import { whenSubmitted } from '../logic/utils';
 import { ButtonBar } from './index';

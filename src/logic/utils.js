@@ -1,3 +1,6 @@
+export const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+export const clip = x => clamp(x, -1, 1);
+
 export const millis = () => (new Date()).getTime();
 export const sec = () => Math.round((new Date()).getTime() / 1000);
 
