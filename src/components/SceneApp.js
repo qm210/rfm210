@@ -451,8 +451,14 @@ const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
     const dispatch = useDispatch();
 
     React.useEffect(() => {
-        if (figure && !figure.qmd) {
+        if (!figure) {
+            return;
+        }
+        if (!figure.qmd) {
             dispatch(updateFigure({qmd: [""]}));
+        } else if (figure.qmd.slice(-1) !== "") {
+            // THIS IS CATASTROPHIC
+            // dispatch(addFigureQmd({index: figure.qmd.length}));
         }
     }, [dispatch, figure]);
 
