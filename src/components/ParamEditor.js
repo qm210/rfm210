@@ -352,6 +352,13 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
         const ctx = canvasRef.current.getContext('2d');
         ctx.clearRect(0, 0, canvasRef.current.width, canvasHeight);
 
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.moveTo(0, canvasHeight / 2);
+        ctx.lineTo(canvasWidth, canvasHeight / 2);
+        ctx.stroke();
+
         if (handles.length === 0) {
             return;
         }
@@ -359,6 +366,7 @@ const ParamCanvas = ({canvasRef, param, handles}) => {
         let last = {};
         ctx.beginPath();
         ctx.lineWidth = 3;
+        ctx.setLineDash([]);
         handles.forEach((handle, index) => {
             current = {
                 x: handle.x,
