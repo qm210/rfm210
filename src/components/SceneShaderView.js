@@ -94,7 +94,7 @@ const SceneShaderView = ()  => {
     }, [figureList]);
 
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
-        if (!glyphset.current) {
+        if (!glyphset.current || !glyphset.letterMap) {
             return ['', '', ''];
         }
         var usedGlyphs = {};

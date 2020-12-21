@@ -92,6 +92,16 @@ export const patchScene = createAsyncThunk('scene/update', async (_, {getState})
     return await service().patch(scene._id, scene);
 });
 
+/*
+// won't work this way. just update whole scene for now, this is just local traffic...
+export const patchFigure = createAsyncThunk('scene/updateFigure', async (_, {getState}) => {
+    const scene = getState().scene.current;
+    const figure = selectCurrentFigure(getState());
+    console.log("PATCH FIG.", scene, figure);
+    return await service().patch(scene._id, {figure});
+});
+*/
+
 const setSuccess = (state, action) => {
     console.log("SUCCESS", action.type, action.payload);
     return ({

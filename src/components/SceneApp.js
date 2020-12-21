@@ -1,13 +1,11 @@
 import React, { useState, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {MainView, MainColumn, LabelledInput, QuickButton} from '.';
-import ContentEditable from 'react-contenteditable'
 import SceneShaderView from './SceneShaderView';
 import ParamEditors, { dumpParams } from './ParamEditor';
 import { fetchScene, updateScene, updateFigure, selectById, addNewPhrase, copyFigure, deleteFigure,
     selectCurrentFigure, selectFigureList, selectSceneList, addNewScene, deleteScene, reorderScene,
     PHRASE, fetchScenes, addParam, addFigureQmd, deleteFigureQmd, updateFigureQmd } from '../slices/sceneSlice';
-import { doc } from '../Initial';
 import { whenSubmitted } from '../logic/utils';
 import { ButtonBar } from './index';
 import { STATUS, SYMBOL } from '../const';
@@ -29,7 +27,6 @@ export const SceneApp = () => {
         sceneId: scene ? scene._id : '',
         sceneQmd: "",
         shaderFunc: "",
-        figureQmd: "",
     });
     const [loader, setLoader] = useState(false);
     const sceneUpdateTimeout = React.useRef();
@@ -118,6 +115,7 @@ export const SceneApp = () => {
                     inputs = {inputs}
                     handleInput = {handleInput}
                 />
+                <FigureQmdEditor/>
             </MainColumn>
 
             <MainColumn>
@@ -403,7 +401,7 @@ const FigureEditor = ({inputs, handleInput}) => {
                     <Form.Input
                         label = "&#966;/°:"
                         type = "number"
-                        step = {5}
+                        step = {1}
                         value = {figure ? .1 * Math.round(1800 / Math.PI * figure.phi) : 0}
                         onChange = {(_, {value}) => dispatch(updateFigure({phi: +value * Math.PI/180}))}
                         disabled = {!figure}
@@ -436,17 +434,11 @@ const FigureEditor = ({inputs, handleInput}) => {
                     />
                 </Form.Group>
             </Form>
-
-            <FigureQmdEditor
-                inputs = {inputs}
-                handleInput = {handleInput}
-                handleFigureUpdate = {handleFigureUpdate}
-            />
         </Segment>
     </>;
 };
 
-const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
+const FigureQmdEditor = () => {
     const figure = useSelector(selectCurrentFigure);
     const dispatch = useDispatch();
 
@@ -454,11 +446,11 @@ const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
         if (!figure) {
             return;
         }
-        if (!figure.qmd) {
+        if (!figure.qmd || figure.qmd.length === 0) {
             dispatch(updateFigure({qmd: [""]}));
         } else if (figure.qmd.slice(-1) !== "") {
-            // THIS IS CATASTROPHIC
-            // dispatch(addFigureQmd({index: figure.qmd.length}));
+            console.log("CC", figure.qmd, figure.qmd.slice(-1));
+            //dispatch(addFigureQmd({index: figure.qmd.length, qmd: ""}));
         }
     }, [dispatch, figure]);
 
@@ -477,11 +469,12 @@ const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
             <Table.Body>
             {
                 figure.qmd.map((qmd, index) =>
-                    <Table.Row>
-                        <Table.Cell>
+                    <Table.Row key={index}>
+                        <Table.Cell style={{display: 'flex'}}>
                             <input
-                                value = {qmd}
+                                value = {qmd || ''}
                                 onChange = {event => dispatch(updateFigureQmd({index, qmd: event.target.value}))}
+                                placeholder = {"FROM..TO; QMD VAR FUNC"}
                                 style = {{
                                     outline: 0,
                                     width: "100%",
@@ -495,9 +488,9 @@ const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
                                 +
                             </button>
                             <button
-                                onClick = {() => dispatch(addFigureQmd({index: index}))}
+                                onClick = {() => dispatch(deleteFigureQmd({index: index}))}
                             >
-                                --
+                                −
                             </button>
                         </Table.Cell>
                     </Table.Row>
@@ -505,5 +498,8 @@ const FigureQmdEditor = ({inputs, handleInput, handleFigureUpdate}) => {
             }
             </Table.Body>
         </Table>
+        <pre style={{fontSize: '.8rem'}}>
+            {"FROM..TO[,REPEAT]; QMD(VAR, PARAM)"}
+        </pre>
     </>;
 };
