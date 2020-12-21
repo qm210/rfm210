@@ -448,9 +448,8 @@ const FigureQmdEditor = () => {
         }
         if (!figure.qmd || figure.qmd.length === 0) {
             dispatch(updateFigure({qmd: [""]}));
-        } else if (figure.qmd.slice(-1) !== "") {
-            console.log("CC", figure.qmd, figure.qmd.slice(-1));
-            //dispatch(addFigureQmd({index: figure.qmd.length, qmd: ""}));
+        } else if (figure.qmd.slice(-1)[0] !== "") {
+            dispatch(addFigureQmd({index: figure.qmd.length, qmd: ""}));
         }
     }, [dispatch, figure]);
 
@@ -458,11 +457,8 @@ const FigureQmdEditor = () => {
         <Table celled compact="very">
             <Table.Header>
                 <Table.Row columns={2}>
-                    <Table.HeaderCell>
-                        Figure QMDs
-                    </Table.HeaderCell>
-                    <Table.HeaderCell>
-                        Actions
+                    <Table.HeaderCell colSpan={2}>
+                        {"FROM..TO[,REPEAT]; QMD(VAR, PARAM)"}
                     </Table.HeaderCell>
                 </Table.Row>
             </Table.Header>
@@ -483,14 +479,14 @@ const FigureQmdEditor = () => {
                         </Table.Cell>
                         <Table.Cell>
                             <button style={{marginRight: 5}}
-                                onClick = {() => dispatch(addFigureQmd({index: index + 1}))}
+                                onClick = {() => dispatch(addFigureQmd({index: index + 1, qmd}))}
                             >
-                                +
+                                {SYMBOL.PLUS}
                             </button>
                             <button
                                 onClick = {() => dispatch(deleteFigureQmd({index: index}))}
                             >
-                                −
+                                {SYMBOL.MINUS}
                             </button>
                         </Table.Cell>
                     </Table.Row>
@@ -498,8 +494,5 @@ const FigureQmdEditor = () => {
             }
             </Table.Body>
         </Table>
-        <pre style={{fontSize: '.8rem'}}>
-            {"FROM..TO[,REPEAT]; QMD(VAR, PARAM)"}
-        </pre>
     </>;
 };

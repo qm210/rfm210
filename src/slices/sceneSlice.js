@@ -203,12 +203,12 @@ const sceneSlice = createSlice({
         addFigureQmd: (state, action) => {
             if (state.current.currentFigureId) {
                 state.current.figures[state.current.currentFigureId].qmd
-                    .splice(action.payload.index, 0, "");
+                    .splice(action.payload.index, 0, action.payload.qmd || "");
             }
         },
         deleteFigureQmd: (state, action) => {
             if (state.current.currentFigureId) {
-                delete state.current.figures[state.current.currentFigureId].qmd[action.payload.index];
+                state.current.figures[state.current.currentFigureId].qmd.splice(action.payload.index, 1);
             }
         },
         updateFigureQmd: (state, action) => {
