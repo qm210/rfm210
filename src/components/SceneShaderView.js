@@ -12,6 +12,7 @@ import { fetchGlyphset } from '../slices/glyphsetSlice';
 import { fetchLetterMap } from '../slices/glyphSlice';
 import { initWidth, initHeight } from '../Initial';
 import { Loader, Segment } from 'semantic-ui-react';
+import { validQmd, parseQmd } from './FigureEditor';
 
 const sceneWidth = 640;
 const sceneHeight = 320;
@@ -83,15 +84,63 @@ const SceneShaderView = ()  => {
     //const usesTime = React.useMemo(() => scene &&  scene.figures[0].qmd.length > 0, [scene]);
     const usesTime = true;
 
-    const placeholderCode = React.useMemo(() => {
-        const placeholderFunctionCall = figure =>
-            `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${figure.phi.toFixed(3)}, R_${figure.id});
-        placeholder(R_${figure.id}*UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);\n`
+    const [placeholderCode, paramCode] = React.useMemo(() => {
+
+        const sceneParams = scene.params.map(it => it.name);
+        const paramCode = {};
+        for (const param of scene.params) {
+            const header = `void ${param.name}(in float t, out float p){p=0.;`
+            const lastValue = param.points.length === 0 ? 0 : param.points.slice(-1)[0].y || 0;
+            let body = 'p=';
+            for (let k = 0; k < param.points.length - 1; k++) {
+                const curr = param.points[k];
+                const next = param.points[k+1];
+                const t0 = curr.x * param.timeScale;
+                const t1 = next.x * param.timeScale;
+                const m = (next.y - curr.y)/(t1 - t0);
+                const b = -t0 * m;
+                let func = `${asFloat(b, 3)} + ${asFloat(m, 3)}*t`;
+
+                body += `(t >= ${asFloat(t0, 3)} && t < ${asFloat(t1, 3)}) ? ${func}:`;
+            }
+            body += asFloat(lastValue, 3) + ';';
+            const footer = '}'
+            paramCode[param.name] = header + body + footer;
+        }
+
+        const placeholderFunctionCall = figure => {
+            const prepare = [];
+            const reverse = [];
+            const vars = {};
+            const qmds = figure.qmd.filter(validQmd).map(parseQmd);
+            let counter = 0;
+            for (const qmd of qmds) {
+                console.log(counter, qmd, scene.params, paramCode);
+                vars.phi = asFloat(figure.phi, 3);
+                if (qmd.action === 'animate') {
+                    if (qmd.subject === 'phi') {
+                        vars.phi = 'phi' + counter;
+                        if (sceneParams.includes(qmd.param[0])) {
+                            prepare.push(
+                                `float ${vars.phi} = ${asFloat(figure.phi, 3)}; ${qmd.param[0]}(t,${vars.phi});`
+                            );
+                        }
+                    }
+                }
+                counter++;
+            };
+
+            return prepare.join('\n        ') +
+                    `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
+                    placeholder(R_${figure.id}*UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);\n`
+                    .replaceAll('                    ', '        ');
+        };
+
         const lineArray = figureList
             .filter(figure => figure.placeholder)
             .map(placeholderFunctionCall);
-        return joinLines(lineArray);
-    }, [figureList]);
+        return [joinLines(lineArray), paramCode];
+    }, [figureList, scene.params]);
 
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
         if (!glyphset.current || !glyphset.letterMap) {
@@ -266,6 +315,7 @@ ${usedGlyphs[glyph].map(rect =>
     }
     ${glyphCode}
     ${phraseCode}
+    ${Object.values(paramCode).join('\n')}
     void placeholder (in vec2 coord, in vec2 center, in vec2 scale, inout vec3 col)
     {
         vec2 cent = (coord-center);

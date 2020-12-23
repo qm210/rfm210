@@ -1,6 +1,8 @@
 import { shaderAlias } from './glyph';
 
-export const asFloat = number => number.toString() + (Number.isInteger(number) ? '.' : '');
+export const asFloat = (number, prec) =>
+    prec ? number.toFixed(prec)
+        : number.toString() + (Number.isInteger(number) ? '.' : '');
 
 export const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing.toString();
 
