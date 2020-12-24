@@ -142,6 +142,13 @@ const FigureQmdEditor = () => {
             <Table.Body>
                 {figure.qmd.map((qmd, index) => <Table.Row key={index}>
                     <Table.Cell style={{ display: 'flex' }}>
+                        <button
+                            style = {{marginRight: 3}}
+                            onClick={() => dispatch(updateFigureQmd({ index, qmd: qmdToggled(qmd) }))}
+                            disabled = {!qmd}
+                        >
+                            {activeQmd(qmd) && qmd ? SYMBOL.CHECKBOX_YES : SYMBOL.CHECKBOX_EMPTY}
+                        </button>
                         <input
                             value={qmd || ''}
                             onChange={event => dispatch(updateFigureQmd({ index, qmd: event.target.value }))}
@@ -149,11 +156,12 @@ const FigureQmdEditor = () => {
                             style={{
                                 outline: 0,
                                 width: "100%",
-                                backgroundColor: !qmd || validQmd(qmd) ? undefined : '#f88'
+                                backgroundColor: qmdFieldColor(qmd),
                             }} />
                     </Table.Cell>
                     <Table.Cell>
-                        <button style={{ marginRight: 5 }}
+                        <button
+                            style = {{marginRight: 5}}
                             onClick={() => dispatch(addFigureQmd({ index: index + 1, qmd }))}
                         >
                             {SYMBOL.PLUS}
@@ -243,3 +251,25 @@ const maybeArg = (arg, prefix, mutator) => {
         }
     }
 }
+
+export const activeQmd = qmd => !qmd.startsWith("#");
+
+const qmdToggled = qmd => {
+    if (activeQmd(qmd)) {
+        return '# ' + qmd;
+    }
+    return qmd.replaceAll('#', '').trim();
+};
+
+const qmdFieldColor = qmd => {
+    if (!qmd) {
+        return undefined;
+    }
+    if (!activeQmd(qmd)) {
+        return '#bbb';
+    }
+    if (!validQmd(qmd)) {
+        return '#f88';
+    }
+    return undefined;
+};

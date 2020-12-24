@@ -12,4 +12,7 @@ export const SYMBOL = {
     RIGHT: '\u2192',
     MINUS: '\u2212',
     PLUS: '+',
+    CHECKBOX_NO: '\u2612',
+    CHECKBOX_YES: '\u2611',
+    CHECKBOX_EMPTY: '\u2610',
 };

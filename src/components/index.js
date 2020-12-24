@@ -5,7 +5,7 @@ import { Segment } from 'semantic-ui-react';
 export const MainView = styled.div`
     display: flex;
     flex-direction: row;
-    height: 100vh;
+    height: 100vh;git
 `
 
 export const MainColumn = styled.div`

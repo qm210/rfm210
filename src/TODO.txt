@@ -1,8 +1,9 @@
-- Stetigkeit in phi
-- R * uv richtig? immer Center of Mass verschieben
-- qmd: T-Repeat und T-faktor
-- qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
+X Stetigkeit in phi
+X R * uv richtig? immer Center of Mass verschieben
+X qmd: T-Repeat und T-faktori
+X qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
 - tension abbilden
+- QMDs deaktivieren ohne gleich zu löschen..
 - mysteriöser Speedup in millis? - react state cutten?
 - Progress Bar
 - Progress Bar interaktiv

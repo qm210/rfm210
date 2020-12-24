@@ -1,5 +1,5 @@
 import { asFloat, float, joinLines, newLine } from './shader';
-import { validQmd, parseQmd } from '../components/FigureEditor';
+import { validQmd, parseQmd, activeQmd } from '../components/FigureEditor';
 
 export const generateShaders = (figureList, paramList) => {
 
@@ -45,7 +45,7 @@ export const generateShaders = (figureList, paramList) => {
         const prepare = [];
         const reverse = [];
         const vars = Object.fromEntries(knownSubjects.map(key => [key, float(figure[key])]));
-        const qmds = figure.qmd.filter(validQmd).map(parseQmd);
+        const qmds = figure.qmd.filter(validQmd).filter(activeQmd).map(parseQmd);
         let counter = 0;
         for (const qmd of qmds) {
             if (qmd.action === 'animate') {
