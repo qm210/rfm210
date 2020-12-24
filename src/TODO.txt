@@ -1,8 +1,9 @@
 - Stetigkeit in phi
 - R * uv richtig? immer Center of Mass verschieben
-- qmd: T-Repeat
+- qmd: T-Repeat und T-faktor
 - qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
 - tension abbilden
+- mysteriöser Speedup in millis? - react state cutten?
 - Progress Bar
 - Progress Bar interaktiv
 - mal eigene Shader FUNC

@@ -11,7 +11,10 @@ export const dumpParams = (params) => {
     if (typeof(params) === "string") {
         return params;
     }
-    return params.map(param => `void ${param.name}(in float t, out float p){...}`).join('\n');
+    return params.map(param => {
+        const points = param.points.map(point => '(' + [point.x, point.y].join(',') + ')').join(' ');
+        return `void ${param.name}(in float t, out float p): ${points}`
+    }).join('\n');
 }
 
 const ParamEditors = () => {

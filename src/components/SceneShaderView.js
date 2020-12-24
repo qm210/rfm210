@@ -12,14 +12,10 @@ import { fetchGlyphset } from '../slices/glyphsetSlice';
 import { fetchLetterMap } from '../slices/glyphSlice';
 import { initWidth, initHeight } from '../Initial';
 import { Loader, Segment } from 'semantic-ui-react';
-import { validQmd, parseQmd } from './FigureEditor';
+import { generateShaders } from '../logic/generateShaders';
 
 const sceneWidth = 640;
 const sceneHeight = 320;
-
-const f = x => asFloat(x || 0, 3);
-
-const joinLines = (array, indent) => array.map(it => ' '.repeat(indent) + it.toString()).join('\n');
 
 const SceneShaderView = ()  => {
     const scene = useSelector(store => store.scene.current);
@@ -29,18 +25,18 @@ const SceneShaderView = ()  => {
     const [loader, setLoader] = useState(!glyphset.current);
     const isRefreshed = useRef('');
 
-    const [millis, setMillis] = useState(0);
+    const [time, setTime] = useState(0);
     const reqRef = useRef();
-    const prevReqRef = useRef();
+    const prevTime = useRef();
 
     const animate = React.useCallback(time => {
-        if (prevReqRef.current !== undefined) {
-            const deltaTime = time - prevReqRef.current;
-            setMillis(ms => ms + deltaTime);
+        if (prevTime.current !== undefined) {
+            const deltaTime = time - prevTime.current;
+            setTime(sec => (sec + 1e-3 * deltaTime) % scene.duration);
         }
-        prevReqRef.current = time;
-        prevReqRef.current = requestAnimationFrame(animate);
-    }, []);
+        prevTime.current = time;
+        reqRef.current = requestAnimationFrame(animate);
+    }, [scene.duration]);
 
     React.useEffect(() => {
         reqRef.current = requestAnimationFrame(animate);
@@ -81,65 +77,9 @@ const SceneShaderView = ()  => {
         return qmds;
     }, [scene.duration]);
 
-    const [placeholderCode, paramCode] = React.useMemo(() => {
-
-        const sceneParams = scene.params.map(it => it.name);
-        const paramCode = {};
-        for (const param of scene.params) {
-            const header = `void ${param.name}(in float t, out float p){t=mod(t,${f(param.timeScale)});`
-            const lastValue = param.points.length === 0 ? 0 : param.points.slice(-1)[0].y || 0;
-            let body = 'p=';
-            for (let k = 0; k < param.points.length - 1; k++) {
-                const curr = param.points[k];
-                const next = param.points[k+1];
-                const t0 = curr.x * param.timeScale;
-                const t1 = next.x * param.timeScale;
-                const m = (next.y - curr.y)/(t1 - t0);
-                const b = -t0 * m;
-                let func = `${f(b)} + ${f(m)}*t`;
-
-                body += `(t >= ${f(t0)} && t < ${f(t1)}) ? ${func}:`;
-            }
-            body += f(lastValue) + ';';
-            const footer = '}'
-            paramCode[param.name] = header + body + footer;
-        }
-
-        const knownSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
-
-        const placeholderFunctionCall = figure => {
-            const prepare = [];
-            const reverse = [];
-            const vars = Object.fromEntries(knownSubjects.map(key => [key, f(figure[key])]));
-            const qmds = figure.qmd.filter(validQmd).map(parseQmd);
-            let counter = 0;
-            for (const qmd of qmds) {
-                const paramFunc = qmd.param[0];
-                if (qmd.action === 'animate') {
-                    if (knownSubjects.includes(qmd.subject)) {
-                        const dynamicSubject = `${qmd.subject}${counter}`;
-                        if (sceneParams.includes(paramFunc)) {
-                            prepare.push(
-                                `float ${dynamicSubject} = ${vars[qmd.subject]}; ${paramFunc}(t,${dynamicSubject});`
-                            );
-                        }
-                        vars[qmd.subject] = dynamicSubject;
-                    }
-                }
-                counter++;
-            };
-
-            return prepare.join('\n        ') +
-                    `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
-                    placeholder(R_${figure.id}*UV, vec2(${figure.x}, ${figure.y}), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}), col);\n`
-                    .replaceAll('                    ', '        ');
-        };
-
-        const lineArray = figureList
-            .filter(figure => figure.placeholder)
-            .map(placeholderFunctionCall);
-        return [joinLines(lineArray), paramCode];
-    }, [figureList, scene.params]);
+    const [placeholderCode, paramCode] = React.useMemo(() =>
+        generateShaders(figureList, scene.params)
+    , [figureList, scene.params]);
 
     const [terrifyingCode, glyphCode, phraseCode] = React.useMemo(() => {
         if (!glyphset.current || !glyphset.letterMap) {
@@ -314,11 +254,10 @@ ${usedGlyphs[glyph].map(rect =>
     ${glyphCode}
     ${phraseCode}
     ${Object.values(paramCode).join('\n')}
-    void placeholder (in vec2 coord, in vec2 center, in vec2 scale, inout vec3 col)
+    void placeholder (inout vec3 col, in vec2 coord, in vec2 scale)
     {
-        vec2 cent = (coord-center);
-        vec2 centq = quant(cent/scale);
-        float cnorm = max(abs(cent.x/scale.x), abs(cent.y/scale.y));
+        vec2 centq = quant(coord/scale);
+        float cnorm = max(abs(coord.x/scale.x), abs(coord.y/scale.y));
 
         if (cnorm < 1.)
         {
@@ -347,7 +286,7 @@ ${usedGlyphs[glyph].map(rect =>
         .replaceAll('CONTOUR', '.01')
         .replaceAll('DARKBORDER', '.1')
         .replaceAll('DARKENING', 'col*col*col')
-    , [placeholderCode, glyphCode, phraseCode, scene]);
+    , [placeholderCode, glyphCode, phraseCode, paramCode, scene]);
 
     useEffect(() => {
         console.log("SHADERCODE CHANGED")
@@ -377,7 +316,7 @@ ${usedGlyphs[glyph].map(rect =>
                     <ShadertoyReact
                         fs = {shadertoyify(shaderCode)}
                         uniforms = {{
-                            time: {type: '1f', value: .000001 * millis}
+                            time: {type: '1f', value: time}
                         }}
                     />
                 }

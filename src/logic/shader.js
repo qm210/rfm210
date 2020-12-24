@@ -4,6 +4,8 @@ export const asFloat = (number, prec) =>
     prec ? number.toFixed(prec)
         : number.toString() + (Number.isInteger(number) ? '.' : '');
 
+export const float = x => asFloat(x || 0, 3);
+
 export const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing.toString();
 
 export const saneGlslDelimiter = (str) => {
@@ -11,6 +13,8 @@ export const saneGlslDelimiter = (str) => {
     str = str.replaceAll(/[^a-zA-Z0-9_]/g, "");
     return str;
 };
+
+export const joinLines = (array, indent) => array.map(it => ' '.repeat(indent) + it.toString()).join('\n');
 
 export const shadertoyify = code => (
     code
