@@ -118,12 +118,10 @@ export const SceneApp = () => {
                 />
             </MainColumn>
 
-            <MainColumn>
-                {
-                    scene &&
-                    <SceneShaderView/>
-                }
-            </MainColumn>
+            {
+                scene &&
+                <SceneShaderView/>
+            }
         </MainView>
     </>;
 };

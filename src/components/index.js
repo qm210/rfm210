@@ -5,12 +5,15 @@ import { Segment } from 'semantic-ui-react';
 export const MainView = styled.div`
     display: flex;
     flex-direction: row;
+    height: 100vh;
 `
 
 export const MainColumn = styled.div`
     display: flex;
     flex-direction: column;
     padding: 10px;
+    overflow-y: scroll;
+    height: calc(100vh - 32px);
 `
 
 export const ExportList = styled.div`

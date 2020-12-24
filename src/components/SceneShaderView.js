@@ -275,6 +275,7 @@ ${usedGlyphs[glyph].map(rect =>
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
         vec2 UV = vec2((uv.x - .5)*${asFloat(sceneWidth/sceneHeight)}, uv.y - .5); // qm hack
         vec3 col = vec3(1.,.8,1.);
+        col = mix(col, 1.1 + -.5*cos(iTime+uv.xyx+vec3(0,2,4)), 0.2);
         float d;
         float alpha = 1.;
         float blur = 1.;
@@ -297,7 +298,7 @@ ${usedGlyphs[glyph].map(rect =>
 
     return <div
         style = {{
-            position: 'fixed',
+            position: 'absolute',
             top: 64,
             right: 20,
         }}>

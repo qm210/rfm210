@@ -14,10 +14,23 @@ export const generateShaders = (figureList, paramList) => {
             const next = param.points[k+1];
             const t0 = curr.x * param.timeScale;
             const t1 = next.x * param.timeScale;
+
             const m = (next.y - curr.y)/(t1 - t0);
             const b = -t0 * m + curr.y;
             let func = `${float(b)} + ${float(m)}*t`;
-            // tension or other shapes...
+            if (param.tension !== 0) {
+                if (param.tension > 0) {
+                    const fractM = float(1/(next.x - curr.x));
+                    const fractB = float(-curr.x / (next.x - curr.x));
+                    func = `pow(${fractB}+${fractM}*t, ${float(1 + param.tension/4)})`
+                }
+                else {
+                    const fractM = float(-1/(next.x - curr.x));
+                    const fractB = float(next.x / (next.x - curr.x));
+                    func = `(1.-pow(${fractB}+${fractM}*t, ${float(1 - param.tension/4)}))`
+                }
+                func = `${float(curr.y)} + ${float(next.y - curr.y)}*${func}`;
+            }
 
             body += `(t >= ${float(t0)} && t < ${float(t1)}) ? ${func}:`;
         }
