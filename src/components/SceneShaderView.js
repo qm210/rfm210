@@ -22,17 +22,18 @@ const SceneShaderView = ()  => {
     const isRefreshed = useRef('');
 
     const [time, setTime] = useState(0);
+    const [running, setRunning] = useState(true);
     const reqRef = useRef();
     const prevTime = useRef();
 
     const animate = React.useCallback(time => {
-        if (prevTime.current !== undefined) {
+        if (running && prevTime.current !== undefined) {
             const deltaTime = time - prevTime.current;
             setTime(sec => (sec + 1e-3 * deltaTime) % scene.duration);
         }
         prevTime.current = time;
         reqRef.current = requestAnimationFrame(animate);
-    }, [scene.duration]);
+    }, [running, scene.duration]);
 
     React.useEffect(() => {
         reqRef.current = requestAnimationFrame(animate);
@@ -52,8 +53,6 @@ const SceneShaderView = ()  => {
             )
             .catch(error => console.warn("IN LOADING LETTER MAP:", error));
     }, [glyphset, dispatch, setLoader])
-
-
 
     const shaderCode = React.useMemo(() =>
         generateShader(sceneWidth, sceneHeight, scene, figureList)
@@ -91,7 +90,15 @@ const SceneShaderView = ()  => {
                     />
                 }
             </ShaderFrame>
+            <TransportBar
+                time = {time}
+                duration = {scene.duration}
+                setTime = {setTime}
+                running = {running}
+                setRunning = {setRunning}
+            />
         </Segment>
+
         <Segment>
             <CodeFrame>
                 {shadertoyify(shaderCode)}
@@ -101,3 +108,24 @@ const SceneShaderView = ()  => {
 };
 
 export default SceneShaderView;
+
+const TransportBar = ({duration, time, setTime, setRunning, running}) =>
+    <div>
+        <input
+            type = "range"
+            style = {{
+                width: '100%',
+                cursor: 'pointer',
+            }}
+            min = {0}
+            max = {duration}
+            step = {0.001}
+            value = {time}
+            onDoubleClick = {() => setRunning(true)}
+            onChange = {event => {
+                setTime(+event.target.value);
+                setRunning(false);
+            }}
+        />
+        {time.toFixed(3)} / {duration} sec -- drag to pause, doubeclick to play
+    </div>;
