@@ -17,6 +17,8 @@ import { validQmd, parseQmd } from './FigureEditor';
 const sceneWidth = 640;
 const sceneHeight = 320;
 
+const f = x => asFloat(x || 0, 3);
+
 const joinLines = (array, indent) => array.map(it => ' '.repeat(indent) + it.toString()).join('\n');
 
 const SceneShaderView = ()  => {
@@ -27,7 +29,6 @@ const SceneShaderView = ()  => {
     const [loader, setLoader] = useState(!glyphset.current);
     const isRefreshed = useRef('');
 
-    /*
     const [millis, setMillis] = useState(0);
     const reqRef = useRef();
     const prevReqRef = useRef();
@@ -45,7 +46,6 @@ const SceneShaderView = ()  => {
         reqRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(reqRef.current);
       }, [animate]);
-    */
 
     useEffect(() => {
         if (glyphset.current) {
@@ -63,7 +63,7 @@ const SceneShaderView = ()  => {
 
 
     const parsePhraseQmd = React.useCallback((script) => {
-        const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod'];
+        const acceptedPhraseQmds = ['show', 'hide', 'blink', 'spin', 'colmod']; // outdated
         const qmds = [];
         for (const line of script) {
             if (line[0] === '#') {
@@ -81,15 +81,12 @@ const SceneShaderView = ()  => {
         return qmds;
     }, [scene.duration]);
 
-    //const usesTime = React.useMemo(() => scene &&  scene.figures[0].qmd.length > 0, [scene]);
-    const usesTime = true;
-
     const [placeholderCode, paramCode] = React.useMemo(() => {
 
         const sceneParams = scene.params.map(it => it.name);
         const paramCode = {};
         for (const param of scene.params) {
-            const header = `void ${param.name}(in float t, out float p){p=0.;`
+            const header = `void ${param.name}(in float t, out float p){t=mod(t,${f(param.timeScale)});`
             const lastValue = param.points.length === 0 ? 0 : param.points.slice(-1)[0].y || 0;
             let body = 'p=';
             for (let k = 0; k < param.points.length - 1; k++) {
@@ -99,32 +96,34 @@ const SceneShaderView = ()  => {
                 const t1 = next.x * param.timeScale;
                 const m = (next.y - curr.y)/(t1 - t0);
                 const b = -t0 * m;
-                let func = `${asFloat(b, 3)} + ${asFloat(m, 3)}*t`;
+                let func = `${f(b)} + ${f(m)}*t`;
 
-                body += `(t >= ${asFloat(t0, 3)} && t < ${asFloat(t1, 3)}) ? ${func}:`;
+                body += `(t >= ${f(t0)} && t < ${f(t1)}) ? ${func}:`;
             }
-            body += asFloat(lastValue, 3) + ';';
+            body += f(lastValue) + ';';
             const footer = '}'
             paramCode[param.name] = header + body + footer;
         }
 
+        const knownSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
+
         const placeholderFunctionCall = figure => {
             const prepare = [];
             const reverse = [];
-            const vars = {};
+            const vars = Object.fromEntries(knownSubjects.map(key => [key, f(figure[key])]));
             const qmds = figure.qmd.filter(validQmd).map(parseQmd);
             let counter = 0;
             for (const qmd of qmds) {
-                console.log(counter, qmd, scene.params, paramCode);
-                vars.phi = asFloat(figure.phi, 3);
+                const paramFunc = qmd.param[0];
                 if (qmd.action === 'animate') {
-                    if (qmd.subject === 'phi') {
-                        vars.phi = 'phi' + counter;
-                        if (sceneParams.includes(qmd.param[0])) {
+                    if (knownSubjects.includes(qmd.subject)) {
+                        const dynamicSubject = `${qmd.subject}${counter}`;
+                        if (sceneParams.includes(paramFunc)) {
                             prepare.push(
-                                `float ${vars.phi} = ${asFloat(figure.phi, 3)}; ${qmd.param[0]}(t,${vars.phi});`
+                                `float ${dynamicSubject} = ${vars[qmd.subject]}; ${paramFunc}(t,${dynamicSubject});`
                             );
                         }
+                        vars[qmd.subject] = dynamicSubject;
                     }
                 }
                 counter++;
@@ -254,7 +253,6 @@ ${usedGlyphs[glyph].map(rect =>
     const shaderCode = React.useMemo(() => !scene ? '' : `
     precision highp float;
     varying vec2 uv;
-    ${usesTime ? 'uniform float time;' : ''}
     const vec3 c = vec3(1.,0.,-1.);
     uniform vec2 iResolution; // qm hacked this
 
@@ -334,7 +332,7 @@ ${usedGlyphs[glyph].map(rect =>
     }
     void main()
     {
-        ${usesTime ? `float t = mod(time, ${asFloat(scene.duration || 0)});` : ''}
+        float t = mod(time, ${asFloat(scene.duration || 0)});
         // vec2 uv = (fragCoord.xy-.5*iResolution.xy)/iResolution.y; // qm hack
         vec2 UV = vec2((uv.x - .5)*${asFloat(sceneWidth/sceneHeight)}, uv.y - .5); // qm hack
         vec3 col = vec3(1.,.8,1.);
@@ -349,7 +347,7 @@ ${usedGlyphs[glyph].map(rect =>
         .replaceAll('CONTOUR', '.01')
         .replaceAll('DARKBORDER', '.1')
         .replaceAll('DARKENING', 'col*col*col')
-    , [placeholderCode, glyphCode, phraseCode, scene, usesTime]);
+    , [placeholderCode, glyphCode, phraseCode, scene]);
 
     useEffect(() => {
         console.log("SHADERCODE CHANGED")
@@ -376,7 +374,12 @@ ${usedGlyphs[glyph].map(rect =>
                 <b>This is the AWESOME part!</b><br/>
                 {
                     isRefreshed.current === shaderCode &&
-                    <ShadertoyReact fs={shadertoyify(shaderCode)}/>
+                    <ShadertoyReact
+                        fs = {shadertoyify(shaderCode)}
+                        uniforms = {{
+                            time: {type: '1f', value: .000001 * millis}
+                        }}
+                    />
                 }
             </ShaderFrame>
         </Segment>

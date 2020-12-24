@@ -185,7 +185,6 @@ export const validQmd = qmd => {
     return true;
 };
 const knownQmds = ['show', 'hide', 'animate'];
-const knownSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
 
 export const parseQmd = qmd => {
     const parsed = {};

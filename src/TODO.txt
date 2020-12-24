@@ -1,25 +1,13 @@
-Shader:
-- fix time
-- render correct phrase
-- allow multiple phrases
-- phrase effects QMD
--- colors?
--- movement
-- scene composition QMD
+- Stetigkeit in phi
+- R * uv richtig? immer Center of Mass verschieben
+- qmd: T-Repeat
+- qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
+- tension abbilden
+- Progress Bar
+- Progress Bar interaktiv
+- mal eigene Shader FUNC
 
-=== NICHT VOR UC10 ===
-
-
-_____
-Backend - State Austausch
-fix von cmd
-Ersetzen von Font-Glyphen durch generische Glyphen (code submitten) mit PARAMETERN
-PARAMETER AUTOMATION
-time in shadertoy-react
-liveMode - deactivate
-(Orgel)
-_____
-
-Backend (Feathers / Express / idon'tcare)
-- store glyph to file (json)
-- load glyph from file (json)
+Zukunft:
+- "Filter wie z.B. Blur oder Ebeneneffekte"
+- Effekte wie Plot hier, Clone da, etc.
+- kubische Splines statt tension -- performance checken :)
