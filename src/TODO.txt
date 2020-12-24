@@ -4,7 +4,7 @@ X qmd: T-Repeat und T-faktori
 X qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
 - tension abbilden
 - QMDs deaktivieren ohne gleich zu löschen..
-- mysteriöser Speedup in millis? - react state cutten?
+X mysteriöser Speedup in millis? - react state cutten?
 - Progress Bar
 - Progress Bar interaktiv
 - mal eigene Shader FUNC
