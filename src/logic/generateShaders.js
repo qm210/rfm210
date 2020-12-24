@@ -1,4 +1,4 @@
-import { asFloat, float, joinLines } from './shader';
+import { asFloat, float, joinLines, newLine } from './shader';
 import { validQmd, parseQmd } from '../components/FigureEditor';
 
 export const generateShaders = (figureList, paramList) => {
@@ -35,13 +35,20 @@ export const generateShaders = (figureList, paramList) => {
         const qmds = figure.qmd.filter(validQmd).map(parseQmd);
         let counter = 0;
         for (const qmd of qmds) {
-            const paramFunc = qmd.param[0];
             if (qmd.action === 'animate') {
                 if (knownSubjects.includes(qmd.subject)) {
                     const dynamicSubject = `${qmd.subject}${counter}`;
-                    if (sceneParams.includes(paramFunc)) {
+                    if (sceneParams.includes(qmd.param.func)) {
+                        const tVar = qmd.param.timeScale === 1 ? 't' : `(t*${float(qmd.param.timeScale)})`;
+                        let process = '';
+                        if (qmd.param.scale !== 1) {
+                            process += `${dynamicSubject}*=${float(qmd.param.scale)};`
+                        }
+                        if (qmd.param.shift !== 0) {
+                            process += `${dynamicSubject}+=${float(qmd.param.shift)};`
+                        }
                         prepare.push(
-                            `float ${dynamicSubject} = ${vars[qmd.subject]}; ${paramFunc}(t,${dynamicSubject});`
+                            `float ${dynamicSubject} = ${vars[qmd.subject]}; ${qmd.param.func}(${tVar},${dynamicSubject});${process}`
                         );
                     }
                     vars[qmd.subject] = dynamicSubject;
@@ -50,10 +57,10 @@ export const generateShaders = (figureList, paramList) => {
             counter++;
         };
 
-        return prepare.join('\n        ') +
+        return prepare.join(newLine(8)) + newLine(8) +
                 `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
-                placeholder(col, R_${figure.id}*(UV - vec2(${figure.x}, ${figure.y})), vec2(${figure.scale*figure.scaleX}, ${figure.scale*figure.scaleY}));\n`
-                .replaceAll('                    ', '        ');
+                placeholder(col, R_${figure.id}*(UV - vec2(${vars.x}, ${vars.y})), vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}));\n`
+                .replaceAll('                ', '        ');
     };
 
     const lineArray = figureList

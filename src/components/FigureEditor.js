@@ -201,7 +201,7 @@ export const parseQmd = qmd => {
         const bodyParse = parsed.body.replace(/\s\s+/g, ' ').split(' ');
         parsed.action = bodyParse[0];
         parsed.subject = bodyParse[1];
-        parsed.param = bodyParse.slice(2);
+        parsed.param = parseQmdArgs(bodyParse.slice(2));
         return parsed;
     }
     catch {
@@ -209,5 +209,37 @@ export const parseQmd = qmd => {
             ...parsed,
             error: "can't parse"
         };
+    }
+}
+
+const parseQmdArgs = args => {
+    const param = {};
+    param.func = args[0].replaceAll('(', '').replaceAll(')', '');
+    param.shift = 0;
+    param.scale = 1;
+    param.timeScale = 1;
+    for (const arg of args.slice(1)) {
+        maybeArg(arg, '*',
+            value => param.scale *= +value
+        );
+        maybeArg(arg, '+',
+            value => param.shift += +value
+        );
+        maybeArg(arg, '-',
+            value => param.shift -= +value
+        );
+        maybeArg(arg, 'T*',
+            value => param.timeScale *= +value
+        );
+    }
+    return param;
+};
+
+const maybeArg = (arg, prefix, mutator) => {
+    if (arg.startsWith(prefix)) {
+        const value = arg.slice(prefix.length);
+        if (value !== "") {
+            mutator(value);
+        }
     }
 }

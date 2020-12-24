@@ -1,8 +1,12 @@
 import { shaderAlias } from './glyph';
 
-export const asFloat = (number, prec) =>
-    prec ? number.toFixed(prec)
-        : number.toString() + (Number.isInteger(number) ? '.' : '');
+export const asFloat = (number, prec) => {
+    const str = prec ? number.toFixed(prec) : number.toString();
+    if (Number.isInteger(number) && !str.includes('.')) {
+        return str + '.';
+    }
+    return str;
+};
 
 export const float = x => asFloat(x || 0, 3);
 
@@ -14,6 +18,7 @@ export const saneGlslDelimiter = (str) => {
     return str;
 };
 
+export const newLine = (indent) => '\n' + ' '.repeat(indent);
 export const joinLines = (array, indent) => array.map(it => ' '.repeat(indent) + it.toString()).join('\n');
 
 export const shadertoyify = code => (
