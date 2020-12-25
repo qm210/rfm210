@@ -10,19 +10,46 @@ import { whenSubmitted } from '../logic/utils';
 import { SYMBOL } from '../const';
 import { Header, Segment, Table, Form } from 'semantic-ui-react';
 
+const shaderFuncTemplate = figure =>
+`void fig${figure.id} (inout vec3 col, in vec2 coord)
+{
+    vec2 pos = vec2(0.5)-coord;
+
+    float r = length(pos)*2.0;
+    float a = atan(pos.y,pos.x);
+
+    float f = cos(a*3.);
+    // f = abs(cos(a*3.));
+    // f = abs(cos(a*2.5))*.5+.3;
+    // f = abs(cos(a*12.)*sin(a*3.))*.8+.1;
+    // f = smoothstep(-.5,1., cos(a*10.))*0.2+0.5;
+
+    col = vec3( 1.-smoothstep(f,f+0.02,r) );
+}
+`
+
 const FigureEditor = ({ inputs, handleInput }) => {
     const scene = useSelector(store => store.scene.current);
     const figure = useSelector(selectCurrentFigure);
     const dispatch = useDispatch();
 
+    React.useEffect(() => {
+        if (figure && !figure.shaderFunc) {
+            dispatch(updateFigure({
+                shaderFunc: shaderFuncTemplate(figure)
+            }));
+        }
+    }, [figure, dispatch]);
+
     const handleFigureUpdate = name =>
         event => dispatch(updateFigure({ [name]: event.target.value }));
 
-    return <>
+    return figure && <>
         <Header as='h5' attached='top'
             onDoubleClick={() => console.log("FIGURE", figure)}
         >
-            Figure</Header>
+            Figure: {figure.shaderFunc ? getShaderFuncName(figure.shaderFunc) : `figure${figure.id}`}
+        </Header>
         <Segment attached>
             <div>
                 <LabelledInput
@@ -30,13 +57,17 @@ const FigureEditor = ({ inputs, handleInput }) => {
                     label="Phrase?"
                     checked={!!figure && figure.type === PHRASE}
                     disabled={!figure}
-                    onChange={event => dispatch(updateFigure({ type: event.target.checked ? PHRASE : null }))} />
+                    onChange={event => dispatch(updateFigure({ type: event.target.checked ? PHRASE : null }))}
+                    style = {{width: 50}}
+                />
                 <LabelledInput
                     type="checkbox"
                     label="Render placeholder"
                     checked={!!figure && figure.placeholder}
                     disabled={!figure}
-                    onChange={event => dispatch(updateFigure({ placeholder: event.target.checked }))} />
+                    onChange={event => dispatch(updateFigure({ placeholder: event.target.checked }))}
+                    style = {{width: 50}}
+                />
             </div>
             <div>
                 {(figure && figure.type === PHRASE &&
@@ -51,12 +82,17 @@ const FigureEditor = ({ inputs, handleInput }) => {
                         disabled={!figure || figure.type !== PHRASE} />
                 ) ||
                     <textarea
-                        style={{ width: 310, height: 100, resize: 'none' }}
-                        placeholder={'shaderFunc() {\n    ...\n}'}
+                        style={{
+                            width: 400,
+                            height: 100,
+                            fontSize: '.75rem',
+                            fontFamily: 'monospace',
+                            backgroundColor: figure.placeholder ? 'silver' : undefined
+                    }}
+                        placeholder={'void shaderFunc() {\n    ...\n}'}
                         value={inputs.shaderFunc}
                         name={'shaderFunc'}
                         onChange={handleInput}
-                        onKeyDown={event => whenSubmitted(event, handleFigureUpdate('shaderFunc'))}
                         onBlur={handleFigureUpdate('shaderFunc')}
                         disabled={!scene} />}
             </div>
@@ -176,6 +212,21 @@ const FigureQmdEditor = () => {
                 )}
             </Table.Body>
         </Table>
+        <div>
+            Known Subjects:
+            <ul>
+            {
+                getSubjects(figure).map((subject, key) =>
+                    <li
+                        key = {key}
+                        style = {{fontFamily: 'monospace'}}
+                    >
+                        {subject}
+                    </li>
+                )
+            }
+            </ul>
+        </div>
     </>;
 };
 
@@ -219,7 +270,7 @@ export const parseQmd = qmd => {
             error: "can't parse"
         };
     }
-}
+};
 
 const parseQmdArgs = args => {
     const param = {};
@@ -274,3 +325,30 @@ const qmdFieldColor = qmd => {
     }
     return undefined;
 };
+
+export const defaultSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
+
+export const getShaderFuncName = (shaderFunc) => {
+    const found = shaderFunc.match(/(?<=void).*(?=\()/im);
+    if (!found) {
+        return "__ERROR";
+    }
+    return found[0].trim();
+}
+
+export const getSubjects = (figure) => {
+    const found = figure.shaderFunc.match(/(?<=\().*(?=\))/i);
+    if (!found || figure.placeholder) {
+        return [];
+    }
+    const argSubjects = found[0]
+        .trim()
+        .split(',')
+        .map(it => it.split(' ').slice(-1)[0])
+        .filter(it => !["col", "coord"].includes(it));
+    return argSubjects;
+}
+
+export const getAllSubjects = (figure) => {
+    return [...defaultSubjects, ...getSubjects(figure)];
+}

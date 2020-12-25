@@ -1,7 +1,5 @@
 import { float, joinLines, newLine } from './shader';
-import { validQmd, parseQmd, activeQmd } from '../components/FigureEditor';
-
-const knownSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
+import { validQmd, parseQmd, activeQmd, defaultSubjects, getSubjects, getAllSubjects, getShaderFuncName } from '../components/FigureEditor';
 
 export const generateParamCode = (paramList) => {
     const paramCode = {};
@@ -42,23 +40,27 @@ export const generateParamCode = (paramList) => {
         const footer = '}'
         paramCode[param.name] = header + body + footer;
     }
-    return paramCode;
+    return Object.values(paramCode).join('\n');
 }
 
-export const generatePlaceHolderCode = (figureList, paramList) => {
+export const generateFigureCode = (figureList) => {
+    return figureList.map(figure => figure.shaderFunc).join('\n');
+};
+
+export const generateCalls = (figureList, paramList) => {
 
     const sceneParams = paramList.map(it => it.name);
 
-    const placeholderFunctionCall = figure => {
+    const functionCall = figure => {
         const varInit = [];
         const varPrepare = [];
         const varCleanup = [];
-        const vars = Object.fromEntries(knownSubjects.map(key => [key, float(figure[key])]));
+        const vars = Object.fromEntries(getAllSubjects(figure).map(key => [key, float(figure[key])]));
         const qmds = figure.qmd.filter(validQmd).filter(activeQmd).map(parseQmd);
         let counter = 0;
         for (const qmd of qmds) {
             if (qmd.action === 'animate') {
-                if (knownSubjects.includes(qmd.subject)) {
+                if (defaultSubjects.includes(qmd.subject)) {
                     const dynamicSubject = `${qmd.subject}${counter}`;
                     if (sceneParams.includes(qmd.param.func)) {
                         const tVar = qmd.param.timeScale === 1 ? 't' : `(t*${float(qmd.param.timeScale)})`;
@@ -88,20 +90,21 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
             counter++;
         };
 
+        const funcName = figure.placeholder ? 'placeholder' : getShaderFuncName(figure.shaderFunc);
+        const extraSubjects = getSubjects(figure).map(subject => `,${vars[subject]}`);
+        const func = `${funcName}(col, R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y}))${extraSubjects});\n`
+
         return (
             varInit.join(newLine(8)) + newLine(8) +
             varPrepare.join(newLine(8)) + newLine(8) +
             `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
-            placeholder(col, R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y})));\n`
+            ${func}`
             + varCleanup.join(newLine(8))
         ).replaceAll(/ {8}[ ]*/g, ' '.repeat(8));
     };
 
-    const lineArray = figureList
-        .filter(figure => figure.placeholder)
-        .map(placeholderFunctionCall);
-
-    return joinLines(lineArray);
+    return joinLines(figureList
+        .map(functionCall));
 };
 
 /*

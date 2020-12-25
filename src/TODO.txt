@@ -8,11 +8,14 @@ X mysteriöser Speedup in millis? - react state cutten?
 X Progress Bar
 X Progress Bar print values
 X Progress Bar interaktiv
-- mal eigene Shader FUNC
 
 X from, to berücksichtigen
-- scaling prüfen
+X scaling prüfen
 X fehler in parameter fixen..!!
+
+- mal eigene Shader FUNC
+
+- reintroduce glyph thingy
 
 Zukunft:
 - "Filter wie z.B. Blur oder Ebeneneffekte"

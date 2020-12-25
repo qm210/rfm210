@@ -61,6 +61,15 @@ export const SceneApp = () => {
     }, [scene, setInputs]);
 
     React.useEffect(() => {
+        if (!figure) {
+            return;
+        }
+        setInputs({
+            shaderFunc: figure.shaderFunc
+        });
+    }, [figure, setInputs]);
+
+    React.useEffect(() => {
         if (!scene && sceneList.length > 0 && status === STATUS.OK) {
             dispatch(fetchScene(sceneList[0]._id));
         }
@@ -274,7 +283,11 @@ const FigureManager = () => {
                     {figureList.map((figure, index) =>
                         <option
                             key = {index}
-                            value = {figure.id}>
+                            value = {figure.id}
+                            onDoubleClick = {() => {
+                                const rename = window.prompt(`rename figure ${index}: ${figure.id}`)
+                            }}
+                            >
                             {
                                 `${figure.id}: ${figure.chars || '<figure>'}`
                             }

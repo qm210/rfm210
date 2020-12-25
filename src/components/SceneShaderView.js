@@ -73,8 +73,8 @@ const SceneShaderView = ()  => {
     return <div
         style = {{
             position: 'absolute',
-            top: 64,
-            right: 20,
+            top: 50,
+            right: 10,
         }}>
         <Segment attached>
             <Loader active={loader || isRefreshed.current !== shaderCode} size="massive"/>

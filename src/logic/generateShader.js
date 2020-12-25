@@ -1,14 +1,15 @@
 import { float } from './shader';
-import * as ShaderPart from './generateShaderParts';
+import { generateParamCode, generateFigureCode, generateCalls } from './generateShaderParts';
 
 export default (sceneWidth, sceneHeight, scene, figureList) => {
-
-    const paramCode = ShaderPart.generateParamCode(scene.params);
-    const placeholderCode = ShaderPart.generatePlaceHolderCode(figureList, scene.params);
 
     if (!scene) {
         return '';
     }
+
+    const paramCode = generateParamCode(scene.params);
+    const figureCode = generateFigureCode(figureList);
+    const calls = generateCalls(figureList, scene.params);
 
     const shader = `
 precision highp float;
@@ -72,7 +73,8 @@ void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale,
     dboxcombo(R*uv + PIXEL*(vec2(-rect.z,rect.w) + vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, distort, d);
 }
 // here would be phrase/glyphcode...
-${Object.values(paramCode).join('\n')}
+${paramCode}
+${figureCode}
 void placeholder (inout vec3 col, in vec2 coord)
 {
     vec2 centq = quant(coord);
@@ -99,7 +101,7 @@ void main()
     float alpha = 1.;
     float blur = 1.;
     //this is where terrifyingCode was
-    ${placeholderCode}
+    ${calls}
     gl_FragColor = vec4(clamp(col,0.,1.),1.); // qm hack fragColor -> gl_FragColor
 }`
     .replaceAll('PIXEL', '.005')
