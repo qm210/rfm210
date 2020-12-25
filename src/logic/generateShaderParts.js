@@ -14,22 +14,26 @@ export const generateParamCode = (paramList) => {
             const next = param.points[k+1];
             const t0 = curr.x * param.timeScale;
             const t1 = next.x * param.timeScale;
+            const dt = t1 - t0;
 
-            const m = (next.y - curr.y)/(t1 - t0);
-            const b = -t0 * m + curr.y;
-            let func = `${float(b)} + ${float(m)}*t`;
+            let func;
             if (param.tension !== 0) {
                 if (param.tension > 0) {
-                    const fractM = float(1/(next.x - curr.x));
-                    const fractB = float(-curr.x / (next.x - curr.x));
+                    const fractM = float(1/dt);
+                    const fractB = float(-t0 / dt);
                     func = `pow(${fractB}+${fractM}*t, ${float(1 + param.tension/4)})`
                 }
                 else {
-                    const fractM = float(-1/(next.x - curr.x));
-                    const fractB = float(next.x / (next.x - curr.x));
+                    const fractM = float(-1/dt);
+                    const fractB = float(t1 / dt);
                     func = `(1.-pow(${fractB}+${fractM}*t, ${float(1 - param.tension/4)}))`
                 }
                 func = `${float(curr.y)} + ${float(next.y - curr.y)}*${func}`;
+            }
+            else {
+                const m = (next.y - curr.y) / dt;
+                const b = -t0 * m + curr.y;
+                func = `${float(b)} + ${float(m)}*t`;
             }
 
             body += `(t >= ${float(t0)} && t < ${float(t1)}) ? ${func}:`;
@@ -70,12 +74,13 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
                         if (qmd.mode === '+') {
                             process += `${dynamicSubject}+=${vars[qmd.subject]};`
                         }
-                        varInit.push(
-                            `float ${dynamicSubject}=${vars[qmd.subject]};`
-                        );
-                        varPrepare.push(
-                            `if(t>${tStart}){${qmd.param.func}(min(${tVar},${tEnd})-${tStart},${dynamicSubject});${process}}`
-                        );
+                        let paramCall = `${qmd.param.func}(min(${tVar},${tEnd})-${tStart},${dynamicSubject});${process}`;
+                        if (qmd.timeStart) {
+                            paramCall = `if(t>${tStart}){${paramCall}}`;
+                        }
+
+                        varInit.push(`float ${dynamicSubject}=${vars[qmd.subject]};`);
+                        varPrepare.push(paramCall);
                     }
                     vars[qmd.subject] = dynamicSubject;
                 }
@@ -87,7 +92,7 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
             varInit.join(newLine(8)) + newLine(8) +
             varPrepare.join(newLine(8)) + newLine(8) +
             `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
-            placeholder(col, R_${figure.id}*(UV - vec2(${vars.x}, ${vars.y})), vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}));\n`
+            placeholder(col, R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y})));\n`
             + varCleanup.join(newLine(8))
         ).replaceAll(/ {8}[ ]*/g, ' '.repeat(8));
     };

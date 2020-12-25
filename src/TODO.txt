@@ -10,9 +10,9 @@ X Progress Bar print values
 X Progress Bar interaktiv
 - mal eigene Shader FUNC
 
-- from, to berücksichtigen
+X from, to berücksichtigen
 - scaling prüfen
-- fehler in parameter fixen..!!
+X fehler in parameter fixen..!!
 
 Zukunft:
 - "Filter wie z.B. Blur oder Ebeneneffekte"

@@ -16,7 +16,7 @@ varying vec2 uv;
 const vec3 c = vec3(1.,0.,-1.);
 uniform vec2 iResolution; // qm hacked this
 
-const float w = .05;
+const float w = .07;
 const float eps = 1.e-5;
 
 float norm(in vec2 coord)
@@ -73,16 +73,16 @@ void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale,
 }
 // here would be phrase/glyphcode...
 ${Object.values(paramCode).join('\n')}
-void placeholder (inout vec3 col, in vec2 coord, in vec2 scale)
+void placeholder (inout vec3 col, in vec2 coord)
 {
-    vec2 centq = quant(coord/scale);
-    float cnorm = max(abs(coord.x/scale.x), abs(coord.y/scale.y));
+    vec2 centq = quant(coord);
+    float cnorm = max(abs(coord.x), abs(coord.y));
 
     if (cnorm < 1.)
     {
         if (cnorm > 1.-w)
         {
-            col = c.xxx;
+            col = .5 * c.xxx;
         }
         else if(w + centq.x > -centq.y + eps && centq.x < -centq.y + w) {col = .5*col;}
         else if(w + centq.x > centq.y + eps&& centq.x < centq.y + w) {col = .5*col;}
