@@ -4,11 +4,12 @@ import ShadertoyReact from 'shadertoy-react';
 import { ShaderFrame } from '.';
 import { shadertoyify } from '../logic/shader';
 import { CodeFrame } from '.';
-import { selectFigureList } from '../slices/sceneSlice';
+import { selectFigureList, updateScene, updateFigureBy } from '../slices/sceneSlice';
 import { fetchGlyphset } from '../slices/glyphsetSlice';
 import { fetchLetterMap } from '../slices/glyphSlice';
 import { Loader, Segment } from 'semantic-ui-react';
 import generateShader from '../logic/generateShader';
+import useShaderDrag from './useShaderDrag';
 
 const sceneWidth = 640;
 const sceneHeight = 320;
@@ -25,6 +26,11 @@ const SceneShaderView = ()  => {
     const [running, setRunning] = useState(true);
     const reqRef = useRef();
     const prevTime = useRef();
+
+    const shaderDrag = useShaderDrag({
+        onDragX: deltaX => dispatch(updateFigureBy({x: 2 * deltaX / sceneWidth})),
+        onDragY: deltaY => dispatch(updateFigureBy({y: -deltaY / sceneHeight})),
+    });
 
     const animate = React.useCallback(time => {
         if (running && prevTime.current !== undefined) {
@@ -59,7 +65,6 @@ const SceneShaderView = ()  => {
     , [scene, figureList]);
 
     useEffect(() => {
-        console.log("SHADERCODE CHANGED")
         if (isRefreshed.current !== shaderCode) {
             isRefreshed.current = shaderCode;
         }
@@ -72,12 +77,16 @@ const SceneShaderView = ()  => {
             right: 20,
         }}>
         <Segment attached>
-            <Loader active={loader} size="massive"/>
+            <Loader active={isRefreshed.current !== shaderCode} size="massive"/>
             <ShaderFrame
                 style = {{
                     width: sceneWidth,
                     height: sceneHeight,
                 }}
+                onMouseDown = {event => shaderDrag.start(event.clientX, event.clientY)}
+                onMouseMove = {event => shaderDrag.update(event.clientX, event.clientY)}
+                onMouseUp = {() => shaderDrag.end()}
+                onMouseLeave = {() => shaderDrag.cancel()}
                 >
                 <b>This is the AWESOME part!</b><br/>
                 {
@@ -109,8 +118,9 @@ const SceneShaderView = ()  => {
 
 export default SceneShaderView;
 
-const TransportBar = ({duration, time, setTime, setRunning, running}) =>
-    <div>
+const TransportBar = ({duration, time, setTime, setRunning, running}) => {
+    const dispatch = useDispatch();
+    return <div>
         <input
             type = "range"
             style = {{
@@ -127,5 +137,21 @@ const TransportBar = ({duration, time, setTime, setRunning, running}) =>
                 setRunning(false);
             }}
         />
-        {time.toFixed(3)} / {duration} sec -- drag to pause, doubeclick to play
+        <div style = {{
+            display: 'flex'
+        }}>
+        <span style={{flex: 1}}>
+            {time.toFixed(3)} -- drag handle to pause, doubeclick to play
+        </span>
+        <input
+            type = "number"
+            min = {0}
+            step = {0.1}
+            value = {duration}
+            onChange = {event => dispatch(updateScene({duration: +event.target.value}))}
+            style = {{width: 80}}
+        />
+        sec total
+        </div>
     </div>;
+};

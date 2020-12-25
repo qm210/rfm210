@@ -3,11 +3,11 @@ X R * uv richtig? immer Center of Mass verschieben
 X qmd: T-Repeat und T-faktori
 X qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
 - tension abbilden
-- QMDs deaktivieren ohne gleich zu löschen..
+X QMDs deaktivieren ohne gleich zu löschen..
 X mysteriöser Speedup in millis? - react state cutten?
 X Progress Bar
-- Progress Bar print values
-- Progress Bar interaktiv
+X Progress Bar print values
+X Progress Bar interaktiv
 - mal eigene Shader FUNC
 
 Zukunft:

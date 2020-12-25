@@ -200,6 +200,14 @@ const sceneSlice = createSlice({
                 }
             }
         },
+        updateFigureBy: (state, action) => {
+            if (!state.current.currentFigureId) {
+                return;
+            }
+            for (const key in action.payload) {
+                state.current.figures[state.current.currentFigureId][key] += action.payload[key];
+            }
+        },
         addFigureQmd: (state, action) => {
             if (state.current.currentFigureId) {
                 state.current.figures[state.current.currentFigureId].qmd
@@ -272,6 +280,7 @@ const sceneSlice = createSlice({
 export const {
     updateScene,
     updateFigure,
+    updateFigureBy,
     selectById,
     addNewPhrase,
     addNewFigure,
