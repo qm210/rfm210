@@ -96,6 +96,9 @@ const SceneShaderView = ()  => {
                         uniforms = {{
                             time: {type: '1f', value: time}
                         }}
+                        style = {{
+                            cursor: 'move',
+                        }}
                     />
                 }
             </ShaderFrame>
