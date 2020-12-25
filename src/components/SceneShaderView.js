@@ -149,7 +149,13 @@ const TransportBar = ({duration, time, setTime, setRunning, running}) => {
             step = {0.1}
             value = {duration}
             onChange = {event => dispatch(updateScene({duration: +event.target.value}))}
-            style = {{width: 80}}
+            style = {{
+                width: 75,
+                textAlign: 'right',
+                marginRight: 3,
+                paddingRight: 2,
+                direction: 'rtl',
+            }}
         />
         sec total
         </div>

@@ -207,9 +207,10 @@ export const parseQmd = qmd => {
         }
         parsed.body = parsed.body.trim();
         const bodyParse = parsed.body.replace(/\s\s+/g, ' ').split(' ');
-        parsed.action = bodyParse[0];
-        parsed.subject = bodyParse[1];
-        parsed.param = parseQmdArgs(bodyParse.slice(2));
+        parsed.action = bodyParse.shift();
+        parsed.subject = bodyParse.shift();
+        parsed.mode = (bodyParse[0].length === 1) ? bodyParse.shift() : '=';
+        parsed.param = parseQmdArgs(bodyParse);
         return parsed;
     }
     catch {

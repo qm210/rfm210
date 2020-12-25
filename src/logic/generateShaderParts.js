@@ -64,8 +64,11 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
                         if (qmd.param.shift !== 0) {
                             process += `${dynamicSubject}+=${float(qmd.param.shift)};`
                         }
+                        if (qmd.mode === '+') {
+                            process += `${dynamicSubject}+=${vars[qmd.subject]};`
+                        }
                         prepare.push(
-                            `float ${dynamicSubject} = ${vars[qmd.subject]}; ${qmd.param.func}(${tVar},${dynamicSubject});${process}`
+                            `float ${dynamicSubject}=0.; ${qmd.param.func}(${tVar},${dynamicSubject});${process}`
                         );
                     }
                     vars[qmd.subject] = dynamicSubject;
@@ -79,7 +82,7 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
             `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
             placeholder(col, R_${figure.id}*(UV - vec2(${vars.x}, ${vars.y})), vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}));\n`
             + reverse.join(newLine(8))
-        ).replaceAll(/        [ ]*/g, '        ');
+        ).replaceAll(/ {8}[ ]*/g, ' '.repeat(8));
     };
 
     const lineArray = figureList
