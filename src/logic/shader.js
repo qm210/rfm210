@@ -31,6 +31,7 @@ export const shadertoyify = code => (
         .replace(/UV/g, 'uv')
         .replace('void main()', 'void mainImage( out vec4 fragColor, in vec2 fragCoord )')
         .replace(/gl_FragColor/g, 'fragColor')
+        .replace('time', 'iTime')
         .replace(/\+0\.,/g, ',')
         .replace(/\*1\.,/g, ',')
         .replace(/\.0*(?!\d)/g, '.')

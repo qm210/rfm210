@@ -52,15 +52,16 @@ export const generateCalls = (figureList, paramList) => {
     const sceneParams = paramList.map(it => it.name);
 
     const functionCall = figure => {
+        const allSubjects = getAllSubjects(figure);
         const varInit = [];
         const varPrepare = [];
         const varCleanup = [];
-        const vars = Object.fromEntries(getAllSubjects(figure).map(key => [key, float(figure[key])]));
+        const vars = Object.fromEntries(allSubjects.map(key => [key, float(figure[key])]));
         const qmds = figure.qmd.filter(validQmd).filter(activeQmd).map(parseQmd);
         let counter = 0;
         for (const qmd of qmds) {
             if (qmd.action === 'animate') {
-                if (defaultSubjects.includes(qmd.subject)) {
+                if (allSubjects.includes(qmd.subject)) {
                     const dynamicSubject = `${qmd.subject}${counter}`;
                     if (sceneParams.includes(qmd.param.func)) {
                         const tVar = qmd.param.timeScale === 1 ? 't' : `(t*${float(qmd.param.timeScale)})`;

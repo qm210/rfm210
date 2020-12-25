@@ -216,7 +216,7 @@ const FigureQmdEditor = () => {
             Known Subjects:
             <ul>
             {
-                getSubjects(figure).map((subject, key) =>
+                getAllSubjects(figure).map((subject, key) =>
                     <li
                         key = {key}
                         style = {{fontFamily: 'monospace'}}
