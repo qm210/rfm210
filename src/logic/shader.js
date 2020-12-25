@@ -33,6 +33,8 @@ export const shadertoyify = code => (
         .replace(/gl_FragColor/g, 'fragColor')
         .replace(/\+0\.,/g, ',')
         .replace(/\*1\.,/g, ',')
+        .replace(/\.0*(?!\d)/g, '.')
+        .replace(/\n\n*/g, '\n')
     );
 
 export const kerning = (glyphset, L, R) => glyphset.kerningMap && L && L in glyphset.kerningMap && R in glyphset.kerningMap[L]

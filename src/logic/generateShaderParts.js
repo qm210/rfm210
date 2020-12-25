@@ -46,8 +46,9 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
     const sceneParams = paramList.map(it => it.name);
 
     const placeholderFunctionCall = figure => {
-        const prepare = [];
-        const reverse = [];
+        const varInit = [];
+        const varPrepare = [];
+        const varCleanup = [];
         const vars = Object.fromEntries(knownSubjects.map(key => [key, float(figure[key])]));
         const qmds = figure.qmd.filter(validQmd).filter(activeQmd).map(parseQmd);
         let counter = 0;
@@ -57,6 +58,8 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
                     const dynamicSubject = `${qmd.subject}${counter}`;
                     if (sceneParams.includes(qmd.param.func)) {
                         const tVar = qmd.param.timeScale === 1 ? 't' : `(t*${float(qmd.param.timeScale)})`;
+                        const tStart = float(qmd.timeStart);
+                        const tEnd = float(qmd.timeEnd);
                         let process = '';
                         if (qmd.param.scale !== 1) {
                             process += `${dynamicSubject}*=${float(qmd.param.scale)};`
@@ -67,8 +70,11 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
                         if (qmd.mode === '+') {
                             process += `${dynamicSubject}+=${vars[qmd.subject]};`
                         }
-                        prepare.push(
-                            `float ${dynamicSubject}; ${qmd.param.func}(${tVar},${dynamicSubject});${process}`
+                        varInit.push(
+                            `float ${dynamicSubject}=${vars[qmd.subject]};`
+                        );
+                        varPrepare.push(
+                            `if(t>${tStart}){${qmd.param.func}(min(${tVar},${tEnd})-${tStart},${dynamicSubject});${process}}`
                         );
                     }
                     vars[qmd.subject] = dynamicSubject;
@@ -78,10 +84,11 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
         };
 
         return (
-            prepare.join(newLine(8)) + newLine(8) +
+            varInit.join(newLine(8)) + newLine(8) +
+            varPrepare.join(newLine(8)) + newLine(8) +
             `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
             placeholder(col, R_${figure.id}*(UV - vec2(${vars.x}, ${vars.y})), vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}));\n`
-            + reverse.join(newLine(8))
+            + varCleanup.join(newLine(8))
         ).replaceAll(/ {8}[ ]*/g, ' '.repeat(8));
     };
 
