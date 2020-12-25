@@ -68,7 +68,7 @@ export const generatePlaceHolderCode = (figureList, paramList) => {
                             process += `${dynamicSubject}+=${vars[qmd.subject]};`
                         }
                         prepare.push(
-                            `float ${dynamicSubject}=0.; ${qmd.param.func}(${tVar},${dynamicSubject});${process}`
+                            `float ${dynamicSubject}; ${qmd.param.func}(${tVar},${dynamicSubject});${process}`
                         );
                     }
                     vars[qmd.subject] = dynamicSubject;

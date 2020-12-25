@@ -77,7 +77,7 @@ const SceneShaderView = ()  => {
             right: 20,
         }}>
         <Segment attached>
-            <Loader active={isRefreshed.current !== shaderCode} size="massive"/>
+            <Loader active={loader || isRefreshed.current !== shaderCode} size="massive"/>
             <ShaderFrame
                 style = {{
                     width: sceneWidth,

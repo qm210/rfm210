@@ -2,13 +2,17 @@ X Stetigkeit in phi
 X R * uv richtig? immer Center of Mass verschieben
 X qmd: T-Repeat und T-faktori
 X qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
-- tension abbilden
+X tension abbilden
 X QMDs deaktivieren ohne gleich zu löschen..
 X mysteriöser Speedup in millis? - react state cutten?
 X Progress Bar
 X Progress Bar print values
 X Progress Bar interaktiv
 - mal eigene Shader FUNC
+
+- from, to berücksichtigen
+- scaling prüfen
+- fehler in parameter fixen..!!
 
 Zukunft:
 - "Filter wie z.B. Blur oder Ebeneneffekte"
