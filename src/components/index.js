@@ -38,7 +38,12 @@ export const LabelledInput = (props) => {
     if (props.type === "number") {
         extraStyle.width = 60;
     }
+    console.log("PP", props);
     return <div>
+        {
+            props.type !== "checkbox" &&
+            <label htmlFor={props.name} style={{whiteSpace: 'nowrap'}}>{props.label}</label>
+        }
         <SpacedInput
             {...props}
             style={{
@@ -46,7 +51,10 @@ export const LabelledInput = (props) => {
                 ...extraStyle,
             }}
         />
-        <label htmlFor={props.name} style={{whiteSpace: 'nowrap'}}>{props.label}</label>
+        {
+            props.type === "checkbox" &&
+            <label htmlFor={props.name} style={{whiteSpace: 'nowrap'}}>{props.label}</label>
+        }
     </div>
 };
 
@@ -77,8 +85,8 @@ export const QuickButton = styled.button`
 export const ButtonBar = styled.div`
     display: flex;
     flex-direction: row;
-    margin-top: 15px;
-    margin-bottom: 15px;
+    margin-top: 0px;
+    margin-bottom: 5px;
 `;
 
 export const ShaderFrame = styled.div`
