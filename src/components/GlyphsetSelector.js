@@ -3,7 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import Select from 'react-select';
 import { STATUS } from '../const';
 import { fetchGlyphsets, selectGlyphsetByTitle } from '../slices/glyphsetSlice';
-import { option } from './ControlPanel';
+
+export const option = value => ({value, label: value});
 
 const GlyphsetSelector = ({ onChange, disabled, style }) => {
     const glyphset = useSelector(state => state.glyphset);

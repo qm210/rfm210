@@ -3,27 +3,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateFigure, selectCurrentFigure, PHRASE,
     addFigureQmd, deleteFigureQmd, updateFigureQmd } from '../slices/sceneSlice';
 import { SYMBOL } from '../const';
-import { Header, Segment, Table, Form, Input } from 'semantic-ui-react';
-import { LabelledInput, SpacedInput } from '.';
+import { Header, Segment, Table } from 'semantic-ui-react';
+import { LabelledInput } from '.';
 import GlyphsetSelector from './GlyphsetSelector';
-
-const shaderFuncTemplate = figure =>
-`void fig${figure.id} (inout vec3 col, in vec2 coord)
-{
-    vec2 pos = vec2(0.5)-coord;
-
-    float r = length(pos)*2.0;
-    float a = atan(pos.y,pos.x);
-
-    float f = cos(a*3.);
-    // f = abs(cos(a*3.));
-    // f = abs(cos(a*2.5))*.5+.3;
-    // f = abs(cos(a*12.)*sin(a*3.))*.8+.1;
-    // f = smoothstep(-.5,1., cos(a*10.))*0.2+0.5;
-
-    col = vec3( 1.-smoothstep(f,f+0.02,r) );
-}
-`
+import Select from 'react-select';
+import { option } from './GlyphsetSelector';
 
 const FigureEditor = ({ inputs, handleInput }) => {
     const scene = useSelector(store => store.scene.current);
@@ -33,7 +17,7 @@ const FigureEditor = ({ inputs, handleInput }) => {
     React.useEffect(() => {
         if (figure && !figure.shaderFunc) {
             dispatch(updateFigure({
-                shaderFunc: shaderFuncTemplate(figure)
+                shaderFunc: shaderFuncTemplate.spinner(figure.id)
             }));
         }
     }, [figure, dispatch]);
@@ -51,19 +35,31 @@ const FigureEditor = ({ inputs, handleInput }) => {
             <div
                 style = {{
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    width: 440,
                 }}>
-                <LabelledInput
-                    type="checkbox"
-                    label="Render placeholder"
-                    checked={!!figure && figure.placeholder}
-                    disabled={!figure}
-                    onChange={event => dispatch(updateFigure({ placeholder: event.target.checked }))}
-                    style = {{width: 30}}
-                />
+                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                        <LabelledInput
+                            type="checkbox"
+                            label="Render placeholder"
+                            checked={!!figure && figure.placeholder}
+                            disabled={!figure}
+                            onChange={event => dispatch(updateFigure({ placeholder: event.target.checked }))}
+                            style = {{width: 30}}
+                        />
+                        <Select
+                            placeholder = "Create from template"
+                            value = ""
+                            options = {shaderFuncTemplate.map(it => option(it.name))}
+                            styles = {{
+                                input: styles => ({...styles, width: 130})
+                            }}
+                        />
+                    </div>
                 <div style={{
                     display: 'flex',
                     alignItems: 'baseline',
+                    justifyContent: 'space-between',
                 }}>
                     <LabelledInput
                         type="checkbox"
@@ -92,11 +88,12 @@ const FigureEditor = ({ inputs, handleInput }) => {
                 </div>
                 <textarea
                     style={{
-                        width: 400,
+                        width: '100%',
                         height: 100,
                         fontSize: '.75rem',
                         fontFamily: 'monospace',
-                        backgroundColor: figure.placeholder ? 'silver' : undefined
+                        backgroundColor: figure.placeholder ? 'silver' : undefined,
+                        marginTop: 3
                 }}
                     placeholder={'void shaderFunc() {\n    ...\n}'}
                     value={inputs.shaderFunc}
@@ -400,3 +397,20 @@ export const getSubjects = (figure) => {
 export const getAllSubjects = (figure) => {
     return [...defaultSubjects, ...getSubjects(figure)];
 }
+
+const shaderFuncTemplate = [
+    {
+        name: 'spinner',
+        template: id =>
+`void ${id} (inout vec3 col, in vec2 coord) {
+    vec2 pos = vec2(0.5)-coord;
+    float r = length(pos)*2.0;
+    float a = atan(pos.y,pos.x);
+    float f = cos(a*3.);
+    col *= 1. - vec3( 1.-smoothstep(f,f+0.02,r) );
+}`
+    }, {
+        name: 'square',
+        template: () => 'shut the fuck up! weil... dei Nudel müffelt!'
+    }
+];
