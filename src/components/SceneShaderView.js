@@ -145,7 +145,7 @@ const TransportBar = ({duration, time, setTime, setRunning, running}) => {
             display: 'flex'
         }}>
         <span style={{flex: 1}}>
-            {time.toFixed(3)} -- drag handle to pause, doubeclick to play
+            {time.toFixed(3)} -- drag handle to pause, doubleclick to play
         </span>
         <input
             type = "number"

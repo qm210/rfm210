@@ -191,7 +191,7 @@ const SceneManager = ({inputs, handleInput}) => {
 
             <select
                 size = "10"
-                style = {{width: 300, height: 120}}
+                style = {{width: 300, height: 60}}
                 value = {inputs.sceneId || ''}
                 name = {'sceneId'}
                 onChange = {event => {
@@ -275,7 +275,7 @@ const FigureManager = () => {
             </ButtonBar>
             <select
                 size = {12}
-                style = {{width: '100%'}}
+                style = {{width: '100%', height: 100}}
                 disabled = {!scene}
                 value = {(figure && figure.id) || ''}
                 onChange = {event => dispatch(selectById(event.target.value))}

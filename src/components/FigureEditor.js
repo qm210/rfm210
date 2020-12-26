@@ -13,11 +13,12 @@ const FigureEditor = ({ inputs, handleInput }) => {
     const scene = useSelector(store => store.scene.current);
     const figure = useSelector(selectCurrentFigure);
     const dispatch = useDispatch();
+    const shaderFuncRef = React.useRef();
 
     React.useEffect(() => {
         if (figure && !figure.shaderFunc) {
             dispatch(updateFigure({
-                shaderFunc: shaderFuncTemplate.spinner(figure.id)
+                shaderFunc: shaderFuncTemplate[0].template('fig' + figure.id)
             }));
         }
     }, [figure, dispatch]);
@@ -50,7 +51,20 @@ const FigureEditor = ({ inputs, handleInput }) => {
                         <Select
                             placeholder = "Create from template"
                             value = ""
-                            options = {shaderFuncTemplate.map(it => option(it.name))}
+                            options = {shaderFuncTemplate.map(it => ({
+                                label: it.name,
+                                value: it,
+                            }))}
+                            onChange = {option => {
+                                const ok = window.confirm(`Overwrite shaderFunc from template '${option.label}'?\nOld shaderFunc will be copied to clipboard.`);
+                                if (ok) {
+                                    shaderFuncRef.current.select();
+                                    document.execCommand('copy');
+                                    dispatch(updateFigure({
+                                        shaderFunc: option.value.template('fig' + figure.id)
+                                    }));
+                                }
+                            }}
                             styles = {{
                                 input: styles => ({...styles, width: 130})
                             }}
@@ -87,6 +101,7 @@ const FigureEditor = ({ inputs, handleInput }) => {
                     />
                 </div>
                 <textarea
+                    ref = {shaderFuncRef}
                     style={{
                         width: '100%',
                         height: 100,
@@ -411,6 +426,6 @@ const shaderFuncTemplate = [
 }`
     }, {
         name: 'square',
-        template: () => 'shut the fuck up! weil... dei Nudel müffelt!'
+        template: () => 'not defined yet.'
     }
 ];
