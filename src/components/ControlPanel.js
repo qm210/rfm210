@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import Select from 'react-select';
 import GlyphSelector from './GlyphSelector';
+import GlyphsetSelector from './GlyphsetSelector';
 import { GenericList, LabelledInput, Button } from '.';
 import { STATUS } from '../const';
 import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets, fetchGlyphset } from '../slices/glyphsetSlice';
@@ -9,21 +9,15 @@ import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph, updateGlyph } f
 
 const GLYPH_UPDATE_DEBOUNCE = 500;
 
-const option = value => ({value, label: value});
+export const option = value => ({value, label: value});
 
-export default () => {
+const ControlPanel = () => {
     const glyphset = useSelector(state => state.glyphset);
     const glyph = useSelector(state => state.glyph.current);
     const dispatch = useDispatch();
     const [glyphsetTitleInput, setGlyphsetTitleInput] = React.useState('Matzdings');
 
     const glyphsetTitleList = (glyphset.all || []).map(item => item.title);
-    const glyphsetOptionList = glyphset.status !== STATUS.OK
-        ? [option(glyphset.status)]
-        : glyphsetTitleList.map(title => option(title))
-    const glyphsetOptionCurrent = glyphset.status !== STATUS.OK
-        ? glyphsetOptionList[0]
-        : glyphsetOptionList.find(option => glyphset.current && glyphset.current.title === option.label)
 
     React.useEffect(() => {
         const debounce = setTimeout(() => {
@@ -44,18 +38,6 @@ export default () => {
         dispatch(assignLetter({id: glyph._id, letter: newLetter}));
         dispatch(updateGlyph());
     }
-
-    React.useEffect(() => {
-        if (glyphset.status === STATUS.IDLE) {
-            dispatch(fetchGlyphsets())
-        }
-    }, [glyphset.status, dispatch]);
-
-    React.useEffect(() => {
-        if (glyphset.all.length === 1 && !glyphset.current) {
-            dispatch(selectGlyphsetByTitle(glyphset.all[0].title));
-        }
-    }, [glyphset, dispatch])
 
     const dispatchAndUpdate = (action) => {
         dispatch(action)
@@ -91,14 +73,8 @@ export default () => {
         </div>
         <div style={{marginBottom: 20}}>
             <span>Glyphset: </span>
-            <Select
-                value = {glyphsetOptionCurrent}
-                onChange = {value => {
-                    dispatch(selectGlyphsetByTitle(value));
-                    value && setGlyphsetTitleInput(value);
-                }}
-                options = {glyphsetOptionList}
-                isDisabled = {glyphset.status !== STATUS.OK}
+            <GlyphsetSelector
+                onChange = {value => value && setGlyphsetTitleInput(value)}
             />
             <div className="ui input" style={{marginTop: 15}}>
                 <input
@@ -122,4 +98,6 @@ export default () => {
             <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(deleteGlyph())}>Delete Glyph</Button>
         </div>
     </GenericList>;
-}
+};
+
+export default ControlPanel;

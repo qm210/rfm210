@@ -26,9 +26,11 @@ export const ExportList = styled.div`
 `;
 
 export const SpacedInput = styled.input`
-    margin: 10px;
-    width: 45px;
-    font-size: 1.2em;
+    margin: 10px 3px;
+    padding: 3px;
+    border: 1px solid grey;
+    border-radius: 2px;
+    font-size: 1rem;
 `;
 
 export const LabelledInput = (props) => {
@@ -36,8 +38,7 @@ export const LabelledInput = (props) => {
     if (props.type === "number") {
         extraStyle.width = 60;
     }
-    return <>
-        <label htmlFor={props.name} style={{whiteSpace: 'nowrap'}}>{props.label}</label>
+    return <div>
         <SpacedInput
             {...props}
             style={{
@@ -45,7 +46,8 @@ export const LabelledInput = (props) => {
                 ...extraStyle,
             }}
         />
-    </>
+        <label htmlFor={props.name} style={{whiteSpace: 'nowrap'}}>{props.label}</label>
+    </div>
 };
 
 export const ExportTextArea = styled.textarea`

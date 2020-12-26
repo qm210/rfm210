@@ -1,14 +1,11 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { LabelledInput } from '.';
-import {
-    updateFigure,
-    selectCurrentFigure,
-    PHRASE, addFigureQmd, deleteFigureQmd, updateFigureQmd
-} from '../slices/sceneSlice';
-import { whenSubmitted } from '../logic/utils';
+import { updateFigure, selectCurrentFigure, PHRASE,
+    addFigureQmd, deleteFigureQmd, updateFigureQmd } from '../slices/sceneSlice';
 import { SYMBOL } from '../const';
-import { Header, Segment, Table, Form } from 'semantic-ui-react';
+import { Header, Segment, Table, Form, Input } from 'semantic-ui-react';
+import { LabelledInput, SpacedInput } from '.';
+import GlyphsetSelector from './GlyphsetSelector';
 
 const shaderFuncTemplate = figure =>
 `void fig${figure.id} (inout vec3 col, in vec2 coord)
@@ -51,99 +48,150 @@ const FigureEditor = ({ inputs, handleInput }) => {
             Figure: {figure.shaderFunc ? getShaderFuncName(figure.shaderFunc) : `figure${figure.id}`}
         </Header>
         <Segment attached>
-            <div>
-                <LabelledInput
-                    type="checkbox"
-                    label="Phrase?"
-                    checked={!!figure && figure.type === PHRASE}
-                    disabled={!figure}
-                    onChange={event => dispatch(updateFigure({ type: event.target.checked ? PHRASE : null }))}
-                    style = {{width: 50}}
-                />
+            <div
+                style = {{
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
                 <LabelledInput
                     type="checkbox"
                     label="Render placeholder"
                     checked={!!figure && figure.placeholder}
                     disabled={!figure}
                     onChange={event => dispatch(updateFigure({ placeholder: event.target.checked }))}
-                    style = {{width: 50}}
+                    style = {{width: 30}}
                 />
-            </div>
-            <div>
-                {(figure && figure.type === PHRASE &&
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                }}>
+                    <LabelledInput
+                        type="checkbox"
+                        label="Phrase?"
+                        checked={!!figure && figure.type === PHRASE}
+                        disabled={!figure}
+                        onChange={event => dispatch(updateFigure({ type: event.target.checked ? PHRASE : null }))}
+                        style = {{width: 30}}
+                    />
                     <LabelledInput
                         name="ichars"
                         label=""
                         placeholder="Enter phrase..."
                         type="text"
-                        style={{ width: 300 }}
+                        style={{width: 170, fontSize: '1.2rem', marginLeft: 20, marginRight: 10 }}
                         value={figure && figure.chars ? figure.chars : '<add phrase first>'}
                         onChange={event => dispatch(updateFigure({ chars: event.target.value }))}
-                        disabled={!figure || figure.type !== PHRASE} />
-                ) ||
-                    <textarea
-                        style={{
-                            width: 400,
-                            height: 100,
-                            fontSize: '.75rem',
-                            fontFamily: 'monospace',
-                            backgroundColor: figure.placeholder ? 'silver' : undefined
-                    }}
-                        placeholder={'void shaderFunc() {\n    ...\n}'}
-                        value={inputs.shaderFunc}
-                        name={'shaderFunc'}
-                        onChange={handleInput}
-                        onBlur={handleFigureUpdate('shaderFunc')}
-                        disabled={!scene} />}
+                        disabled={figure.type !== PHRASE}
+                    />
+                    <GlyphsetSelector
+                        disabled = {figure.type !== PHRASE}
+                        style = {{
+                            width: 80
+                        }}
+                    />
+                </div>
+                <textarea
+                    style={{
+                        width: 400,
+                        height: 100,
+                        fontSize: '.75rem',
+                        fontFamily: 'monospace',
+                        backgroundColor: figure.placeholder ? 'silver' : undefined
+                }}
+                    placeholder={'void shaderFunc() {\n    ...\n}'}
+                    value={inputs.shaderFunc}
+                    name={'shaderFunc'}
+                    onChange={handleInput}
+                    onBlur={handleFigureUpdate('shaderFunc')}
+                    disabled={!scene}
+                />
             </div>
-            <Form style={{ width: 300 }}>
-                <Form.Group widths="3">
-                    <Form.Input
-                        label="X:"
-                        type="number"
-                        step={.01}
-                        value={figure ? figure.x : 0}
-                        onChange={(_, { value }) => dispatch(updateFigure({ x: +value }))}
-                        disabled={!figure} />
-                    <Form.Input
-                        label="Y:"
-                        type="number"
-                        step={.01}
-                        value={figure ? figure.y : 0}
-                        onChange={(_, { value }) => dispatch(updateFigure({ y: +value }))}
-                        disabled={!figure} />
-                    <Form.Input
-                        label="&#966;/°:"
-                        type="number"
-                        step={1}
-                        value={figure ? .1 * Math.round(1800 / Math.PI * figure.phi) : 0}
-                        onChange={(_, { value }) => dispatch(updateFigure({ phi: +value * Math.PI / 180 }))}
-                        disabled={!figure} />
-                </Form.Group>
-                <Form.Group widths="3">
-                    <Form.Input
-                        label="scale"
-                        type="number"
-                        step={.01}
-                        value={figure ? figure.scale : 1}
-                        onChange={event => dispatch(updateFigure({ scale: +event.target.value }))}
-                        disabled={!figure} />
-                    <Form.Input
-                        label="scaleX"
-                        type="number"
-                        step={.01}
-                        value={figure ? figure.scaleX : 1}
-                        onChange={event => dispatch(updateFigure({ scaleX: +event.target.value }))}
-                        disabled={!figure} />
-                    <Form.Input
-                        label="scaleY"
-                        type="number"
-                        step={.01}
-                        value={figure ? figure.scaleY : 1}
-                        onChange={event => dispatch(updateFigure({ scaleY: +event.target.value }))}
-                        disabled={!figure} />
-                </Form.Group>
-            </Form>
+            <Table compact>
+                <Table.Body>
+                    <Table.Row>
+                        <Table.Cell collapsing>
+                            <label>X:</label>
+                        </Table.Cell>
+                        <Table.Cell>
+                            <input
+                                type="number"
+                                step={.01}
+                                value={figure ? figure.x : 0}
+                                onChange={(_, { value }) => dispatch(updateFigure({ x: +value }))}
+                                disabled={!figure}
+                                style = {{width: 60}}
+                            />
+                        </Table.Cell>
+                        <Table.Cell collapsing>
+                            <label>Y:</label>
+                        </Table.Cell>
+                        <Table.Cell>
+                            <input
+                                type="number"
+                                step={.01}
+                                value={figure ? figure.y : 0}
+                                onChange={(_, { value }) => dispatch(updateFigure({ y: +value }))}
+                                disabled={!figure}
+                                style = {{width: 60}}
+                            />
+                        </Table.Cell>
+                        <Table.Cell collapsing>
+                            <label>φ/°:</label>
+                        </Table.Cell>
+                        <Table.Cell>
+                            <input
+                                type="number"
+                                step={1}
+                                value={figure ? .1 * Math.round(1800 / Math.PI * figure.phi) : 0}
+                                onChange={(_, { value }) => dispatch(updateFigure({ phi: +value * Math.PI / 180 }))}
+                                disabled={!figure}
+                                style = {{width: 60}}
+                            />
+                        </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                        <Table.Cell collapsing>
+                            <label>scale:</label>
+                        </Table.Cell>
+                        <Table.Cell>
+                            <input
+                                type="number"
+                                step={.01}
+                                value={figure ? figure.scale : 1}
+                                onChange={event => dispatch(updateFigure({ scale: +event.target.value }))}
+                                disabled={!figure}
+                                style = {{width: 60}}
+                            />
+                        </Table.Cell>
+                        <Table.Cell collapsing>
+                            <label>scaleX:</label>
+                        </Table.Cell>
+                        <Table.Cell>
+                            <input
+                                type="number"
+                                step={.01}
+                                value={figure ? figure.scaleX : 1}
+                                onChange={event => dispatch(updateFigure({ scaleX: +event.target.value }))}
+                                disabled={!figure}
+                                style = {{width: 60}}
+                            />
+                        </Table.Cell>
+                        <Table.Cell collapsing>
+                            <label>scaleY:</label>
+                        </Table.Cell>
+                        <Table.Cell>
+                            <input
+                                type="number"
+                                step={1}
+                                value={figure ? figure.scaleY : 1}
+                                onChange={event => dispatch(updateFigure({ scaleY: +event.target.value }))}
+                                disabled={!figure}
+                                style = {{width: 60}}
+                            />
+                        </Table.Cell>
+                    </Table.Row>
+                </Table.Body>
+            </Table>
         </Segment>
         <FigureQmdEditor/>
     </>;

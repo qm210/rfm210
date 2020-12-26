@@ -73,26 +73,28 @@ const SceneShaderView = ()  => {
     return <div
         style = {{
             position: 'absolute',
-            top: 50,
+            top: 55,
             right: 10,
         }}>
-        <Segment attached>
             <Loader active={loader || isRefreshed.current !== shaderCode} size="massive"/>
             <ShaderFrame
                 style = {{
                     width: sceneWidth,
                     height: sceneHeight,
+                    padding: 0,
+                    margin: 0,
+                    marginBottom: 5,
+                    border: '1px solid black'
                 }}
                 onMouseDown = {event => shaderDrag.start(event.clientX, event.clientY)}
                 onMouseMove = {event => shaderDrag.update(event.clientX, event.clientY)}
                 onMouseUp = {() => shaderDrag.end()}
                 onMouseLeave = {() => shaderDrag.cancel()}
                 >
-                <b>This is the AWESOME part!</b><br/>
                 {
                     isRefreshed.current === shaderCode &&
                     <ShadertoyReact
-                        fs = {shadertoyify(shaderCode)}
+                        fs = {shadertoyify(shaderCode).replaceAll('iTime', 'time')}
                         uniforms = {{
                             time: {type: '1f', value: time}
                         }}
@@ -109,7 +111,6 @@ const SceneShaderView = ()  => {
                 running = {running}
                 setRunning = {setRunning}
             />
-        </Segment>
 
         <Segment>
             <CodeFrame>

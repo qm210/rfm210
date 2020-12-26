@@ -1,23 +1,13 @@
-X Stetigkeit in phi
-X R * uv richtig? immer Center of Mass verschieben
-X qmd: T-Repeat und T-faktori
-X qmd: Shift= Scale=... bzw. parsen: Zahl + Zahl*paramFunc
-X tension abbilden
-X QMDs deaktivieren ohne gleich zu löschen..
-X mysteriöser Speedup in millis? - react state cutten?
-X Progress Bar
-X Progress Bar print values
-X Progress Bar interaktiv
+- reintroduce glyphs and phrases
+- mehrere figures
+- mehrere scenes
 
-X from, to berücksichtigen
-X scaling prüfen
-X fehler in parameter fixen..!!
+- template dropdown
+- ebeneneffekte
 
-- mal eigene Shader FUNC
-
-- reintroduce glyph thingy
+- give shaderCode in a way that you don't need shadertoyify to work
 
 Zukunft:
-- "Filter wie z.B. Blur oder Ebeneneffekte"
 - Effekte wie Plot hier, Clone da, etc.
 - kubische Splines statt tension -- performance checken :)
+- "Filter wie z.B. Blur"

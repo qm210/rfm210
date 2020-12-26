@@ -96,12 +96,12 @@ export const generateCalls = (figureList, paramList) => {
         const func = `${funcName}(col, R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y}))${extraSubjects});\n`
 
         return (
-            varInit.join(newLine(8)) + newLine(8) +
-            varPrepare.join(newLine(8)) + newLine(8) +
+            varInit.join(newLine(4)) + newLine(4) +
+            varPrepare.join(newLine(4)) + newLine(4) +
             `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
             ${func}`
-            + varCleanup.join(newLine(8))
-        ).replaceAll(/ {8}[ ]*/g, ' '.repeat(8));
+            + varCleanup.join(newLine(4))
+        ).replaceAll(/ {4}[ ]*/g, ' '.repeat(4));
     };
 
     return joinLines(figureList
