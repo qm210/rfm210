@@ -1,11 +1,25 @@
-import { float } from './shader';
-import { generateParamCode, generateFigureCode, generateCalls } from './generateShaderParts';
+import { float } from './shaderHelpers';
+import { generateParamCode, generateFigureCode, generateCalls } from './shaderPartGenerators';
+import { PHRASE } from './../slices/sceneSlice';
 
-export default (sceneWidth, sceneHeight, scene, figureList) => {
+export default (sceneWidth, sceneHeight, scene, figureList, glyphset) => {
 
     if (!scene) {
         return '';
     }
+
+    const usedGlyphs = figureList.reduce((accGlyphs, figure) => {
+        if (figure.type !== PHRASE || !glyphset || !glyphset.letterMap) {
+            return accGlyphs;
+        }
+        figure.chars.split("").forEach(char => {
+            if (!(char in accGlyphs)) {
+                //accGlyphs[char] = getRequiredRectsForPixels(glyph.pixels);;
+            }
+        });
+        console.log("FL", figureList, figure.acc, glyphset.letterMap);
+        return accGlyphs    ;
+    }, {});
 
     const paramCode = generateParamCode(scene.params);
     const figureCode = generateFigureCode(figureList);

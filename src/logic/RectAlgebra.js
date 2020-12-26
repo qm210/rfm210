@@ -48,7 +48,7 @@ const getMaxWidthToRightWithHeight = (pixels, row, column, height) => {
     return maxWidth;
 }
 
-const getAllRectsAndOrphanPixels = (pixels) => {
+export const getAllRectsAndOrphanPixels = (pixels) => {
     const orphanPixels = [];
     const allRects = [];
     for (const [row, pixelRow] of pixels.entries()) {
@@ -100,7 +100,7 @@ const getResultOfRemovingRect = (pixels, rect) => {
     return {pixels, anyDifference, isEmptyNow};
 }
 
-const getSufficientRects = (pixels, allRects, orphanPixels) => {
+export const getSufficientRects = (pixels, allRects, orphanPixels) => {
     allRects.sort((a, b) => a.size() < b.size());
     const sufficientRects = [];
     let remainingPixels = getResultOfRemovingOrphans(pixels, orphanPixels);
@@ -118,7 +118,7 @@ const getSufficientRects = (pixels, allRects, orphanPixels) => {
     return sufficientRects;
 }
 
-const getEverythingYouNeedAsRects = (pixels) => {
+export const getRequiredRectsForPixels = (pixels) => {
     const [allRects, orphanPixels] = getAllRectsAndOrphanPixels(pixels);
     const sufficientRects = getSufficientRects(pixels, allRects, orphanPixels);
     const orphanRects = orphanPixels.map(pixel => new Rect({
@@ -128,10 +128,4 @@ const getEverythingYouNeedAsRects = (pixels) => {
         height: 1,
     }));
     return [...sufficientRects, ...orphanRects];
-}
-
-export default {
-    getAllRectsAndOrphanPixels,
-    getSufficientRects,
-    getRequiredRectsForPixels: getEverythingYouNeedAsRects,
 }

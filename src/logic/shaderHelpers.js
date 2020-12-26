@@ -61,8 +61,8 @@ export const glslForPhrase = (phrase, transform) => {
     const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 'alpha', blur = 'blur', distort = 1., spacing = 1.} = transform;
     return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)},d);\n`
     + `        col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\n`
-    + `        col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005, ${asFloatOrStr(blur)}));`
-} // make blackening customizable, also might think about alpha* in third argument (vorletzte zeile)
+    + `        col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005,    ${asFloatOrStr(blur)}));`
+}
 
 export const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
 

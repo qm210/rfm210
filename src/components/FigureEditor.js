@@ -8,11 +8,13 @@ import { LabelledInput } from '.';
 import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
 import AceEditor from 'react-ace';
+import { selectFigureList } from './../slices/sceneSlice';
+import { legacyCodes } from '../logic/shaderPartGenerators';
 
 const FigureEditor = ({ inputs, setInputs }) => {
     const figure = useSelector(selectCurrentFigure);
     const dispatch = useDispatch();
-    const shaderFuncRef = React.useRef();
+    const editorRef = React.useRef();
 
     React.useEffect(() => {
         if (figure && !figure.shaderFunc) {
@@ -32,6 +34,12 @@ const FigureEditor = ({ inputs, setInputs }) => {
         return () => clearTimeout(debounce);
     }, [figure, inputs.shaderFunc, dispatch]);
 
+    const glyphset = useSelector(state => state.glyphset.current);
+    const figureList = useSelector(selectFigureList);
+    const legacy = React.useMemo(() => legacyCodes(figureList, glyphset), [figureList, glyphset]);
+
+    console.log("LEGACY", legacy);
+
     return figure && <>
         <Header as='h5' attached='top'
             onDoubleClick={() => console.log("FIGURE", figure)}
@@ -47,11 +55,12 @@ const FigureEditor = ({ inputs, setInputs }) => {
                 }}>
                     <div style={{display: 'flex', justifyContent: 'space-between'}}>
                         <LabelledInput
-                            type="checkbox"
-                            label="Render placeholder"
-                            checked={!!figure && figure.placeholder}
-                            disabled={!figure}
-                            onChange={event => dispatch(updateFigure({ placeholder: event.target.checked }))}
+                            type = "checkbox"
+                            label = "Render placeholder"
+                            name = "placeholderCheckBox"
+                            checked = {!!figure && figure.placeholder}
+                            disabled = {!figure}
+                            onChange = {event => dispatch(updateFigure({ placeholder: event.target.checked }))}
                             style = {{width: 30}}
                         />
                         <Select
@@ -64,8 +73,8 @@ const FigureEditor = ({ inputs, setInputs }) => {
                             onChange = {option => {
                                 const ok = window.confirm(`Overwrite shaderFunc from template '${option.label}'?\nOld shaderFunc will be copied to clipboard.`);
                                 if (ok) {
-                                    shaderFuncRef.current.editor.selectAll();
-                                    shaderFuncRef.current.editor.focus();
+                                    editorRef.current.editor.selectAll();
+                                    editorRef.current.editor.focus();
                                     document.execCommand('copy');
                                     dispatch(updateFigure({
                                         shaderFunc: option.value.template.replace('__TEMPLATE__', 'fig' + figure.id)
@@ -83,11 +92,12 @@ const FigureEditor = ({ inputs, setInputs }) => {
                     justifyContent: 'space-between',
                 }}>
                     <LabelledInput
-                        type="checkbox"
-                        label="Phrase?"
-                        checked={!!figure && figure.type === PHRASE}
-                        disabled={!figure}
-                        onChange={event => dispatch(updateFigure({ type: event.target.checked ? PHRASE : null }))}
+                        type = "checkbox"
+                        label = "Phrase?"
+                        name = "phraseCheckbox"
+                        checked = {!!figure && figure.type === PHRASE}
+                        disabled = {!figure}
+                        onChange = {event => dispatch(updateFigure({ type: event.target.checked ? PHRASE : null }))}
                         style = {{width: 30}}
                     />
                     <LabelledInput
@@ -114,20 +124,22 @@ const FigureEditor = ({ inputs, setInputs }) => {
                     />
                 </div>
                 <AceEditor
-                    ref = {shaderFuncRef}
+                    ref = {editorRef}
                     mode = "glsl"
                     theme = "github"
-                    name ="shaderFuncEditor"
+                    name = "shaderFuncEditor"
                     fontSize = {11}
                     style = {{
                         width: '100%',
                         height: 120,
+                        backgroundColor: figure.type === PHRASE ? '#ddd' : undefined,
                     }}
-                    value = {inputs.shaderFunc}
+                    value = {figure.type === PHRASE ? legacy[2] : inputs.shaderFunc}
                     placeholder={"No shader function defines. Use 'Create from template' to start :)"}
                     onChange={value =>
                         setInputs({shaderFunc: value})
                     }
+                    readOnly = {figure.type === PHRASE}
                     tabSize = {2}
                 />
             </div>

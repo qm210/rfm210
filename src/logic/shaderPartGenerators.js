@@ -1,5 +1,10 @@
-import { float, joinLines, newLine } from './shader';
+import { float, joinLines, newLine, asFloat, asFloatOrStr } from './shaderHelpers';
 import { validQmd, parseQmd, activeQmd, getSubjects, getAllSubjects, getShaderFuncName } from '../components/FigureEditor';
+import { PHRASE } from '../slices/sceneSlice';
+import { placeholder } from './glyph';
+import { initWidth, initHeight } from '../Initial';
+import { getRequiredRectsForPixels } from './RectAlgebra';
+import { glslForPhrase, glslForGlyph, glslForRect, glyphFuncName, phraseFuncName, kerning } from './shaderHelpers';
 
 export const generateParamCode = (paramList) => {
     const paramCode = {};
@@ -108,24 +113,21 @@ export const generateCalls = (figureList, paramList) => {
         .map(functionCall));
 };
 
-/*
-const [terrifyingCode, glyphCode, phraseCode] = ([glyphset, parsePhraseQmd, figureList], glyphset) => {
-    if (!glyphset.current || !glyphset.letterMap) {
+export const legacyCodes = (figureList, glyphset) => {
+    console.log("GC", glyphset);
+    if (!glyphset || !glyphset.letterMap) {
         return ['', '', ''];
     }
     var usedGlyphs = {};
     var terrifyingCode = '';
     var phraseCode = '';
     const transform = {};
-    for (const figure of figureList.filter(figure => figure.type !== PHRASE)) {
+    for (const figure of figureList.filter(figure => figure.type === PHRASE)) {
         var phraseObjects = [];
         var postProcess = [];
         var params = [];
         const cosPhi = Math.cos(figure.phi);
         const sinPhi = Math.sin(figure.phi);
-
-        // parse qmds
-        const qmds = parsePhraseQmd(figure.qmd);
 
         transform[figure.id] = {
             offsetX: asFloat(figure.x),
@@ -139,7 +141,7 @@ const [terrifyingCode, glyphCode, phraseCode] = ([glyphset, parsePhraseQmd, figu
         var lastChar = undefined;
         for (const char of figure.chars.split('')) {
             const glyph = glyphset.letterMap[char] || placeholder(initWidth, initHeight, char !== ' ');
-            const pixelRects = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);
+            const pixelRects = getRequiredRectsForPixels(glyph.pixels);
             const kern = kerning(glyphset, lastChar, char);
             maxWidth += kern.x;
             const transform = {
@@ -168,13 +170,14 @@ const [terrifyingCode, glyphCode, phraseCode] = ([glyphset, parsePhraseQmd, figu
             return acc;
         }, usedGlyphs);
         // quick hack before UC10: use every glyph
-        usedGlyphs = glyphset.current.letterMap.reduce((allLetters, glyph) => {
+        usedGlyphs = glyphset.letterMap.reduce((allLetters, glyph) => {
             if (!(glyph.letter in allLetters)) {
-                allLetters[glyph.letter] = RectAlgebra.getRequiredRectsForPixels(glyph.pixels);;
+                allLetters[glyph.letter] = getRequiredRectsForPixels(glyph.pixels);;
             }
             return allLetters;
         }, usedGlyphs);
         //////////////////////////////
+        /*
         for (const {start, end, qmd, arg} of qmds) {
             const nextParamName = `p${params.length}`;
             var def = asFloat(0);
@@ -194,6 +197,7 @@ const [terrifyingCode, glyphCode, phraseCode] = ([glyphset, parsePhraseQmd, figu
                     break;
             }
         }
+        */
         terrifyingCode += params.map(p =>
             `float ${p.name} = (t >= ${p.start} && t < ${p.end}) ? ${p.code} : ${p.def};\n` + ' '.repeat(8)
         ) + glslForPhrase(figure, transform[figure.id]) + '\n' + ' '.repeat(8);
@@ -216,5 +220,4 @@ ${usedGlyphs[glyph].map(rect =>
         ).join('')
     }`;
     return [terrifyingCode, glyphCode, phraseCode];
-});
-*/
+};

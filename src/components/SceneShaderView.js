@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import ShadertoyReact from 'shadertoy-react';
 import { ShaderFrame } from '.';
-import { shadertoyify } from '../logic/shader';
+import { shadertoyify } from '../logic/shaderHelpers';
 import { selectFigureList, updateScene, updateFigureBy } from '../slices/sceneSlice';
 import { fetchGlyphset } from '../slices/glyphsetSlice';
 import { fetchLetterMap } from '../slices/glyphSlice';
 import { Loader, Segment } from 'semantic-ui-react';
-import generateShader from '../logic/generateShader';
+import generateShader from '../logic/shaderGenerator';
 import useShaderDrag from './useShaderDrag';
 import AceEditor from 'react-ace';
 
@@ -61,8 +61,8 @@ const SceneShaderView = ()  => {
     }, [glyphset, dispatch, setLoader])
 
     const shaderCode = React.useMemo(() =>
-        generateShader(sceneWidth, sceneHeight, scene, figureList)
-    , [scene, figureList]);
+        generateShader(sceneWidth, sceneHeight, scene, figureList, glyphset.current)
+    , [scene, figureList, glyphset]);
 
     useEffect(() => {
         if (isRefreshed.current !== shaderCode) {

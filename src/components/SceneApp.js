@@ -11,7 +11,7 @@ import { ButtonBar } from './index';
 import { STATUS, SYMBOL } from '../const';
 import { Header, Segment, Loader } from 'semantic-ui-react';
 import { patchScene } from './../slices/sceneSlice';
-import { saneGlslDelimiter } from './../logic/shader';
+import { saneGlslDelimiter } from '../logic/shaderHelpers';
 import FigureEditor from './FigureEditor';
 
 const SCENE_UPDATE_DEBOUNCE = 500;

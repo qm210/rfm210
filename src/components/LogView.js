@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-import RectAlgebra from '../logic/RectAlgebra';
+import { getAllRectsAndOrphanPixels, getSufficientRects } from '../logic/RectAlgebra';
 
 const LogList = styled.div`
     display: flex;
@@ -35,7 +35,7 @@ const RectList = ({collection, ItemClass, label}) => {
     </>;
 };
 
-export default () => {
+const LogView = () => {
     const glyph = useSelector(state => state.glyph.current);
     const [onceClicked, setOnceClicked] = React.useState(false);
 
@@ -43,8 +43,8 @@ export default () => {
         return null;
     }
     const pixels = glyph.pixels;
-    const [allRects, orphanPixels] = RectAlgebra.getAllRectsAndOrphanPixels(pixels);
-    const sufficientRects = RectAlgebra.getSufficientRects(pixels, allRects, orphanPixels);
+    const [allRects, orphanPixels] =getAllRectsAndOrphanPixels(pixels);
+    const sufficientRects = getSufficientRects(pixels, allRects, orphanPixels);
     return <LogList>
         {
             onceClicked
@@ -57,3 +57,5 @@ export default () => {
         }
     </LogList>;
 };
+
+export default LogView;

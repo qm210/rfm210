@@ -45,6 +45,7 @@ export const LabelledInput = (props) => {
         }
         <SpacedInput
             {...props}
+            id = {props.name}
             style={{
                 ...props.style,
                 ...extraStyle,

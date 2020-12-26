@@ -10,18 +10,6 @@ const GlyphsetSelector = ({ onChange, disabled, style }) => {
     const glyphset = useSelector(state => state.glyphset);
     const dispatch = useDispatch();
 
-    React.useEffect(() => {
-        if (glyphset.status === STATUS.IDLE) {
-            dispatch(fetchGlyphsets())
-        }
-    }, [glyphset.status, dispatch]);
-
-    React.useEffect(() => {
-        if (glyphset.all.length === 1 && !glyphset.current) {
-            dispatch(selectGlyphsetByTitle(glyphset.all[0].title));
-        }
-    }, [glyphset, dispatch])
-
     const glyphsetOptionList = glyphset.status !== STATUS.OK
         ? [option(glyphset.status)]
         : (glyphset.all || []).map(item => option(item.title));

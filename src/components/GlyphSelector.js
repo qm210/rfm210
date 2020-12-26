@@ -12,20 +12,6 @@ const GlyphSelector = () => {
     const lastGlyphId = useSelector(state => state.local.lastGlyphId);
     const dispatch = useDispatch();
 
-    React.useEffect(() => {
-        if (glyphset && !glyphset.letterMap) {
-            dispatch(fetchLetterMap(glyphset));
-        }
-    }, [dispatch, glyphset])
-
-    React.useEffect(() => {
-        if (glyphset && glyphset.letterMap && !glyph && lastGlyphId) {
-            if (glyphset.glyphList.includes(lastGlyphId)) {
-                dispatch(fetchGlyph(lastGlyphId));
-            }
-        }
-    }, [glyphset, glyph, lastGlyphId, dispatch]);
-
     const selected = item => glyph && glyph._id === item._id;
 
     return !glyphset ? null : <div>

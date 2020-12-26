@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import produce from 'immer';
 import { updateScene, updateParam, deleteParam } from '../slices/sceneSlice';
 import { objectWithout, clamp } from '../logic/utils';
-import { saneGlslDelimiter } from './../logic/shader';
+import { saneGlslDelimiter } from '../logic/shaderHelpers';
 
 export const dumpParams = (params) => {
     if (typeof(params) === "string") {
