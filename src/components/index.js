@@ -38,7 +38,6 @@ export const LabelledInput = (props) => {
     if (props.type === "number") {
         extraStyle.width = 60;
     }
-    console.log("PP", props);
     return <div>
         {
             props.type !== "checkbox" &&

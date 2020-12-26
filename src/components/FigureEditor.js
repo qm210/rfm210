@@ -7,7 +7,6 @@ import { Header, Segment, Table } from 'semantic-ui-react';
 import { LabelledInput } from '.';
 import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
-import { option } from './GlyphsetSelector';
 
 const FigureEditor = ({ inputs, handleInput }) => {
     const scene = useSelector(store => store.scene.current);
@@ -88,10 +87,16 @@ const FigureEditor = ({ inputs, handleInput }) => {
                         label=""
                         placeholder="Enter phrase..."
                         type="text"
-                        style={{width: 170, fontSize: '1.2rem', marginLeft: 20, marginRight: 10 }}
                         value={figure && figure.chars ? figure.chars : '<add phrase first>'}
                         onChange={event => dispatch(updateFigure({ chars: event.target.value }))}
                         disabled={figure.type !== PHRASE}
+                        style={{
+                            width: 170,
+                            fontSize: '1.2rem',
+                            marginLeft: 20,
+                            marginRight: 10,
+                            backgroundColor: figure.type !== PHRASE ? 'lightgrey' : undefined
+                        }}
                     />
                     <GlyphsetSelector
                         disabled = {figure.type !== PHRASE}
