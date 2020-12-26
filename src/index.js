@@ -15,6 +15,9 @@ import {parse} from 'query-string';
 import socketio from 'socket.io-client';
 import feathers from '@feathersjs/client';
 
+import "ace-builds/src-noconflict/mode-glsl";
+import "ace-builds/src-noconflict/theme-github";
+
 export const liveMode = 'live' in parse(window.location.search);
 
 export const surferUrl = 'http://localhost:3030';

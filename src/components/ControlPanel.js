@@ -3,13 +3,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import GlyphSelector from './GlyphSelector';
 import GlyphsetSelector from './GlyphsetSelector';
 import { GenericList, LabelledInput, Button } from '.';
-import { STATUS } from '../const';
-import { selectGlyphsetByTitle, createGlyphset, fetchGlyphsets, fetchGlyphset } from '../slices/glyphsetSlice';
+import { createGlyphset, fetchGlyphset } from '../slices/glyphsetSlice';
 import { assignLetter, resize, addGlyph, copyGlyph, deleteGlyph, updateGlyph } from '../slices/glyphSlice';
 
 const GLYPH_UPDATE_DEBOUNCE = 500;
-
-export const option = value => ({value, label: value});
 
 const ControlPanel = () => {
     const glyphset = useSelector(state => state.glyphset);

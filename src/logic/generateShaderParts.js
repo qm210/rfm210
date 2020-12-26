@@ -1,5 +1,5 @@
 import { float, joinLines, newLine } from './shader';
-import { validQmd, parseQmd, activeQmd, defaultSubjects, getSubjects, getAllSubjects, getShaderFuncName } from '../components/FigureEditor';
+import { validQmd, parseQmd, activeQmd, getSubjects, getAllSubjects, getShaderFuncName } from '../components/FigureEditor';
 
 export const generateParamCode = (paramList) => {
     const paramCode = {};

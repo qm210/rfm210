@@ -97,20 +97,6 @@ export const ShaderFrame = styled.div`
     border: 1px solid #888;
 `;
 
-export const CodeFrame = (props) =>
-    <div style={{height: 1200, border: "1px solid grey"}}>
-        <textarea
-            style={{
-                width: '100%',
-                height: 350,
-                fontSize: '.9rem',
-                overflow: 'scroll',
-            }}
-            disabled
-            value={props.children}
-        />
-    </div>;
-
 export const GenericList = styled.div`
     display: flex;
     flex-direction: column;

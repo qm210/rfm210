@@ -7,6 +7,9 @@
 
 - give shaderCode in a way that you don't need shadertoyify to work
 
+- "trigger tables" - trigger a given animation at a list of moments, or parametrize
+- "TRIGGER NOW" tool for current moment
+
 Zukunft:
 - Effekte wie Plot hier, Clone da, etc.
 - kubische Splines statt tension -- performance checken :)

@@ -3,13 +3,13 @@ import { useSelector, useDispatch } from 'react-redux';
 import ShadertoyReact from 'shadertoy-react';
 import { ShaderFrame } from '.';
 import { shadertoyify } from '../logic/shader';
-import { CodeFrame } from '.';
 import { selectFigureList, updateScene, updateFigureBy } from '../slices/sceneSlice';
 import { fetchGlyphset } from '../slices/glyphsetSlice';
 import { fetchLetterMap } from '../slices/glyphSlice';
 import { Loader, Segment } from 'semantic-ui-react';
 import generateShader from '../logic/generateShader';
 import useShaderDrag from './useShaderDrag';
+import AceEditor from 'react-ace';
 
 const sceneWidth = 640;
 const sceneHeight = 320;
@@ -165,3 +165,18 @@ const TransportBar = ({duration, time, setTime, setRunning, running}) => {
         </div>
     </div>;
 };
+
+export const CodeFrame = (props) =>
+    <AceEditor
+        mode = "glsl"
+        theme = "github"
+        name = "shaderCodeView"
+        fontSize = {11}
+        style= {{
+            width: '100%',
+            height: 480,
+        }}
+        readOnly
+        value={props.children}
+        tabSize = {2}
+    />;

@@ -7,9 +7,9 @@ import { Header, Segment, Table } from 'semantic-ui-react';
 import { LabelledInput } from '.';
 import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
+import AceEditor from 'react-ace';
 
-const FigureEditor = ({ inputs, handleInput }) => {
-    const scene = useSelector(store => store.scene.current);
+const FigureEditor = ({ inputs, setInputs }) => {
     const figure = useSelector(selectCurrentFigure);
     const dispatch = useDispatch();
     const shaderFuncRef = React.useRef();
@@ -17,13 +17,20 @@ const FigureEditor = ({ inputs, handleInput }) => {
     React.useEffect(() => {
         if (figure && !figure.shaderFunc) {
             dispatch(updateFigure({
-                shaderFunc: shaderFuncTemplate[0].template('fig' + figure.id)
+                shaderFunc: shaderFuncTemplate[0].template.replace('__TEMPLATE__', 'fig' + figure.id)
             }));
         }
     }, [figure, dispatch]);
 
-    const handleFigureUpdate = name =>
-        event => dispatch(updateFigure({ [name]: event.target.value }));
+    React.useEffect(() => {
+        if (!figure || figure.shaderFunc === inputs.shaderFunc) {
+            return;
+        }
+        const debounce = setTimeout(() => {
+            dispatch(updateFigure({ shaderFunc: inputs.shaderFunc }))
+        }, 500);
+        return () => clearTimeout(debounce);
+    }, [figure, inputs.shaderFunc, dispatch]);
 
     return figure && <>
         <Header as='h5' attached='top'
@@ -57,10 +64,11 @@ const FigureEditor = ({ inputs, handleInput }) => {
                             onChange = {option => {
                                 const ok = window.confirm(`Overwrite shaderFunc from template '${option.label}'?\nOld shaderFunc will be copied to clipboard.`);
                                 if (ok) {
-                                    shaderFuncRef.current.select();
+                                    shaderFuncRef.current.editor.selectAll();
+                                    shaderFuncRef.current.editor.focus();
                                     document.execCommand('copy');
                                     dispatch(updateFigure({
-                                        shaderFunc: option.value.template('fig' + figure.id)
+                                        shaderFunc: option.value.template.replace('__TEMPLATE__', 'fig' + figure.id)
                                     }));
                                 }
                             }}
@@ -105,22 +113,22 @@ const FigureEditor = ({ inputs, handleInput }) => {
                         }}
                     />
                 </div>
-                <textarea
+                <AceEditor
                     ref = {shaderFuncRef}
-                    style={{
+                    mode = "glsl"
+                    theme = "github"
+                    name ="shaderFuncEditor"
+                    fontSize = {11}
+                    style = {{
                         width: '100%',
-                        height: 100,
-                        fontSize: '.75rem',
-                        fontFamily: 'monospace',
-                        backgroundColor: figure.placeholder ? 'silver' : undefined,
-                        marginTop: 3
-                }}
-                    placeholder={'void shaderFunc() {\n    ...\n}'}
-                    value={inputs.shaderFunc}
-                    name={'shaderFunc'}
-                    onChange={handleInput}
-                    onBlur={handleFigureUpdate('shaderFunc')}
-                    disabled={!scene}
+                        height: 120,
+                    }}
+                    value = {inputs.shaderFunc}
+                    placeholder={"No shader function defines. Use 'Create from template' to start :)"}
+                    onChange={value =>
+                        setInputs({shaderFunc: value})
+                    }
+                    tabSize = {2}
                 />
             </div>
             <Table compact>
@@ -134,7 +142,7 @@ const FigureEditor = ({ inputs, handleInput }) => {
                                 type="number"
                                 step={.01}
                                 value={figure ? figure.x : 0}
-                                onChange={(_, { value }) => dispatch(updateFigure({ x: +value }))}
+                                onChange={event => dispatch(updateFigure({ x: +event.target.value }))}
                                 disabled={!figure}
                                 style = {{width: 60}}
                             />
@@ -147,7 +155,7 @@ const FigureEditor = ({ inputs, handleInput }) => {
                                 type="number"
                                 step={.01}
                                 value={figure ? figure.y : 0}
-                                onChange={(_, { value }) => dispatch(updateFigure({ y: +value }))}
+                                onChange={event => dispatch(updateFigure({ y: +event.target.value }))}
                                 disabled={!figure}
                                 style = {{width: 60}}
                             />
@@ -160,7 +168,7 @@ const FigureEditor = ({ inputs, handleInput }) => {
                                 type="number"
                                 step={1}
                                 value={figure ? .1 * Math.round(1800 / Math.PI * figure.phi) : 0}
-                                onChange={(_, { value }) => dispatch(updateFigure({ phi: +value * Math.PI / 180 }))}
+                                onChange={event => dispatch(updateFigure({ phi: +event.target.value * Math.PI / 180 }))}
                                 disabled={!figure}
                                 style = {{width: 60}}
                             />
@@ -199,7 +207,7 @@ const FigureEditor = ({ inputs, handleInput }) => {
                         <Table.Cell>
                             <input
                                 type="number"
-                                step={1}
+                                step={.01}
                                 value={figure ? figure.scaleY : 1}
                                 onChange={event => dispatch(updateFigure({ scaleY: +event.target.value }))}
                                 disabled={!figure}
@@ -420,17 +428,18 @@ export const getAllSubjects = (figure) => {
 
 const shaderFuncTemplate = [
     {
-        name: 'spinner',
-        template: id =>
-`void ${id} (inout vec3 col, in vec2 coord) {
-    vec2 pos = vec2(0.5)-coord;
-    float r = length(pos)*2.0;
-    float a = atan(pos.y,pos.x);
-    float f = cos(a*3.);
-    col *= 1. - vec3( 1.-smoothstep(f,f+0.02,r) );
+        name: 'square',
+        template: `void __TEMPLATE__ (inout vec3 col, in vec2 coord, float blur) {
+  float n = max(abs(coord.x), abs(coord.y));
+  col *= vec3(smoothstep(0.5, 0.5+blur+1.e-4, n));
 }`
     }, {
-        name: 'square',
-        template: () => 'not defined yet.'
-    }
+        name: 'spinner',
+        template: `void __TEMPLATE__ (inout vec3 col, in vec2 coord) {
+  float r = length(coord)*2.0;
+  float a = atan(coord.y,coord.x);
+  float f = cos(a*3.);
+  col *= 1. - vec3( 1.-smoothstep(f,f+0.02,r) );
+}`
+    },
 ];

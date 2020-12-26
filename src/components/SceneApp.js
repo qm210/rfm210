@@ -123,7 +123,7 @@ export const SceneApp = () => {
             <MainColumn>
                 <FigureEditor
                     inputs = {inputs}
-                    handleInput = {handleInput}
+                    setInputs = {setInputs}
                 />
             </MainColumn>
 
@@ -285,7 +285,8 @@ const FigureManager = () => {
                             key = {index}
                             value = {figure.id}
                             onDoubleClick = {() => {
-                                const rename = window.prompt(`rename figure ${index}: ${figure.id}`)
+                                const rename = window.prompt(`rename figure ${index}: ${figure.id}.`, "Sorry. Not implemented yet.");
+                                console.log("would rename to", rename, "but would first need to check whether that ID is possible");
                             }}
                             >
                             {
