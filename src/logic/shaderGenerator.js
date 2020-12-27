@@ -73,7 +73,7 @@ void lp2dnoise(in float t, out vec2 n)
 }
 void dboxcombo(in vec2 x, in vec2 b, in float distort, inout float d)
 {
-    vec2 da = abs(x*distort)-b;
+    vec2 da = abs(x*(1.+distort))-b;
     d = min(d, length(max(da,c.yy)) + min(max(da.x,da.y),0.0));
 }
 void rot(in float phi, out mat2 m)
@@ -86,7 +86,7 @@ float sm(in float d, in float blur)
     return smoothstep(.2/iResolution.y, -.2/iResolution.y, blur*d);
 }
 void rect(inout float d, vec2 uv, float x, float y, float w, float h, float distort) {
-  dboxcombo(uv + (vec2(-h,w) + vec2(-2.*x, 2.*y))*PIXEL, vec2(w,h)*PIXEL, distort, d);
+  dboxcombo(uv + (vec2(-w,h) + 2.*vec2(-x,y))*PIXEL, vec2(w,h)*PIXEL, distort, d);
 }
 
 ${paramCode}

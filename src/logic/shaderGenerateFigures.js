@@ -18,6 +18,7 @@ export const generateFigureCode = (figureList, glyphlist) =>
 const rectCall = (rect) => {
     const {x, y, width, height} = rect;
     return `rect(d,coord,${float(x)}+shift.x,${float(y)}+shift.y,${float(width)},${float(height)},distort);`
+        .replaceAll(',0.+', ',')
 };
 
 const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
@@ -58,27 +59,21 @@ export const generatePhraseCode = (figureList, glyphset) => {
         }
         const halfWidth = .5 * maxWidth;
         const halfHeight = .5 * maxHeight;
-        phraseObjects.forEach(obj =>
-            obj.transform = {
-                ...obj.transform,
-                offsetX: obj.transform.offsetX - halfWidth,
-                offsetY: obj.transform.offsetY + halfHeight,
-            }
-        );
+
         const alpha = .5;
         const blur = 1.;
 
-        console.log("teh fun thingy is:", phraseObjects);
-
         const glyphCall = (obj) => {
             const {offsetX = 0, offsetY = 0, distort = 1.} = obj.transform;
-            return `${glyphFuncName(obj.char)}(d,coord,vec2(${float(offsetX)}*spac,${float(offsetY)}),distort*${float(distort)});`;
+            const shift = `vec2(${float(offsetX)}*spacing-${float(halfWidth)},${float(offsetY)}-${float(halfHeight)})`
+                .replaceAll(/(?<!\d)0.\*spacing-/g, '-')
+                .replaceAll(/(?<!\d)0.-/g, '-');
+            return `${glyphFuncName(obj.char)}(d,coord,${shift},distort*${float(distort)});`;
         };
 
-        const body = phraseObjects.map(glyphCall).join(newLine(2));
-        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spac) {
+        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spacing) {
   float d = 1.;
-  ${body}
+  ${phraseObjects.map(glyphCall).join(newLine(2))}
   col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));
   col = mix(col, c.yyy, ${asFloatOrStr(alpha)} * sm(d-.0005, ${asFloatOrStr(blur)}));
 }`
@@ -148,14 +143,18 @@ export const generateCalls = (figureList, paramList) => {
 
         let funcName = '';
         let extraSubjects = [];
-        if (figure.type === PHRASE && !figure.placeholder) {
+        if (figure.placeholder) {
+            funcName = 'placeholder';
+        }
+        else if (figure.type === PHRASE) {
             funcName = phraseFuncName(figure);
             extraSubjects = ['distort', 'spacing'];
-            vars.distort = '.5';
-            vars.spacing = '.1';
+            if (vars.spacing === '0.') {
+                vars.spacing = '1.';
+            }
         }
         else {
-            funcName = figure.placeholder ? 'placeholder' : getShaderFuncName(figure.shaderFunc);
+            funcName = getShaderFuncName(figure.shaderFunc);
             extraSubjects = getSubjects(figure);
         }
         const extraArgs = extraSubjects.map(subject => `,${vars[subject]}`).join('');

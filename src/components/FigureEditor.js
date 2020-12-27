@@ -418,6 +418,9 @@ export const getShaderFuncName = (shaderFunc) => {
 }
 
 export const getSubjects = (figure) => {
+    if (figure.type === PHRASE) {
+        return ['distort', 'spacing'];
+    }
     const found = figure.shaderFunc.match(/(?<=\().*(?=\))/i);
     if (!found || figure.placeholder) {
         return [];

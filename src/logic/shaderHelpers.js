@@ -26,14 +26,15 @@ export const shadertoyify = code => (
         .replace(/uniform vec2 iResolution.*/, '')
         .replace('// vec2 uv', 'vec2 uv')
         .replace(/vec2 UV = .*/, '')
-        .replace(/UV/g, 'uv')
+        .replaceAll(/UV/g, 'uv')
         .replace('void main()', 'void mainImage( out vec4 fragColor, in vec2 fragCoord )')
-        .replace(/gl_FragColor/g, 'fragColor')
-        .replace('time', 'iTime')
-        .replace(/\.0*(?!\d)/g, '.')
-        .replace(/\n\n*/g, '\n')
-        .replace(/\+0\.,/g, ',')
-        .replace(/\*1\.(?!\d)/g, '')
+        .replaceAll(/gl_FragColor/g, 'fragColor')
+        .replaceAll('time', 'iTime')
+        .replaceAll(/\.0*(?!\d)/g, '.')
+        .replaceAll(/\n\n*/g, '\n')
+        .replaceAll(/\+0\.,/g, ',')
+        .replaceAll(/\*1\.(?!\d)/g, '')
+        .replaceAll('+-','-')
     );
 
 export const kerning = (glyphset, L, R) => glyphset.kerningMap && L && L in glyphset.kerningMap && R in glyphset.kerningMap[L]
