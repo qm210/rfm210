@@ -9,17 +9,17 @@ import { kerning } from './shaderHelpers';
 
 export const rectCall = (rect) => {
     const {x, y, width, height} = rect;
-    return `rect(d,coord,vec4(${x},${y},${width},${height}),shift,phi,scale,distort,d);`
+    return `rect(d,coord,${float(x)}+shift.x,${float(y)}+shift.y,${float(width)},${float(height)},distort);`
 };
 
 export const glyphCall = (glyph, transform) => {
     const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, distort = 1.} = transform;
-    return `${glyphFuncName(glyph.letter)}(d,coord,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},distort*${asFloatOrStr(distort)});`;
+    return `${glyphFuncName(glyph.letter)}(d,coord,vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),distort*${asFloatOrStr(distort)});`;
 };
 
 export const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
 
-export const phraseFuncName = (phrase) => `phrase_${[...phrase.chars].map(char => shaderAlias(char)).join('')}`;
+export const phraseFuncName = (figure) => `phrase_${[...figure.chars].map(char => shaderAlias(char)).join('')}`;
 
 export const generateParamCode = (paramList) => {
     const paramCode = {};
@@ -116,27 +116,29 @@ export const generatePhraseCode = (figureList, glyphset) => {
                 offsetY: obj.transform.offsetY + halfWidth * sinPhi - halfHeight * cosPhi,
             }
         );
-        const alpha = 1;
-        const blur = .5;
+        const alpha = .5;
+        const blur = 1.;
         const body = phraseObjects.map(obj => glyphCall(obj.glyph, obj.transform)).join(newLine(2));
         phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spac)
 {float d = 1.;
   ${body}
   col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\n
-  col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005,    ${asFloatOrStr(blur)}));
+  col = mix(col, c.yyy, ${asFloatOrStr(alpha)} * sm(d-.0005, ${asFloatOrStr(blur)}));
 }`
     }
     return phraseCode;
 }
 
 export const generateGlyphCode = (usedGlyphs) => {
-    let glyphCode = `void glyph_undefined(inout float d, in vec2 coord, in vec2 shift, in float phi, in float scale, in float distort)
-    {rect(d,coord,vec4(0,0,9,16),shift,phi,scale,distort);}`;
+    let glyphCode = `void glyph_undefined(inout float d, in vec2 coord, in vec2 shift, in float distort)
+    {rect(d,coord,shift.x,shift.y,${float(initWidth)},${float(initHeight)},distort);}`;
+
     Object.entries(usedGlyphs).forEach(([glyph, pixels]) => {
-        const header = `void ${glyphFuncName(glyph)}(inout float d, in vec2 coord, in vec2 shift, in float phi, in float scale, in float distort)`;
+        const header = `void ${glyphFuncName(glyph)}(inout float d, in vec2 coord, in vec2 shift, in float distort)`;
         const body = pixels.map(rectCall).join('');
         glyphCode += `${newLine(2)}${header}{${body}}`;
     });
+
     return glyphCode;
 };
 

@@ -85,18 +85,22 @@ float sm(in float d, in float blur)
 {
     return smoothstep(.2/iResolution.y, -.2/iResolution.y, blur*d);
 }
-void rect(inout float d, in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale, in float distort)
+void rectMod(inout float d, in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale, in float distort)
 {
     mat2 R;
     rot(phi, R);
     R /= max(1.e-3, scale);
     dboxcombo(R*uv + PIXEL*(vec2(-rect.z,rect.w) + vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, distort, d);
 }
+void rect(inout float d, vec2 uv, float x, float y, float w, float h, float distort) {
+  dboxcombo(uv + (vec2(-h,w) + vec2(-2.*x, 2.*y))*PIXEL, vec2(w,h)*PIXEL, distort, d);
+}
+
 ${paramCode}
 ${glyphCode}
 ${phraseCode}
 ${figureCode}
-void placeholder (inout vec3 col, in vec2 coord)
+void placeholder(inout vec3 col, in vec2 coord)
 {
     vec2 centq = quant(coord);
     float cnorm = max(abs(coord.x), abs(coord.y));
@@ -108,7 +112,7 @@ void placeholder (inout vec3 col, in vec2 coord)
             col = .5 * c.xxx;
         }
         else if(w + centq.x > -centq.y + eps && centq.x < -centq.y + w) {col = .5*col;}
-        else if(w + centq.x > centq.y + eps&& centq.x < centq.y + w) {col = .5*col;}
+        else if(w + centq.x > centq.y + eps && centq.x < centq.y + w) {col = .5*col;}
     }
 }
 void main()

@@ -15,6 +15,7 @@ import {parse} from 'query-string';
 import socketio from 'socket.io-client';
 import feathers from '@feathersjs/client';
 
+import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/mode-glsl";
 import "ace-builds/src-noconflict/theme-github";
 
