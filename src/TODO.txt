@@ -1,16 +1,17 @@
-- reintroduce glyphs and phrases
+- auto reload from server (change in glyph now needs refresh)
+- definition of kerning
+
 - mehrere figures
 - mehrere scenes
 
-- template dropdown
+- automate alpha
 - ebeneneffekte
-
-- give shaderCode in a way that you don't need shadertoyify to work
 
 - "trigger tables" - trigger a given animation at a list of moments, or parametrize
 - "TRIGGER NOW" tool for current moment
 
 Zukunft:
 - Effekte wie Plot hier, Clone da, etc.
+- tension pointwise
 - kubische Splines statt tension -- performance checken :)
 - "Filter wie z.B. Blur"
