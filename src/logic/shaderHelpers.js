@@ -30,10 +30,10 @@ export const shadertoyify = code => (
         .replace('void main()', 'void mainImage( out vec4 fragColor, in vec2 fragCoord )')
         .replace(/gl_FragColor/g, 'fragColor')
         .replace('time', 'iTime')
-        .replace(/\+0\.,/g, ',')
-        .replace(/\*1\.,/g, ',')
         .replace(/\.0*(?!\d)/g, '.')
         .replace(/\n\n*/g, '\n')
+        .replace(/\+0\.,/g, ',')
+        .replace(/\*1\.(?!\d)/g, '')
     );
 
 export const kerning = (glyphset, L, R) => glyphset.kerningMap && L && L in glyphset.kerningMap && R in glyphset.kerningMap[L]

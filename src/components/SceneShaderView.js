@@ -10,6 +10,7 @@ import { Loader, Segment } from 'semantic-ui-react';
 import generateShader from '../logic/shaderGenerator';
 import useShaderDrag from './useShaderDrag';
 import AceEditor from 'react-ace';
+import { Button } from 'semantic-ui-react';
 
 const sceneWidth = 640;
 const sceneHeight = 320;
@@ -20,6 +21,7 @@ const SceneShaderView = ()  => {
     const glyphset = useSelector(store => store.glyphset);
     const dispatch = useDispatch();
     const [loader, setLoader] = useState(!glyphset.current);
+    const [largeCode, setLargeCode] = useState(false);
     const isRefreshed = useRef('');
 
     const [time, setTime] = useState(0);
@@ -77,45 +79,52 @@ const SceneShaderView = ()  => {
             right: 10,
         }}>
             <Loader active={loader || isRefreshed.current !== shaderCode} size="massive"/>
-            <ShaderFrame
-                style = {{
-                    width: sceneWidth,
-                    height: sceneHeight,
-                    padding: 0,
-                    margin: 0,
-                    marginBottom: 5,
-                    border: '1px solid black'
-                }}
-                onMouseDown = {event => shaderDrag.start(event.clientX, event.clientY)}
-                onMouseMove = {event => shaderDrag.update(event.clientX, event.clientY)}
-                onMouseUp = {() => shaderDrag.end()}
-                onMouseLeave = {() => shaderDrag.cancel()}
-                >
-                {
-                    isRefreshed.current === shaderCode &&
-                    <ShadertoyReact
-                        fs = {shadertoyify(shaderCode).replaceAll('iTime', 'time')}
-                        uniforms = {{
-                            time: {type: '1f', value: time}
-                        }}
+            {
+                !largeCode &&
+                <>
+                    <ShaderFrame
                         style = {{
-                            cursor: 'move',
+                            width: sceneWidth,
+                            height: sceneHeight,
+                            padding: 0,
+                            margin: 0,
+                            marginBottom: 5,
+                            border: '1px solid black'
                         }}
+                        onMouseDown = {event => shaderDrag.start(event.clientX, event.clientY)}
+                        onMouseMove = {event => shaderDrag.update(event.clientX, event.clientY)}
+                        onMouseUp = {() => shaderDrag.end()}
+                        onMouseLeave = {() => shaderDrag.cancel()}
+                        >
+                        {
+                            isRefreshed.current === shaderCode &&
+                            <ShadertoyReact
+                                fs = {shadertoyify(shaderCode).replaceAll('iTime', 'time')}
+                                uniforms = {{
+                                    time: {type: '1f', value: time}
+                                }}
+                                style = {{
+                                    cursor: 'move',
+                                }}
+                            />
+                        }
+                    </ShaderFrame>
+                    <TransportBar
+                        time = {time}
+                        duration = {scene.duration}
+                        setTime = {setTime}
+                        running = {running}
+                        setRunning = {setRunning}
                     />
-                }
-            </ShaderFrame>
-            <TransportBar
-                time = {time}
-                duration = {scene.duration}
-                setTime = {setTime}
-                running = {running}
-                setRunning = {setRunning}
-            />
+                </>
+            }
 
         <Segment>
-            <CodeFrame>
-                {shadertoyify(shaderCode)}
-            </CodeFrame>
+            <CodeFrame
+                value = {shadertoyify(shaderCode)}
+                large = {largeCode}
+                onToggle = {() => setLargeCode(state => !state)}
+            />
         </Segment>
     </div>;
 };
@@ -166,17 +175,35 @@ const TransportBar = ({duration, time, setTime, setRunning, running}) => {
     </div>;
 };
 
-export const CodeFrame = (props) =>
-    <AceEditor
-        mode = "glsl"
-        theme = "github"
-        name = "shaderCodeView"
-        fontSize = {11}
-        style= {{
-            width: '100%',
-            height: 480,
-        }}
-        readOnly
-        value={props.children}
-        tabSize = {2}
-    />;
+export const CodeFrame = ({value, large, onToggle}) => {
+    const largeStyle = large ? {
+        position: 'fixed',
+        top: 42,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 9,
+    } : {
+        height: 480,
+    };
+    return <div style={largeStyle}>
+        <Button
+            icon = "external alternate"
+            style = {{position: 'absolute', right: 32, top: 16, zIndex: 1}}
+            onClick = {onToggle}
+        />
+        <AceEditor
+            mode = "glsl"
+            theme = "github"
+            name = "shaderCodeView"
+            fontSize = {11}
+            style = {{
+                width: '100%',
+                height: '100%',
+            }}
+            readOnly
+            value = {value}
+            tabSize = {2}
+        />
+    </div>;
+};

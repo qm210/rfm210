@@ -17,11 +17,6 @@ export const glyphCall = (glyph, transform) => {
     return `${glyphFuncName(glyph.letter)}(d,coord,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},distort*${asFloatOrStr(distort)});`;
 };
 
-export const phraseCall = (phrase, transform) => {
-    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 'alpha', blur = 'blur', distort = 1., spacing = 1.} = transform;
-    return `${phraseFuncName(phrase)}(col,coord,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)});\n`
-}
-
 export const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
 
 export const phraseFuncName = (phrase) => `phrase_${[...phrase.chars].map(char => shaderAlias(char)).join('')}`;
@@ -124,13 +119,12 @@ export const generatePhraseCode = (figureList, glyphset) => {
         const alpha = 1;
         const blur = .5;
         const body = phraseObjects.map(obj => glyphCall(obj.glyph, obj.transform)).join(newLine(2));
-        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in vec2 shift, in float phi, in float scale, in float distort, in float spac)
+        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spac)
 {float d = 1.;
   ${body}
-  col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\
+  col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\n
   col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005,    ${asFloatOrStr(blur)}));
-}
-`
+}`
     }
     return phraseCode;
 }
@@ -190,15 +184,23 @@ export const generateCalls = (figureList, paramList) => {
             counter++;
         };
 
-        let funcCall = '';
-        if (figure.type === PHRASE) {
-            funcCall = phraseCall(figure, {}) + newLine(2);
+        const coord = (figure, vars) =>
+            `R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y})`;
+
+        let funcName = '';
+        let extraSubjects = [];
+        if (figure.type === PHRASE && !figure.placeholder) {
+            funcName = phraseFuncName(figure);
+            extraSubjects = ['distort', 'spacing'];
+            vars.distort = '.5';
+            vars.spacing = '.1';
         }
         else {
-            const funcName = figure.placeholder ? 'placeholder' : getShaderFuncName(figure.shaderFunc);
-            const extraSubjects = getSubjects(figure).map(subject => `,${vars[subject]}`);
-            funcCall = `${funcName}(col, R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y}))${extraSubjects});\n`
+            funcName = figure.placeholder ? 'placeholder' : getShaderFuncName(figure.shaderFunc);
+            extraSubjects = getSubjects(figure);
         }
+        const extraArgs = extraSubjects.map(subject => `,${vars[subject]}`).join('');
+        const funcCall = `${funcName}(col, ${coord(figure, vars)})${extraArgs});\n`
 
         return (
             varInit.join(newLine(4)) + newLine(4) +
