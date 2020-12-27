@@ -47,7 +47,7 @@ const ControlPanel = () => {
                 name = "iletter"
                 label = "Letter:"
                 type = "text"
-                defaultValue = {(glyph && glyph.letter) || ''}
+                value = {(glyph && glyph.letter) || ''}
                 disabled = {!glyph}
                 onKeyPress = {dispatchLastTypedLetter}
             />

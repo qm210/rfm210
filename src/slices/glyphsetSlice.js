@@ -78,7 +78,6 @@ const glyphsetSlice = createSlice({
         },
         [assignLetter]: (state, {payload}) => {
             if (state.current.letterMap) {
-                console.log("lel", payload);
                 state.current.letterMap = state.current.letterMap.map(glyph => ({
                     ...glyph,
                     letter: glyph._id === payload.id ? payload.letter : glyph.letter
