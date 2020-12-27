@@ -49,17 +49,17 @@ export const kerning = (glyphset, L, R) => glyphset.kerningMap && L && L in glyp
 
 export const glslForRect = (rect) => {
     const {x, y, width, height} = rect;
-    return `rect(UV,vec4(${x},${y},${width},${height}),shift,phi,scale,distort,d);`
+    return `rect(d,coord,vec4(${x},${y},${width},${height}),shift,phi,scale,distort,d);`
 };
 
 export const glslForGlyph = (glyph, transform) => {
     const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, distort = 1.} = transform;
-    return `${glyphFuncName(glyph.letter)}(UV,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},distort*${asFloatOrStr(distort)},d);`;
+    return `${glyphFuncName(glyph.letter)}(d,coord,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},distort*${asFloatOrStr(distort)});`;
 };
 
 export const glslForPhrase = (phrase, transform) => {
     const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 'alpha', blur = 'blur', distort = 1., spacing = 1.} = transform;
-    return `${phraseFuncName(phrase)}(UV,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)},d);\n`
+    return `${phraseFuncName(phrase)}(d,coord,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)});\n`
     + `        col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\n`
     + `        col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005,    ${asFloatOrStr(blur)}));`
 }

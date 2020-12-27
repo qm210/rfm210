@@ -1,6 +1,7 @@
 import { float } from './shaderHelpers';
-import { generateParamCode, generateFigureCode, generateCalls } from './shaderPartGenerators';
+import { generateParamCode, generateFigureCode, generateCalls, generateGlyphCode, generatePhraseCode } from './shaderPartGenerators';
 import { PHRASE } from './../slices/sceneSlice';
+import { getRequiredRectsForPixels } from './RectAlgebra';
 
 export default (sceneWidth, sceneHeight, scene, figureList, glyphset) => {
 
@@ -14,15 +15,20 @@ export default (sceneWidth, sceneHeight, scene, figureList, glyphset) => {
         }
         figure.chars.split("").forEach(char => {
             if (!(char in accGlyphs)) {
-                //accGlyphs[char] = getRequiredRectsForPixels(glyph.pixels);;
+                const glyph = glyphset.letterMap.find(glyph => glyph.letter === char)
+                    || glyphset.letterMap.find(glyph => glyph.letter.toLowerCase() === char.toLowerCase());
+                if (glyph) {
+                    accGlyphs[char] = getRequiredRectsForPixels(glyph.pixels);;
+                }
             }
         });
-        console.log("FL", figureList, figure.acc, glyphset.letterMap);
-        return accGlyphs    ;
+        return accGlyphs;
     }, {});
 
     const paramCode = generateParamCode(scene.params);
     const figureCode = generateFigureCode(figureList);
+    const phraseCode = generatePhraseCode(figureList, glyphset);
+    const glyphCode = generateGlyphCode(usedGlyphs);
     const calls = generateCalls(figureList, scene.params);
 
     const shader = `
@@ -86,8 +92,9 @@ void rect(in vec2 uv, in vec4 rect, in vec2 shift, in float phi, in float scale,
     R /= max(1.e-3, scale);
     dboxcombo(R*uv + PIXEL*(vec2(-rect.z,rect.w) + vec2(-2.*shift.x,2.*shift.y) + vec2(-2.*rect.x, 2.*rect.y)), vec2(rect.z,rect.w)*PIXEL, distort, d);
 }
-// here would be phrase/glyphcode...
 ${paramCode}
+${glyphCode}
+${phraseCode}
 ${figureCode}
 void placeholder (inout vec3 col, in vec2 coord)
 {

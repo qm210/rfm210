@@ -8,11 +8,11 @@ import { LabelledInput } from '.';
 import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
 import AceEditor from 'react-ace';
-import { selectFigureList } from './../slices/sceneSlice';
-import { legacyCodes } from '../logic/shaderPartGenerators';
+import { generatePhraseCode } from './../logic/shaderPartGenerators';
 
 const FigureEditor = ({ inputs, setInputs }) => {
     const figure = useSelector(selectCurrentFigure);
+    const glyphset = useSelector(state => state.glyphset.current);
     const dispatch = useDispatch();
     const editorRef = React.useRef();
 
@@ -34,11 +34,7 @@ const FigureEditor = ({ inputs, setInputs }) => {
         return () => clearTimeout(debounce);
     }, [figure, inputs.shaderFunc, dispatch]);
 
-    const glyphset = useSelector(state => state.glyphset.current);
-    const figureList = useSelector(selectFigureList);
-    const legacy = React.useMemo(() => legacyCodes(figureList, glyphset), [figureList, glyphset]);
-
-    console.log("LEGACY", legacy);
+    const phraseCode = React.useMemo(() => generatePhraseCode([figure], glyphset), [figure, glyphset]);
 
     return figure && <>
         <Header as='h5' attached='top'
@@ -134,7 +130,7 @@ const FigureEditor = ({ inputs, setInputs }) => {
                         height: 120,
                         backgroundColor: figure.type === PHRASE ? '#ddd' : undefined,
                     }}
-                    value = {figure.type === PHRASE ? legacy[2] : inputs.shaderFunc}
+                    value = {figure.type === PHRASE ? phraseCode : inputs.shaderFunc}
                     placeholder={"No shader function defines. Use 'Create from template' to start :)"}
                     onChange={value =>
                         setInputs({shaderFunc: value})

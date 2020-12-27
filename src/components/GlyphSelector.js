@@ -3,7 +3,6 @@ import {useSelector, useDispatch} from 'react-redux';
 import { alias } from '../logic/glyph';
 import { fetchGlyph } from '../slices/glyphSlice';
 import { Loader, Segment } from 'semantic-ui-react';
-import { fetchLetterMap } from './../slices/glyphSlice';
 
 // TODO: save last glyphset and glyph ID in local state, and fetch these again up reload.
 const GlyphSelector = () => {
