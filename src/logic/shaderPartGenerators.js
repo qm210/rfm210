@@ -4,7 +4,27 @@ import { PHRASE } from '../slices/sceneSlice';
 import { placeholder } from './glyph';
 import { initWidth, initHeight } from '../Initial';
 import { getRequiredRectsForPixels } from './RectAlgebra';
-import { glslForPhrase, glslForGlyph, glslForRect, glyphFuncName, phraseFuncName, kerning } from './shaderHelpers';
+import { shaderAlias } from './glyph';
+import { kerning } from './shaderHelpers';
+
+export const rectCall = (rect) => {
+    const {x, y, width, height} = rect;
+    return `rect(d,coord,vec4(${x},${y},${width},${height}),shift,phi,scale,distort,d);`
+};
+
+export const glyphCall = (glyph, transform) => {
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, distort = 1.} = transform;
+    return `${glyphFuncName(glyph.letter)}(d,coord,shift+vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),phi+${asFloatOrStr(rotate)},scale*${asFloatOrStr(scale)},distort*${asFloatOrStr(distort)});`;
+};
+
+export const phraseCall = (phrase, transform) => {
+    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, alpha = 'alpha', blur = 'blur', distort = 1., spacing = 1.} = transform;
+    return `${phraseFuncName(phrase)}(col,coord,vec2(${offsetX},${offsetY}),${asFloatOrStr(rotate)},${asFloatOrStr(scale)},${asFloatOrStr(distort)},${asFloatOrStr(spacing)});\n`
+}
+
+export const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
+
+export const phraseFuncName = (phrase) => `phrase_${[...phrase.chars].map(char => shaderAlias(char)).join('')}`;
 
 export const generateParamCode = (paramList) => {
     const paramCode = {};
@@ -56,53 +76,61 @@ export const generateFigureCode = (figureList) =>
 
 
 export const generatePhraseCode = (figureList, glyphset) => {
+    if (!figureList || figureList[0] === null || !glyphset.letterMap) {
+        return '';
+    }
     let phraseCode = '';
     var phraseObjects = [];
     const transform = {};
-    for(const figure of figureList.filter(figure => figure.type === PHRASE))
-    {
-    const cosPhi = Math.cos(figure.phi);
-    const sinPhi = Math.sin(figure.phi);
 
-    transform[figure.id] = {
-        offsetX: asFloat(figure.x),
-        offsetY: asFloat(figure.y),
-        rotate: asFloat(figure.phi),
-    };
+    for(const figure of figureList.filter(figure => figure.type === PHRASE)) {
+        const cosPhi = Math.cos(figure.phi);
+        const sinPhi = Math.sin(figure.phi);
 
-    // construct rects
-    var maxWidth = 0;
-    var maxHeight = 0;
-    var lastChar = undefined;
-    for (const char of figure.chars.split('')) {
-        const glyph = glyphset.letterMap[char] || placeholder(initWidth, initHeight, char !== ' ');
-        const pixelRects = getRequiredRectsForPixels(glyph.pixels);
-        const kern = kerning(glyphset, lastChar, char);
-        maxWidth += kern.x;
-        const transform = {
-            offsetX: maxWidth * cosPhi + kern.y * sinPhi,
-            offsetY: maxWidth * sinPhi + kern.y * cosPhi,
-            rotate: 0,
+        transform[figure.id] = {
+            offsetX: asFloat(figure.x),
+            offsetY: asFloat(figure.y),
+            rotate: asFloat(figure.phi),
         };
-        phraseObjects.push({phrase: figure, char, glyph, pixelRects, transform});
-        maxHeight = Math.max(maxHeight, glyph.height);
-        maxWidth += glyph.width;
-        lastChar = char;
-    }
-    const halfWidth = .5 * maxWidth;
-    const halfHeight = .5 * maxHeight;
-    phraseObjects.forEach(obj =>
-        obj.transform = {
-            ...obj.transform,
-            offsetX: obj.transform.offsetX - halfWidth * cosPhi - halfHeight * sinPhi,
-            offsetY: obj.transform.offsetY + halfWidth * sinPhi - halfHeight * cosPhi,
+
+        // construct rects
+        var maxWidth = 0;
+        var maxHeight = 0;
+        var lastChar = undefined;
+        for (const char of figure.chars.split('')) {
+            const glyph = glyphset.letterMap[char] || placeholder(initWidth, initHeight, char !== ' ');
+            const pixelRects = getRequiredRectsForPixels(glyph.pixels);
+            const kern = kerning(glyphset, lastChar, char);
+            maxWidth += kern.x;
+            const transform = {
+                offsetX: maxWidth * cosPhi + kern.y * sinPhi,
+                offsetY: maxWidth * sinPhi + kern.y * cosPhi,
+                rotate: 0,
+            };
+            phraseObjects.push({phrase: figure, char, glyph, pixelRects, transform});
+            maxHeight = Math.max(maxHeight, glyph.height);
+            maxWidth += glyph.width;
+            lastChar = char;
         }
-    );
-    phraseCode += `void ${phraseFuncName(figure)}(in vec2 UV, in vec2 shift, in float phi, in float scale, in float distort, in float spac, out float d)
-    {d = 1.;
-    ${phraseObjects.map(obj =>
-        glslForGlyph(obj.glyph, obj.transform)).join('\n' + ' '.repeat(4))}
-            }`
+        const halfWidth = .5 * maxWidth;
+        const halfHeight = .5 * maxHeight;
+        phraseObjects.forEach(obj =>
+            obj.transform = {
+                ...obj.transform,
+                offsetX: obj.transform.offsetX - halfWidth * cosPhi - halfHeight * sinPhi,
+                offsetY: obj.transform.offsetY + halfWidth * sinPhi - halfHeight * cosPhi,
+            }
+        );
+        const alpha = 1;
+        const blur = .5;
+        const body = phraseObjects.map(obj => glyphCall(obj.glyph, obj.transform)).join(newLine(2));
+        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in vec2 shift, in float phi, in float scale, in float distort, in float spac)
+{float d = 1.;
+  ${body}
+  col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\
+  col = mix(col, c.xxx, ${asFloatOrStr(alpha)} * sm(d-.0005,    ${asFloatOrStr(blur)}));
+}
+`
     }
     return phraseCode;
 }
@@ -112,7 +140,7 @@ export const generateGlyphCode = (usedGlyphs) => {
     {rect(d,coord,vec4(0,0,9,16),shift,phi,scale,distort);}`;
     Object.entries(usedGlyphs).forEach(([glyph, pixels]) => {
         const header = `void ${glyphFuncName(glyph)}(inout float d, in vec2 coord, in vec2 shift, in float phi, in float scale, in float distort)`;
-        const body = pixels.map(glslForRect).join('');
+        const body = pixels.map(rectCall).join('');
         glyphCode += `${newLine(2)}${header}{${body}}`;
     });
     return glyphCode;
@@ -164,7 +192,7 @@ export const generateCalls = (figureList, paramList) => {
 
         let funcCall = '';
         if (figure.type === PHRASE) {
-            funcCall = glslForPhrase(figure, transform[figure.id]) + newLine(2);
+            funcCall = phraseCall(figure, {}) + newLine(2);
         }
         else {
             const funcName = figure.placeholder ? 'placeholder' : getShaderFuncName(figure.shaderFunc);
