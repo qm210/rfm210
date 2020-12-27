@@ -13,8 +13,8 @@ export const rectCall = (rect) => {
 };
 
 export const glyphCall = (glyph, transform) => {
-    const {offsetX = 0, offsetY = 0, rotate = 0, scale = 1, distort = 1.} = transform;
-    return `${glyphFuncName(glyph.letter)}(d,coord,vec2(${asFloatOrStr(offsetX)}*spac,${asFloatOrStr(offsetY)}),distort*${asFloatOrStr(distort)});`;
+    const {offsetX = 0, offsetY = 0, distort = 1.} = transform;
+    return `${glyphFuncName(glyph.letter)}(d,coord,vec2(${float(offsetX)}*spac,${float(offsetY)}),distort*${float(distort)});`;
 };
 
 export const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
@@ -85,7 +85,6 @@ export const generatePhraseCode = (figureList, glyphset) => {
         transform[figure.id] = {
             offsetX: asFloat(figure.x),
             offsetY: asFloat(figure.y),
-            rotate: asFloat(figure.phi),
         };
 
         // construct rects
@@ -100,7 +99,6 @@ export const generatePhraseCode = (figureList, glyphset) => {
             const transform = {
                 offsetX: maxWidth * cosPhi + kern.y * sinPhi,
                 offsetY: maxWidth * sinPhi + kern.y * cosPhi,
-                rotate: 0,
             };
             phraseObjects.push({phrase: figure, char, glyph, pixelRects, transform});
             maxHeight = Math.max(maxHeight, glyph.height);
@@ -119,10 +117,10 @@ export const generatePhraseCode = (figureList, glyphset) => {
         const alpha = .5;
         const blur = 1.;
         const body = phraseObjects.map(obj => glyphCall(obj.glyph, obj.transform)).join(newLine(2));
-        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spac)
-{float d = 1.;
+        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spac) {
+  float d = 1.;
   ${body}
-  col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));\n
+  col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));
   col = mix(col, c.yyy, ${asFloatOrStr(alpha)} * sm(d-.0005, ${asFloatOrStr(blur)}));
 }`
     }
@@ -187,7 +185,7 @@ export const generateCalls = (figureList, paramList) => {
         };
 
         const coord = (figure, vars) =>
-            `R_${figure.id}*(UV/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY}) - vec2(${vars.x}, ${vars.y})`;
+            `R_${figure.id}*(UV - vec2(${vars.x}, ${vars.y}))/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY})`;
 
         let funcName = '';
         let extraSubjects = [];
@@ -202,7 +200,7 @@ export const generateCalls = (figureList, paramList) => {
             extraSubjects = getSubjects(figure);
         }
         const extraArgs = extraSubjects.map(subject => `,${vars[subject]}`).join('');
-        const funcCall = `${funcName}(col, ${coord(figure, vars)})${extraArgs});\n`
+        const funcCall = `${funcName}(col, ${coord(figure, vars)}${extraArgs});\n`
 
         return (
             varInit.join(newLine(4)) + newLine(4) +

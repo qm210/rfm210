@@ -6,7 +6,7 @@ export const asFloat = (number, prec) => {
     return str;
 };
 
-export const float = x => asFloat(x || 0, 3);
+export const float = x => asFloat(x || 0, 3).replace(/\.0*(?!\d)/g, '.');
 
 export const asFloatOrStr = thing => typeof thing === 'number' ? asFloat(thing) : thing.toString();
 
