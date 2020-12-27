@@ -101,7 +101,7 @@ const FigureEditor = ({ inputs, setInputs }) => {
                         label=""
                         placeholder="Enter phrase..."
                         type="text"
-                        value={figure && figure.chars ? figure.chars : '<add phrase first>'}
+                        value={(figure && figure.chars) || ''}
                         onChange={event => dispatch(updateFigure({ chars: event.target.value }))}
                         disabled={figure.type !== PHRASE}
                         style={{
