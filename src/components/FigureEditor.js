@@ -8,7 +8,7 @@ import { LabelledInput } from '.';
 import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
 import AceEditor from 'react-ace';
-import { generatePhraseCode } from './../logic/shaderPartGenerators';
+import { generatePhraseCode } from '../logic/shaderGenerateFigures';
 
 const FigureEditor = ({ inputs, setInputs }) => {
     const figure = useSelector(selectCurrentFigure);

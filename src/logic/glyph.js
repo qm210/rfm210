@@ -44,6 +44,10 @@ export const nextLetter = (letterMap) => {
     return nextLetter(letterMap.slice(-1));
 }
 
+export const findInLetterMap = (glyphset, char) =>
+    glyphset.letterMap.find(glyph => glyph.letter === char)
+        || glyphset.letterMap.find(glyph => glyph.letter.toLowerCase() === char.toLowerCase());
+
 export const alias = letter =>
     letter === ''
         ? '<undefined>'
@@ -92,7 +96,6 @@ const shaderAliases = {
 }
 
 export const shaderAlias = letter => letter in shaderAliases ? shaderAliases[letter] : letter;
-
 
 export const surroundingPixelList = ({row, column, width, height}) => {
     const surrounding = [];

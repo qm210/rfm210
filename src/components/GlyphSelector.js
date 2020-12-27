@@ -4,11 +4,9 @@ import { alias } from '../logic/glyph';
 import { fetchGlyph } from '../slices/glyphSlice';
 import { Loader, Segment } from 'semantic-ui-react';
 
-// TODO: save last glyphset and glyph ID in local state, and fetch these again up reload.
 const GlyphSelector = () => {
     const glyphset = useSelector(state => state.glyphset.current);
     const glyph = useSelector(state => state.glyph.current);
-    const lastGlyphId = useSelector(state => state.local.lastGlyphId);
     const dispatch = useDispatch();
 
     const selected = item => glyph && glyph._id === item._id;
