@@ -11,6 +11,8 @@ export default (sceneWidth, sceneHeight, scene, figureList, glyphset) => {
         return '';
     }
 
+    figureList = figureList.filter(it => it.active !== false);
+
     const usedGlyphs = figureList.reduce((accGlyphs, figure) => {
         if (figure.type !== PHRASE || !glyphset || !glyphset.letterMap) {
             return accGlyphs;

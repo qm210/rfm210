@@ -151,7 +151,7 @@ export const generateCalls = (figureList, paramList) => {
         const extraArgs = getSubjects(figure).map(subject => `,${vars[subject]}`).join('');
         const colVar = `col${figure.id}`;
         const funcCall = `${funcName}(${colVar}, ${coord(figure, vars)}${extraArgs});\n`
-        const mixColor = `col = min(col,${colVar}); //,clamp(${float(figure.alpha)},0.,1.));`;
+        const mixColor = `col *= ${colVar};`
 
         return (
             varInit.join(newLine(4)) + newLine(4) +

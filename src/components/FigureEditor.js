@@ -38,10 +38,17 @@ const FigureEditor = ({ inputs, setInputs }) => {
     const phraseCode = React.useMemo(() => generatePhraseCode([figure], glyphset), [figure, glyphset]);
 
     return figure && <>
-        <Header as='h5' attached='top'
-            onDoubleClick={() => console.log("FIGURE", figure)}
-        >
+        <Header as='h5' attached='top'>
             Figure: {figure.shaderFunc ? getShaderFuncName(figure.shaderFunc) : `figure${figure.id}`}
+            <span style={{float: 'right'}}>
+                <LabelledInput
+                    type = "checkbox"
+                    label = "active"
+                    checked = {figure.active}
+                    name = "activeCheckBox"
+                    onChange = {event => dispatch(updateFigure({ active: event.target.checked }))}
+                />
+            </span>
         </Header>
         <Segment attached>
             <div
@@ -318,7 +325,7 @@ export const getShaderFuncName = (shaderFunc) => {
         return "__ERROR";
     }
     return found[0].trim();
-}
+};
 
 export const getSubjects = (figure) => {
     if (figure.type === PHRASE) {
@@ -334,11 +341,11 @@ export const getSubjects = (figure) => {
         .map(it => it.split(' ').slice(-1)[0])
         .filter(it => !["col", "coord"].includes(it));
     return argSubjects;
-}
+};
 
 export const getAllSubjects = (figure) => {
     return [...defaultSubjects, ...getSubjects(figure)];
-}
+};
 
 const shaderFuncTemplate = [
     {
