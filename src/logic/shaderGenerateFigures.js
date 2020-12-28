@@ -1,4 +1,4 @@
-import { float, joinLines, newLine, asFloat, asFloatOrStr } from './shaderHelpers';
+import { float, joinLines, newLine, asFloat } from './shaderHelpers';
 import { validQmd, parseQmd, activeQmd, getSubjects, getAllSubjects, getShaderFuncName } from '../components/FigureEditor';
 import { PHRASE } from '../slices/sceneSlice';
 import { placeholder } from './glyph';
@@ -17,7 +17,7 @@ export const generateFigureCode = (figureList, glyphlist) =>
 
 const rectCall = (rect) => {
     const {x, y, width, height} = rect;
-    return `rect(d,coord,${float(x)}+shift.x,${float(y)}+shift.y,${float(width)},${float(height)},distort);`
+    return `rect(d,coord,${float(x)}+shift.x,${float(y)}+shift.y,${float(width)},${float(height)},border);`
         .replaceAll(',0.+', ',')
 };
 
@@ -60,33 +60,30 @@ export const generatePhraseCode = (figureList, glyphset) => {
         const halfWidth = .5 * maxWidth;
         const halfHeight = .5 * maxHeight;
 
-        const alpha = .5;
-        const blur = 1.;
-
         const glyphCall = (obj) => {
-            const {offsetX = 0, offsetY = 0, distort = 1.} = obj.transform;
+            const {offsetX = 0, offsetY = 0} = obj.transform;
             const shift = `vec2(${float(offsetX-halfWidth)}*spacing,${float(offsetY-halfHeight)})`
                 .replaceAll(/(?<!\d)0.\*spacing-/g, '-')
                 .replaceAll(/(?<!\d)0.-/g, '-');
-            return `${glyphFuncName(obj.char)}(d,coord,${shift},distort*${float(distort)});`;
+            return `${glyphFuncName(obj.char)}(d,coord,${shift},border);`;
         };
 
-        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, in vec2 coord, in float distort, in float spacing) {
+        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, vec2 coord, float alpha, float border, float spacing, float blur) {
   float d = 1.;
   ${phraseObjects.map(glyphCall).join(newLine(2))}
-  col = mix(col, DARKENING, DARKBORDER * ${asFloatOrStr(alpha)} * sm(d-CONTOUR, ${asFloatOrStr(blur)}));
-  col = mix(col, c.yyy, ${asFloatOrStr(alpha)} * sm(d-.0005, ${asFloatOrStr(blur)}));
+  col = mix(col, DARKENING, DARKBORDER * sm(d, blur));
+  col = mix(col, c.yyy, alpha*sm(d-.0005, blur));
 }`
     }
     return phraseCode;
 }
 
 export const generateGlyphCode = (usedGlyphs) => {
-    let glyphCode = `void glyph_undefined(inout float d, in vec2 coord, in vec2 shift, in float distort) {
-  rect(d,coord,shift.x,shift.y,${float(initWidth)},${float(initHeight)},distort); }`;
+    let glyphCode = `void glyph_undefined(inout float d, in vec2 coord, vec2 shift, float border) {
+  rect(d,coord,shift.x,shift.y,${float(initWidth)},${float(initHeight)},border); }`;
 
     Object.entries(usedGlyphs).forEach(([glyph, pixels]) => {
-        const header = `void ${glyphFuncName(glyph)}(inout float d, in vec2 coord, in vec2 shift, in float distort)`;
+        const header = `void ${glyphFuncName(glyph)}(inout float d, in vec2 coord, in vec2 shift, in float border)`;
         const body = newLine(2) + pixels.map(rectCall).join(newLine(2));
         glyphCode += `\n${header}{${body}}`;
     });
@@ -142,29 +139,26 @@ export const generateCalls = (figureList, paramList) => {
             `R_${figure.id}*(UV - vec2(${vars.x}, ${vars.y}))/vec2(${vars.scale}*${vars.scaleX}, ${vars.scale}*${vars.scaleY})`;
 
         let funcName = '';
-        let extraSubjects = [];
         if (figure.placeholder) {
             funcName = 'placeholder';
         }
         else if (figure.type === PHRASE) {
             funcName = phraseFuncName(figure);
-            extraSubjects = ['distort', 'spacing'];
-            if (vars.spacing === '0.') {
-                vars.spacing = '1.';
-            }
         }
         else {
             funcName = getShaderFuncName(figure.shaderFunc);
-            extraSubjects = getSubjects(figure);
         }
-        const extraArgs = extraSubjects.map(subject => `,${vars[subject]}`).join('');
-        const funcCall = `${funcName}(col, ${coord(figure, vars)}${extraArgs});\n`
+        const extraArgs = getSubjects(figure).map(subject => `,${vars[subject]}`).join('');
+        const colVar = `col${figure.id}`;
+        const funcCall = `${funcName}(${colVar}, ${coord(figure, vars)}${extraArgs});\n`
+        const mixColor = `col = min(col,${colVar}); //,clamp(${float(figure.alpha)},0.,1.));`;
 
         return (
             varInit.join(newLine(4)) + newLine(4) +
             varPrepare.join(newLine(4)) + newLine(4) +
-            `vec3 col_${figure.id} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
-            ${funcCall}`
+            `vec3 ${colVar} = c.xxx; mat2 R_${figure.id}; rot(${vars.phi}, R_${figure.id});
+            ${funcCall}
+            ${mixColor}`
             + varCleanup.join(newLine(4))
         ).replaceAll(/ {4}[ ]*/g, ' '.repeat(4));
     };

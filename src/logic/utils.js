@@ -28,8 +28,5 @@ export const groupArray = (array, n) => {
     for (let i = 0; i < array.length / n; i++) {
         result.push(array.slice(n * i, n * (i + 1)));
     }
-    while (result[result.length - 1].length < n) {
-        result[result.length - 1].push(null);
-    }
     return result;
 };

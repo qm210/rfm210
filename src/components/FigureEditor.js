@@ -310,7 +310,7 @@ const qmdFieldColor = qmd => {
     return undefined;
 };
 
-export const defaultSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
+export const defaultSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY'];
 
 export const getShaderFuncName = (shaderFunc) => {
     const found = shaderFunc.match(/(?<=void).*(?=\()/im);
@@ -322,7 +322,7 @@ export const getShaderFuncName = (shaderFunc) => {
 
 export const getSubjects = (figure) => {
     if (figure.type === PHRASE) {
-        return ['distort', 'spacing'];
+        return ['alpha', 'border', 'spacing', 'sharp'];
     }
     const found = figure.shaderFunc.match(/(?<=\().*(?=\))/i);
     if (!found || figure.placeholder) {
@@ -391,7 +391,7 @@ const SubjectTable = ({figure}) => {
                     >
                     {
                         row.map((subject, key) =>
-                        <>
+                        <React.Fragment key = {key}>
                             <Table.Cell collapsing>
                                 <label>
                                     {subject}:
@@ -407,7 +407,7 @@ const SubjectTable = ({figure}) => {
                                     style = {{width: 60}}
                                 />
                             </Table.Cell>
-                        </>
+                        </React.Fragment>
                         )
                     }
                     </Table.Row>

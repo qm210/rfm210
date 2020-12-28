@@ -15,21 +15,15 @@ const initFigure = {
     scale: .5,
     scaleX: 1,
     scaleY: 1,
-    spacing: 0,
-    color: {
-        r: 0,
-        g: 0,
-        b: 0,
-        a: 1,
-    },
+    spacing: 1,
+    border: 1,
+    spacing: 1,
+    sharp: 1,
+    alpha: 1,
     startTime: 0,
     endTime: 0,
     shaderFunc: "",
     qmd: [],
-    vars: {
-        distort: 0,
-        spacing: 1,
-    },
     placeholder: true,
 };
 

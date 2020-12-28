@@ -71,9 +71,9 @@ void lp2dnoise(in float t, out vec2 n)
     lpnoise(t, 1.1, r2);
     n = vec2(r1, r2);
 }
-void dboxcombo(in vec2 x, in vec2 b, in float distort, inout float d)
+void dboxcombo(inout float d, in vec2 x, vec2 b, float border)
 {
-    vec2 da = abs(x*(1.+distort))-b;
+    vec2 da = abs(x*(border*border))-b;
     d = min(d, length(max(da,c.yy)) + min(max(da.x,da.y),0.0));
 }
 void rot(in float phi, out mat2 m)
@@ -81,12 +81,12 @@ void rot(in float phi, out mat2 m)
     vec2 cs = vec2(cos(phi), sin(phi));
     m = mat2(cs.x, -cs.y, cs.y, cs.x);
 }
-float sm(in float d, in float blur)
+float sm(in float d, in float sharp)
 {
-    return smoothstep(.2/iResolution.y, -.2/iResolution.y, blur*d);
+    return smoothstep(.2/iResolution.y, -.2/iResolution.y, sharp*d);
 }
-void rect(inout float d, vec2 uv, float x, float y, float w, float h, float distort) {
-  dboxcombo(uv + (vec2(-w,h) + 2.*vec2(-x,y))*PIXEL, vec2(w,h)*PIXEL, distort, d);
+void rect(inout float d, vec2 uv, float x, float y, float w, float h, float border) {
+  dboxcombo(d, uv + (vec2(-w,h) + 2.*vec2(-x,y))*PIXEL, vec2(w,h)*PIXEL, border);
 }
 
 ${paramCode}
@@ -114,15 +114,10 @@ void main()
     vec2 UV = vec2((uv.x - .5)*${float(sceneWidth/sceneHeight)}, uv.y - .5); // qm hack
     vec3 col = vec3(1.,.8,1.);
     col = mix(col, 1.1 + -.5*cos(iTime+uv.xyx+vec3(0,2,4)), 0.2);
-    float d;
-    float alpha = 1.;
-    float blur = 1.;
-    //this is where terrifyingCode was
     ${calls}
     gl_FragColor = vec4(clamp(col,0.,1.),1.); // qm hack fragColor -> gl_FragColor
 }`
     .replaceAll('PIXEL', '.005')
-    .replaceAll('CONTOUR', '.01')
     .replaceAll('DARKBORDER', '.1')
     .replaceAll('DARKENING', 'col*col*col');
 
