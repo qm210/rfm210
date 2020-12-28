@@ -15,12 +15,10 @@ const GlyphApp = () => {
             </MainColumn>
             <MainColumn width='40vw'>
                 <ControlPanel/>
+                <ExportView/>
             </MainColumn>
             <MainColumn width = '15vw'>
                 <KerningPanel/>
-            </MainColumn>
-            <MainColumn>
-                <ExportView/>
             </MainColumn>
         </MainView>
     );

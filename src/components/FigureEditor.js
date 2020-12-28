@@ -35,7 +35,7 @@ const FigureEditor = ({ inputs, setInputs }) => {
         return () => clearTimeout(debounce);
     }, [figure, inputs.shaderFunc, dispatch]);
 
-    const phraseCode = React.useMemo(() => generatePhraseCode([figure], glyphset), [figure, glyphset]);
+    const phraseCode = React.useMemo(() => generatePhraseCode(figure, glyphset), [figure, glyphset]);
 
     return figure && <>
         <Header as='h5' attached='top'>
@@ -317,7 +317,7 @@ const qmdFieldColor = qmd => {
     return undefined;
 };
 
-export const defaultSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY'];
+export const defaultSubjects = ['x', 'y', 'phi', 'scale', 'scaleX', 'scaleY', 'alpha'];
 
 export const getShaderFuncName = (shaderFunc) => {
     const found = shaderFunc.match(/(?<=void).*(?=\()/im);
@@ -329,7 +329,7 @@ export const getShaderFuncName = (shaderFunc) => {
 
 export const getSubjects = (figure) => {
     if (figure.type === PHRASE) {
-        return ['alpha', 'border', 'spacing', 'sharp'];
+        return ['border', 'spacing', 'sharp'];
     }
     const found = figure.shaderFunc.match(/(?<=\().*(?=\))/i);
     if (!found || figure.placeholder) {
@@ -339,7 +339,7 @@ export const getSubjects = (figure) => {
         .trim()
         .split(',')
         .map(it => it.split(' ').slice(-1)[0])
-        .filter(it => !["col", "coord"].includes(it));
+        .filter(it => !["col", "coord", "alpha"].includes(it));
     return argSubjects;
 };
 
@@ -350,13 +350,19 @@ export const getAllSubjects = (figure) => {
 const shaderFuncTemplate = [
     {
         name: 'square',
-        template: `void __TEMPLATE__ (inout vec3 col, in vec2 coord, float blur) {
+        template: `void __TEMPLATE__ (inout vec3 col, vec2 coord, float alpha, float blur) {
   float n = max(abs(coord.x), abs(coord.y));
   col *= vec3(smoothstep(0.5, 0.5+blur+1.e-4, n));
 }`
     }, {
+        name: 'circle',
+        template: `void __TEMPLATE__ (inout vec3 col, vec2 coord, float alpha, float blur) {
+  float n = dot(coord,coord);
+  col *= vec3(smoothstep(0.5, 0.5+blur+1.e-4, n));
+}`
+    }, {
         name: 'spinner',
-        template: `void __TEMPLATE__ (inout vec3 col, in vec2 coord) {
+        template: `void __TEMPLATE__ (inout vec3 col, vec2 coord, float alpha) {
   float r = length(coord)*2.0;
   float a = atan(coord.y,coord.x);
   float f = cos(a*3.);

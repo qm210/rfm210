@@ -11,7 +11,7 @@ import { findInLetterMap } from './glyph';
 export const generateFigureCode = (figureList, glyphlist) =>
     figureList.map(figure =>
         figure.type === PHRASE
-            ? generatePhraseCode(figureList, glyphlist)
+            ? generatePhraseCode(figure, glyphlist)
             : figure.shaderFunc
     ).join('\n');
 
@@ -25,56 +25,47 @@ const glyphFuncName = (letter) => `glyph_${shaderAlias(letter)}`;
 
 const phraseFuncName = (figure) => `phrase_${[...figure.chars].map(char => shaderAlias(char)).join('')}`;
 
-export const generatePhraseCode = (figureList, glyphset) => {
-    if (!figureList || figureList[0] === null || !glyphset.letterMap) {
+export const generatePhraseCode = (figure, glyphset) => {
+    if (!figure || !glyphset.letterMap) {
         return '';
     }
     let phraseCode = '';
-    var phraseObjects = [];
-    const transform = {};
-
-    for(const figure of figureList.filter(figure => figure.type === PHRASE)) {
-        transform[figure.id] = {
-            offsetX: asFloat(figure.x),
-            offsetY: asFloat(figure.y),
+    let phraseObjects = [];
+    let maxWidth = 0;
+    let maxHeight = 0;
+    let lastChar = undefined;
+    for (const char of figure.chars.split('')) {
+        const glyph = findInLetterMap(glyphset, char) || placeholder(initWidth, initHeight, char !== ' ');
+        const pixelRects = getRequiredRectsForPixels(glyph.pixels);
+        const kern = kerning(glyphset, lastChar, char);
+        maxWidth += kern.x;
+        const transform = {
+            offsetX: maxWidth,
+            offsetY: kern.y,
         };
+        phraseObjects.push({phrase: figure, char, glyph, pixelRects, transform});
+        maxHeight = Math.max(maxHeight, glyph.height);
+        maxWidth += glyph.width;
+        lastChar = char;
+    }
+    const halfWidth = .5 * maxWidth;
+    const halfHeight = .5 * maxHeight;
 
-        // construct rects
-        var maxWidth = 0;
-        var maxHeight = 0;
-        var lastChar = undefined;
-        for (const char of figure.chars.split('')) {
-            const glyph = findInLetterMap(glyphset, char) || placeholder(initWidth, initHeight, char !== ' ');
-            const pixelRects = getRequiredRectsForPixels(glyph.pixels);
-            const kern = kerning(glyphset, lastChar, char);
-            maxWidth += kern.x;
-            const transform = {
-                offsetX: maxWidth,
-                offsetY: kern.y,
-            };
-            phraseObjects.push({phrase: figure, char, glyph, pixelRects, transform});
-            maxHeight = Math.max(maxHeight, glyph.height);
-            maxWidth += glyph.width;
-            lastChar = char;
-        }
-        const halfWidth = .5 * maxWidth;
-        const halfHeight = .5 * maxHeight;
+    const glyphCall = (obj) => {
+        const {offsetX = 0, offsetY = 0} = obj.transform;
+        const shift = `vec2(${float(offsetX-halfWidth)}*spacing,${float(offsetY-halfHeight)})`
+            .replaceAll(/(?<!\d)0.\*spacing-/g, '-')
+            .replaceAll(/(?<!\d)0.-/g, '-');
+        return `${glyphFuncName(obj.char)}(d,coord,${shift},border);`;
+    };
 
-        const glyphCall = (obj) => {
-            const {offsetX = 0, offsetY = 0} = obj.transform;
-            const shift = `vec2(${float(offsetX-halfWidth)}*spacing,${float(offsetY-halfHeight)})`
-                .replaceAll(/(?<!\d)0.\*spacing-/g, '-')
-                .replaceAll(/(?<!\d)0.-/g, '-');
-            return `${glyphFuncName(obj.char)}(d,coord,${shift},border);`;
-        };
-
-        phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, vec2 coord, float alpha, float border, float spacing, float blur) {
+    phraseCode += `void ${phraseFuncName(figure)}(inout vec3 col, vec2 coord, float alpha, float border, float spacing, float blur) {
   float d = 1.;
   ${phraseObjects.map(glyphCall).join(newLine(2))}
   col = mix(col, DARKENING, DARKBORDER * sm(d, blur));
   col = mix(col, c.yyy, alpha*sm(d-.0005, blur));
 }`
-    }
+
     return phraseCode;
 }
 
@@ -95,6 +86,8 @@ export const generateCalls = (figureList, paramList) => {
 
     const sceneParams = paramList.map(it => it.name);
 
+    let counter = 0;
+
     const functionCall = figure => {
         const allSubjects = getAllSubjects(figure);
         const varInit = [];
@@ -102,7 +95,6 @@ export const generateCalls = (figureList, paramList) => {
         const varCleanup = [];
         const vars = Object.fromEntries(allSubjects.map(key => [key, float(figure[key])]));
         const qmds = figure.qmd.filter(validQmd).filter(activeQmd).map(parseQmd);
-        let counter = 0;
         for (const qmd of qmds) {
             if (qmd.action === 'animate') {
                 if (allSubjects.includes(qmd.subject)) {
@@ -150,7 +142,7 @@ export const generateCalls = (figureList, paramList) => {
         }
         const extraArgs = getSubjects(figure).map(subject => `,${vars[subject]}`).join('');
         const colVar = `col${figure.id}`;
-        const funcCall = `${funcName}(${colVar}, ${coord(figure, vars)}${extraArgs});\n`
+        const funcCall = `${funcName}(${colVar}, ${coord(figure, vars)}, ${float(figure.alpha)}${extraArgs});\n`
         const mixColor = `col *= ${colVar};`
 
         return (
