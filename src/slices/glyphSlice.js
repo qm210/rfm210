@@ -55,6 +55,15 @@ export const fetchLetterMap = createAsyncThunk('glyph/fetchLetterMap', async (gl
     return letterMap;
 });
 
+const pending = (state) => {
+    state.status = STATUS.LOADING;
+};
+
+const rejected = (state, {error}) => {
+    state.status = STATUS.FAIL;
+    state.error = error.message;
+}
+
 const glyphSlice = createSlice({
     name: 'glyph',
     initialState: {
@@ -118,9 +127,7 @@ const glyphSlice = createSlice({
         }
     },
     extraReducers: {
-        [fetchGlyph.pending]: (state) => {
-            state.status = STATUS.LOADING;
-        },
+        [fetchGlyph.pending]: pending,
         [fetchGlyph.fulfilled]: (state, {payload}) => ({
                 ...state,
                 current: {
@@ -130,10 +137,13 @@ const glyphSlice = createSlice({
                 status: STATUS.OK,
                 error: null
         }),
-        [fetchGlyph.rejected]: (state, {error}) => {
-            state.status = STATUS.FAIL;
-            state.error = error.message;
+        [fetchGlyph.rejected]: rejected,
+        [addGlyph.pending]: pending,
+        [addGlyph.fulfilled]: (state, {payload}) => {
+            state.current = payload;
+            state.status = STATUS.OK;
         },
+        [addGlyph.rejected]: rejected,
     }
 });
 

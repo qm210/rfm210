@@ -38,7 +38,10 @@ const ControlPanel = () => {
 
     const dispatchAndUpdate = (action) => {
         dispatch(action)
-            .then(() => dispatch(fetchGlyphset(glyphset.current)))
+            .then(() => {
+                dispatch(fetchGlyphset(glyphset.current));
+                document.getElementById("iletter").focus();
+            })
     };
 
     return <GenericList>
