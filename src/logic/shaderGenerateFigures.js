@@ -65,7 +65,7 @@ export const generatePhraseCode = (figureList, glyphset) => {
 
         const glyphCall = (obj) => {
             const {offsetX = 0, offsetY = 0, distort = 1.} = obj.transform;
-            const shift = `vec2(${float(offsetX)}*spacing-${float(halfWidth)},${float(offsetY)}-${float(halfHeight)})`
+            const shift = `vec2(${float(offsetX-halfWidth)}*spacing,${float(offsetY-halfHeight)})`
                 .replaceAll(/(?<!\d)0.\*spacing-/g, '-')
                 .replaceAll(/(?<!\d)0.-/g, '-');
             return `${glyphFuncName(obj.char)}(d,coord,${shift},distort*${float(distort)});`;

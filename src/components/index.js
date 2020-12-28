@@ -13,6 +13,7 @@ export const MainColumn = styled.div`
     flex-direction: column;
     padding: 10px;
     overflow-y: scroll;
+    width: ${props => props.width};
     height: calc(100vh - 32px);
 `
 

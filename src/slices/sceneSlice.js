@@ -26,6 +26,10 @@ const initFigure = {
     endTime: 0,
     shaderFunc: "",
     qmd: [],
+    vars: {
+        distort: 0,
+        spacing: 1,
+    },
     placeholder: true,
 };
 

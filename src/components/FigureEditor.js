@@ -9,6 +9,7 @@ import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
 import AceEditor from 'react-ace';
 import { generatePhraseCode } from '../logic/shaderGenerateFigures';
+import { groupArray } from './../logic/utils';
 
 const FigureEditor = ({ inputs, setInputs }) => {
     const figure = useSelector(selectCurrentFigure);
@@ -139,92 +140,9 @@ const FigureEditor = ({ inputs, setInputs }) => {
                     tabSize = {2}
                 />
             </div>
-            <Table compact>
-                <Table.Body>
-                    <Table.Row>
-                        <Table.Cell collapsing>
-                            <label>X:</label>
-                        </Table.Cell>
-                        <Table.Cell>
-                            <input
-                                type="number"
-                                step={.01}
-                                value={figure ? figure.x : 0}
-                                onChange={event => dispatch(updateFigure({ x: +event.target.value }))}
-                                disabled={!figure}
-                                style = {{width: 60}}
-                            />
-                        </Table.Cell>
-                        <Table.Cell collapsing>
-                            <label>Y:</label>
-                        </Table.Cell>
-                        <Table.Cell>
-                            <input
-                                type="number"
-                                step={.01}
-                                value={figure ? figure.y : 0}
-                                onChange={event => dispatch(updateFigure({ y: +event.target.value }))}
-                                disabled={!figure}
-                                style = {{width: 60}}
-                            />
-                        </Table.Cell>
-                        <Table.Cell collapsing>
-                            <label>φ/°:</label>
-                        </Table.Cell>
-                        <Table.Cell>
-                            <input
-                                type="number"
-                                step={1}
-                                value={figure ? .1 * Math.round(1800 / Math.PI * figure.phi) : 0}
-                                onChange={event => dispatch(updateFigure({ phi: +event.target.value * Math.PI / 180 }))}
-                                disabled={!figure}
-                                style = {{width: 60}}
-                            />
-                        </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                        <Table.Cell collapsing>
-                            <label>scale:</label>
-                        </Table.Cell>
-                        <Table.Cell>
-                            <input
-                                type="number"
-                                step={.01}
-                                value={figure ? figure.scale : 1}
-                                onChange={event => dispatch(updateFigure({ scale: +event.target.value }))}
-                                disabled={!figure}
-                                style = {{width: 60}}
-                            />
-                        </Table.Cell>
-                        <Table.Cell collapsing>
-                            <label>scaleX:</label>
-                        </Table.Cell>
-                        <Table.Cell>
-                            <input
-                                type="number"
-                                step={.01}
-                                value={figure ? figure.scaleX : 1}
-                                onChange={event => dispatch(updateFigure({ scaleX: +event.target.value }))}
-                                disabled={!figure}
-                                style = {{width: 60}}
-                            />
-                        </Table.Cell>
-                        <Table.Cell collapsing>
-                            <label>scaleY:</label>
-                        </Table.Cell>
-                        <Table.Cell>
-                            <input
-                                type="number"
-                                step={.01}
-                                value={figure ? figure.scaleY : 1}
-                                onChange={event => dispatch(updateFigure({ scaleY: +event.target.value }))}
-                                disabled={!figure}
-                                style = {{width: 60}}
-                            />
-                        </Table.Cell>
-                    </Table.Row>
-                </Table.Body>
-            </Table>
+            <SubjectTable
+                figure = {figure}
+            />
         </Segment>
         <FigureQmdEditor/>
     </>;
@@ -293,21 +211,6 @@ const FigureQmdEditor = () => {
                 )}
             </Table.Body>
         </Table>
-        <div>
-            Known Subjects:
-            <ul>
-            {
-                getAllSubjects(figure).map((subject, key) =>
-                    <li
-                        key = {key}
-                        style = {{fontFamily: 'monospace'}}
-                    >
-                        {subject}
-                    </li>
-                )
-            }
-            </ul>
-        </div>
     </>;
 };
 
@@ -454,3 +357,62 @@ const shaderFuncTemplate = [
 }`
     },
 ];
+
+const mapSubjectValue = (figure, subject) => {
+    if (!figure || !(subject in figure)) {
+        return 0;
+    }
+    if (subject === "phi") {
+        return .1 * Math.round(1800 / Math.PI * figure[subject])
+    }
+    return figure[subject];
+};
+
+const SubjectTable = ({figure}) => {
+    const dispatch = useDispatch();
+
+    const subjectRows = React.useMemo(() => groupArray(getAllSubjects(figure), 3), [figure]);
+
+    const dispatchSubjectUpdate = React.useCallback(subject => event => {
+        let scale = 1.;
+        if (subject === "phi") {
+            scale = Math.PI / 180;
+        }
+        dispatch(updateFigure({[subject]: +event.target.value * scale}));
+    }, [dispatch]);
+
+    return <Table compact>
+            <Table.Body>
+            {
+
+                subjectRows.map((row, key) =>
+                    <Table.Row
+                        key = {key}
+                    >
+                    {
+                        row.map((subject, key) =>
+                        <>
+                            <Table.Cell collapsing>
+                                <label>
+                                    {subject}:
+                                </label>
+                            </Table.Cell>
+                            <Table.Cell>
+                                <input
+                                    type = "number"
+                                    step = {subject === "phi" ? 1 : .01}
+                                    value = {mapSubjectValue(figure, subject)}
+                                    onChange = {dispatchSubjectUpdate(subject)}
+                                    disabled = {!figure}
+                                    style = {{width: 60}}
+                                />
+                            </Table.Cell>
+                        </>
+                        )
+                    }
+                    </Table.Row>
+                )
+            }
+            </Table.Body>
+        </Table>;
+}

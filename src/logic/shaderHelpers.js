@@ -37,11 +37,13 @@ export const shadertoyify = code => (
         .replaceAll('+-','-')
     );
 
-export const kerning = (glyphset, L, R) => glyphset.kerningMap && L && L in glyphset.kerningMap && R in glyphset.kerningMap[L]
-    ? {
-        x: glyphset.kerningMap[L][R][0],
-        y: glyphset.kerningMap[L][R][1]
-    } : {
-        x: 0,
-        y: 0
-    };
+export const kerning = (glyphset, L, R) => {
+    const pair = L + R;
+    if (glyphset.kerningMap && pair in glyphset.kerningMap) {
+        return {
+            x: glyphset.kerningMap[pair][0],
+            y: glyphset.kerningMap[pair][1]
+        }
+    }
+    return {x: 0, y: 0};
+};

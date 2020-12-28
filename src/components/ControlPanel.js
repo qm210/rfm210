@@ -18,7 +18,6 @@ const ControlPanel = () => {
 
     React.useEffect(() => {
         const debounce = setTimeout(() => {
-            console.log("update glyph to surfer:", glyph);
             dispatch(updateGlyph());
         }, GLYPH_UPDATE_DEBOUNCE);
         return () => clearTimeout(debounce);
@@ -45,38 +44,13 @@ const ControlPanel = () => {
     };
 
     return <GenericList>
-        <div>
-            <LabelledInput
-                name = "iletter"
-                label = "Letter:"
-                type = "text"
-                value = {(glyph && glyph.letter) || ''}
-                disabled = {!glyph}
-                onKeyPress = {dispatchLastTypedLetter}
-            />
-            <LabelledInput
-                name = "iwidth"
-                label = "Width:"
-                type = "number"
-                value = {(glyph && glyph.width) || 0}
-                disabled = {!glyph}
-                onChange = {event => dispatch(resize({width: +event.target.value}))}
-            />
-            <LabelledInput
-                name="iheight"
-                label="Height:"
-                type="number"
-                value={(glyph && glyph.height) || 0}
-                disabled = {!glyph}
-                onChange={event => dispatch(resize({height: +event.target.value}))}
-            />
-        </div>
         <div style={{marginBottom: 20}}>
-            <span>Glyphset: </span>
-            <GlyphsetSelector
-                onChange = {value => value && setGlyphsetTitleInput(value)}
-            />
-            <div className="ui input" style={{marginTop: 15}}>
+            <h4>Glyphset</h4>
+            <div className="ui input">
+                <GlyphsetSelector
+                    onChange = {value => value && setGlyphsetTitleInput(value)}
+                    style = {{width: 300}}
+                />
                 <input
                     type = "text"
                     value = {glyphsetTitleInput}
@@ -96,6 +70,34 @@ const ControlPanel = () => {
             <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(addGlyph())}>New Glyph</Button>
             <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(copyGlyph())}>Copy Glyph</Button>
             <Button disabled={!glyphset.current} onClick={() => dispatchAndUpdate(deleteGlyph())}>Delete Glyph</Button>
+        </div>
+        <div style={{display: 'flex'}}>
+            <LabelledInput
+                name = "iletter"
+                label = "Letter:"
+                type = "text"
+                value = {(glyph && glyph.letter) || ''}
+                disabled = {!glyph}
+                onKeyPress = {dispatchLastTypedLetter}
+            />
+            <div style={{marginRight: 10}}/>
+            <LabelledInput
+                name = "iwidth"
+                label = "Width:"
+                type = "number"
+                value = {(glyph && glyph.width) || 0}
+                disabled = {!glyph}
+                onChange = {event => dispatch(resize({width: +event.target.value}))}
+            />
+            <div style={{marginRight: 10}}/>
+            <LabelledInput
+                name="iheight"
+                label="Height:"
+                type="number"
+                value={(glyph && glyph.height) || 0}
+                disabled = {!glyph}
+                onChange={event => dispatch(resize({height: +event.target.value}))}
+            />
         </div>
     </GenericList>;
 };

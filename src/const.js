@@ -15,4 +15,5 @@ export const SYMBOL = {
     CHECKBOX_NO: '\u2612',
     CHECKBOX_YES: '\u2611',
     CHECKBOX_EMPTY: '\u2610',
+    DELTA: '\u0394',
 };

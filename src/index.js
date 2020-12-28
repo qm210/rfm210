@@ -17,6 +17,7 @@ import feathers from '@feathersjs/client';
 
 import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/mode-glsl";
+import "ace-builds/src-noconflict/mode-plain_text";
 import "ace-builds/src-noconflict/theme-github";
 
 export const liveMode = 'live' in parse(window.location.search);

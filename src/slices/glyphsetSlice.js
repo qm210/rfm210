@@ -13,7 +13,6 @@ export const fetchGlyphsets = createAsyncThunk('glyphset/find', async () => {
 export const fetchGlyphset = createAsyncThunk('glyphset/get', async (glyphset) => {
     if (!glyphset) {
         const all = await dispatchEvent(fetchGlyphsets());
-        console.log("NOW TAKE FIRST OF", all);
         return all[0];
     }
     return await service().get(glyphset._id);
@@ -28,6 +27,23 @@ export const deleteAllGlyphsetsAndGlyphs = createAsyncThunk('glyphsets/clear', a
     await service().remove(null);
     await surfer.service('glyph').remove(null);
 });
+
+export const updateGlyphset = createAsyncThunk('glyphsets/update', async (update) => {
+    if (!update._id) {
+        console.log("can't patch what has no _id:", update);
+        return;
+    }
+    return await service().patch(update._id, update);
+});
+
+const pending =  (state) => {
+    state.status = STATUS.LOADING;
+};
+
+const rejected = (state, action) => {
+    state.status = STATUS.FAIL;
+    state.error = action.error.message;
+};
 
 const glyphsetSlice = createSlice({
     name: 'glyphset',
@@ -47,24 +63,30 @@ const glyphsetSlice = createSlice({
         },
     },
     extraReducers: {
-        [fetchGlyphsets.pending]: (state) => {
-            state.status = STATUS.LOADING;
-        },
+        [fetchGlyphsets.pending]: pending,
+        [fetchGlyphsets.rejected]: rejected,
         [fetchGlyphsets.fulfilled]: (state, action) => {
             state.all = action.payload;
             state.status = STATUS.OK;
         },
-        [fetchGlyphsets.rejected]: (state, action) => {
-            state.status = STATUS.FAIL;
-            state.error = action.error.message;
-        },
         [fetchGlyphset.fulfilled]: (state, action) => {
             state.current = action.payload;
         },
+        [createGlyphset.pending]: pending,
+        [createGlyphset.rejected]: rejected,
         [createGlyphset.fulfilled]: (state, action) => {
             state.all.push(action.payload);
-            state.all.sort();
+            console.log("ALL GLYPHSETS", state.all);
+            state.all.sort(); // <-- what is this doing?? sort needs arguments, doesn't it?
+            console.log("ALL GLYPHSETS SORTED NOW?", state.all);
             state.current = action.payload;
+        },
+        [updateGlyphset.pending]: pending,
+        [updateGlyphset.rejected]: rejected,
+        [updateGlyphset.fulfilled]: (state, action) => {
+            console.log("UPDATED GLYPHSET", action.payload);
+            state.current = action.payload;
+            state.status = STATUS.OK;
         },
         [deleteAllGlyphsetsAndGlyphs.fulfilled]: (state) => {
             state.status = STATUS.IDLE;

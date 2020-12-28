@@ -22,3 +22,14 @@ export const objectWithout = (obj, excludes) =>
             entry => !excludes.includes(entry[0])
         )
     );
+
+export const groupArray = (array, n) => {
+    const result = [];
+    for (let i = 0; i < array.length / n; i++) {
+        result.push(array.slice(n * i, n * (i + 1)));
+    }
+    while (result[result.length - 1].length < n) {
+        result[result.length - 1].push(null);
+    }
+    return result;
+};
