@@ -1,14 +1,13 @@
 - auto reload from server (change in glyph now needs refresh)
-- definition of kerning
-
-- mehrere figures
 - mehrere scenes
 
-- automate alpha
+- alpha in die templates
 - ebeneneffekte
 
 - "trigger tables" - trigger a given animation at a list of moments, or parametrize
 - "TRIGGER NOW" tool for current moment
+
+- dreiecke?
 
 Zukunft:
 - Effekte wie Plot hier, Clone da, etc.

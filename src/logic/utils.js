@@ -16,11 +16,16 @@ export const joinObject = (obj, hSep, vSep) =>
 export const splitToObject = (str, hSep, vSep) =>
     Object.fromEntries(str.split(vSep).map(e => e.split(hSep)));
 
-export const objectWithout = (obj, excludes) =>
+export const objectWithout = (obj, excludeKeys) =>
     Object.fromEntries(
         Object.entries(obj).filter(
-            entry => !excludes.includes(entry[0])
+            entry => !excludeKeys.includes(entry[0])
         )
+    );
+
+export const objectWithOnly = (obj, includeKeys) =>
+    Object.fromEntries(
+        includeKeys.map(key => [key, obj[key]])
     );
 
 export const groupArray = (array, n) => {
