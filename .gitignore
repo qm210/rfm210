@@ -24,3 +24,7 @@ yarn-error.log*
 
 .vscode
 debug.log
+
+# Vite related dependencies
+.vite
+.swc

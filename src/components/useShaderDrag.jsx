@@ -8,7 +8,7 @@ const initState = {
     offsetY: null
 };
 
-const useShaderDrag = ({onDragX, onDragY, onCancel}) => {
+const useShaderDrag = ({onDragX, onDragY}) => {
     const [state, setState] = React.useState(initState);
 
     const start = (x, y) => {
@@ -43,7 +43,7 @@ const useShaderDrag = ({onDragX, onDragY, onCancel}) => {
         }));
     };
 
-    const end = (x, y) => {
+    const end = () => {
         if (!state.dragging) {
             return;
         }

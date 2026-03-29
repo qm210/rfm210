@@ -10,7 +10,7 @@ import { whenSubmitted } from '../logic/utils';
 import { ButtonBar } from './index';
 import { STATUS, SYMBOL } from '../const';
 import { Header, Segment, Loader } from 'semantic-ui-react';
-import { patchScene } from './../slices/sceneSlice';
+import { patchScene } from '../slices/sceneSlice';
 import { saneGlslDelimiter } from '../logic/shaderHelpers';
 import FigureEditor from './FigureEditor';
 
@@ -39,7 +39,7 @@ export const SceneApp = () => {
     }, [dispatch, status]);
 
     React.useEffect(() => {
-        var timeout;
+        let timeout = 0;
         if (status === STATUS.LOADING) {
             timeout = setTimeout(() => setLoader(true), 500);
         }

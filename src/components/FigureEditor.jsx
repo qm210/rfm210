@@ -1,15 +1,21 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { updateFigure, selectCurrentFigure, PHRASE,
-    addFigureQmd, deleteFigureQmd, updateFigureQmd } from '../slices/sceneSlice';
-import { SYMBOL } from '../const';
-import { Header, Segment, Table } from 'semantic-ui-react';
-import { LabelledInput } from '.';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+    addFigureQmd,
+    deleteFigureQmd,
+    PHRASE,
+    selectCurrentFigure,
+    updateFigure,
+    updateFigureQmd
+} from '../slices/sceneSlice';
+import {SYMBOL} from '../const';
+import {Header, Segment, Table} from 'semantic-ui-react';
+import {LabelledInput} from '.';
 import GlyphsetSelector from './GlyphsetSelector';
 import Select from 'react-select';
 import AceEditor from 'react-ace';
-import { generatePhraseCode } from '../logic/shaderGenerateFigures';
-import { groupArray } from './../logic/utils';
+import {generatePhraseCode} from '../logic/shaderGenerateFigures';
+import {groupArray} from '../logic/utils';
 
 const FigureEditor = ({ inputs, setInputs }) => {
     const figure = useSelector(selectCurrentFigure);
@@ -229,10 +235,8 @@ export const validQmd = qmd => {
     if (parsed.error) {
         return false;
     }
-    if (!knownQmds.some(it => parsed.body.includes(it))) {
-        return false;
-    }
-    return true;
+    return knownQmds.some(it => parsed.body.includes(it));
+
 };
 const knownQmds = ['show', 'hide', 'animate'];
 
@@ -335,12 +339,11 @@ export const getSubjects = (figure) => {
     if (!found || figure.placeholder) {
         return [];
     }
-    const argSubjects = found[0]
+    return found[0]
         .trim()
         .split(',')
         .map(it => it.split(' ').slice(-1)[0])
         .filter(it => !["col", "coord", "alpha"].includes(it));
-    return argSubjects;
 };
 
 export const getAllSubjects = (figure) => {

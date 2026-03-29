@@ -20,7 +20,7 @@ export const MainColumn = styled.div`
 export const ExportList = styled.div`
     display: flex;
     flex-direction: column;
-    alignItems: left;
+    align-items: left;
     margin: 10px;
     padding: 10px;
     border: 1px solid #888;
@@ -86,14 +86,14 @@ export const QuickButton = styled.button`
 export const ButtonBar = styled.div`
     display: flex;
     flex-direction: row;
-    margin-top: 0px;
+    margin-top: 0;
     margin-bottom: 5px;
 `;
 
 export const ShaderFrame = styled.div`
     display: flex;
     flex-direction: column;
-    alignItems: left;
+    align-items: flex-start;
     margin: 10px;
     padding: 10px;
     border: 1px solid #888;
@@ -102,7 +102,7 @@ export const ShaderFrame = styled.div`
 export const GenericList = styled.div`
     display: flex;
     flex-direction: column;
-    alignItems: left;
+    align-items: flex-start;
     margin: 10px;
     padding: 10px;
     border: 1px solid #888;

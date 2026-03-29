@@ -6,9 +6,9 @@ import StoreDebugger from '../StoreDebugger';
 import 'fomantic-ui-css/semantic.min.css';
 import { deleteAllScenes } from '../slices/sceneSlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { STATUS } from './../const';
-import { fetchGlyphsets, selectGlyphsetByTitle } from './../slices/glyphsetSlice';
-import { fetchGlyph, fetchLetterMap } from './../slices/glyphSlice';
+import { STATUS } from '../const';
+import { fetchGlyphsets, selectGlyphsetByTitle } from '../slices/glyphsetSlice';
+import { fetchGlyph, fetchLetterMap } from '../slices/glyphSlice';
 
 const shortcutActions = {
     'F4': deleteAllScenes()
